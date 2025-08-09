@@ -1,0 +1,1 @@
+UPDATE document_templates SET output_type = 'pdf' WHERE output_type = 'docx';

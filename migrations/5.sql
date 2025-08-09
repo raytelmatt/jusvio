@@ -1,0 +1,11 @@
+
+CREATE TABLE client_portal_access (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  client_id INTEGER NOT NULL,
+  access_token TEXT NOT NULL UNIQUE,
+  expires_at DATETIME NOT NULL,
+  is_active BOOLEAN DEFAULT 1,
+  last_login_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,0 +1,24 @@
+# Node
+node_modules
+.pnpm-store
+
+# Vite
+dist/
+.vite
+
+# Env
+.env*
+!.env.example
+
+# Editor
+.DS_Store
+.idea
+.vscode
+
+# Logs
+*.log
+logs/
+
+# Builds
+*.zip
+*.tar.gz
