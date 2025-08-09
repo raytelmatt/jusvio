@@ -25,19 +25,19 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_APPWRITE_ENDPOINT: ${{ secrets.VITE_APPWRITE_ENDPOINT }}
-          VITE_APPWRITE_PROJECT_ID: ${{ secrets.VITE_APPWRITE_PROJECT_ID }}
+          VITE_APPWRITE_ENDPOINT: https://nyc.cloud.appwrite.io/v1
+          VITE_APPWRITE_PROJECT_ID: 6897443a0034c54b3fd8
 
       - name: Create deployment archive
         run: tar -czf code.tar.gz -C dist/client .
 
       - name: Deploy to Appwrite Sites
         env:
-          APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT }}
-          APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
           APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
           APPWRITE_SITE_ID: ${{ secrets.APPWRITE_SITE_ID }}
         run: |
+          APPWRITE_ENDPOINT="https://nyc.cloud.appwrite.io/v1"
+          APPWRITE_PROJECT_ID="6897443a0034c54b3fd8"
           curl -fsS -X POST "$APPWRITE_ENDPOINT/sites/$APPWRITE_SITE_ID/deployments" \
             -H "X-Appwrite-Project: $APPWRITE_PROJECT_ID" \
             -H "X-Appwrite-Key: $APPWRITE_API_KEY" \
