@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
+import { resolveDownloadUrl } from '@/react-app/lib/storage-url';
 import { Link } from 'react-router';
 import { 
   FileText, 
@@ -303,7 +304,10 @@ export default function Documents() {
                       </button>
                       {doc.file_url && (
                         <button 
-                          onClick={() => window.open(doc.file_url, '_blank')}
+                          onClick={() => {
+                            const url = resolveDownloadUrl(doc.file_url);
+                            if (url) window.open(url, '_blank');
+                          }}
                           className="p-2 text-green-300 hover:text-green-100 rounded-lg hover:bg-white/20 transition-colors"
                           title="Download Document"
                         >

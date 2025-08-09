@@ -149,6 +149,7 @@ export default function GenerateDocument() {
       });
 
       setGeneratedDocument(doc);
+      // local download for convenience; storage remains private
       downloadDocument(generatedDoc.blob, generatedDoc.filename);
       setTimeout(() => navigate('/documents'), 1200);
     } catch (error) {
