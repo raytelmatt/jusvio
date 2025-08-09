@@ -1,0 +1,47 @@
+name: Deploy to Appwrite Sites
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_APPWRITE_ENDPOINT: ${{ secrets.VITE_APPWRITE_ENDPOINT }}
+          VITE_APPWRITE_PROJECT_ID: ${{ secrets.VITE_APPWRITE_PROJECT_ID }}
+
+      - name: Create deployment archive
+        run: tar -czf code.tar.gz -C dist/client .
+
+      - name: Deploy to Appwrite Sites
+        env:
+          APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT }}
+          APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
+          APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
+          APPWRITE_SITE_ID: ${{ secrets.APPWRITE_SITE_ID }}
+        run: |
+          curl -fsS -X POST "$APPWRITE_ENDPOINT/sites/$APPWRITE_SITE_ID/deployments" \
+            -H "X-Appwrite-Project: $APPWRITE_PROJECT_ID" \
+            -H "X-Appwrite-Key: $APPWRITE_API_KEY" \
+            -F "code=@code.tar.gz" \
+            -F "activate=true"
+
+
