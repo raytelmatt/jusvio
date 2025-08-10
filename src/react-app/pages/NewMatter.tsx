@@ -13,7 +13,7 @@ export default function NewMatter() {
     title: '',
     practice_area: '',
     description: '',
-    fee_model: 'FlatRate',
+    fee_model: 'Progressive',
     flat_rate_amount: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,23 +59,32 @@ export default function NewMatter() {
     setLoading(true);
     try {
       const matterNumber = `MT${Date.now().toString().slice(-6)}`;
-      const created = await databases.createDocument(DATABASE_ID, COLLECTIONS.matters, 'unique()', {
+      const payload: any = {
         matter_number: matterNumber,
         title: formData.title,
         practice_area: formData.practice_area,
         status: 'Open',
         client_id: formData.client_id,
-        description: formData.description || null,
         fee_model: formData.fee_model,
-        flat_rate_amount: formData.fee_model === 'FlatRate' && formData.flat_rate_amount ? parseFloat(formData.flat_rate_amount) : null,
         opened_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      } as any);
+      };
+      if (formData.description.trim()) {
+        payload.description = formData.description.trim();
+      }
+      if (formData.fee_model === 'FlatRate' && formData.flat_rate_amount) {
+        payload.flat_rate_amount = parseFloat(formData.flat_rate_amount);
+      }
+
+      const created = await databases.createDocument(DATABASE_ID, COLLECTIONS.matters, 'unique()', payload);
 
       navigate(`/matters/${created.$id}`);
     } catch (error) {
-      setErrors({ submit: 'Network error. Please try again.' });
+      console.error('Error creating matter:', error);
+      const message = (error as any)?.message || 'Error creating matter. Please check required fields and try again.';
+      setErrors({ submit: message });
+      alert(message);
     } finally {
       setLoading(false);
     }
