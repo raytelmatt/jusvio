@@ -32,4 +32,17 @@ export const BUCKETS = {
   documents: 'documents',
 };
 
+// Allow auth layer to inject a JWT to avoid cross-site cookie issues
+export function setClientJWT(jwt: string | null) {
+  try {
+    if (jwt) {
+      appwriteClient.setJWT(jwt);
+    } else {
+      // Clearing JWT: set empty string to drop Authorization header
+      // @ts-ignore - SDK accepts empty string
+      appwriteClient.setJWT('');
+    }
+  } catch {}
+}
+
 

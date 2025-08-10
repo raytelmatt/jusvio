@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Client, Account, Models } from "appwrite";
+import { setClientJWT } from "@/react-app/lib/appwrite";
 
 type AuthUser = Models.User<Models.Preferences> | null;
 
@@ -47,9 +48,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     try {
       const current = await account.get();
+      // Ensure DB/Storage calls carry an Authorization header for Appwrite Cloud
+      try {
+        const jwt = await account.createJWT();
+        setClientJWT(jwt.jwt || null);
+      } catch {}
       setUser(current);
     } catch {
       setUser(null);
+      setClientJWT(null);
     } finally {
       setIsPending(false);
     }
@@ -79,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await account.deleteSession("current");
     } finally {
       setUser(null);
+      setClientJWT(null);
     }
   }, [account]);
 

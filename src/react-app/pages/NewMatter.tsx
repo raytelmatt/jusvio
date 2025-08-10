@@ -87,7 +87,12 @@ export default function NewMatter() {
         payload.flat_rate_amount = parseFloat(formData.flat_rate_amount);
       }
 
-      const created = await databases.createDocument(DATABASE_ID, COLLECTIONS.matters, 'unique()', payload);
+      const created = await databases.createDocument(
+        DATABASE_ID,
+        COLLECTIONS.matters,
+        'unique()',
+        payload
+      );
       // Ensure navigation occurs after state update cycle
       setTimeout(() => navigate(`/matters/${created.$id}`), 0);
     } catch (error) {
