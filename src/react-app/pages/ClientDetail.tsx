@@ -19,6 +19,8 @@ import {
   Eye
 } from 'lucide-react';
 import type { Client } from '@/shared/types';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
+import { Query } from 'appwrite';
 
 interface Matter {
   id: number;
@@ -58,19 +60,17 @@ export default function ClientDetail() {
 
   const fetchClientDetails = async () => {
     try {
-      const response = await fetch(`/api/clients/${id}`, {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setClient(data);
-      } else {
-        setError('Client not found');
-      }
+      const doc: any = await databases.getDocument(DATABASE_ID, COLLECTIONS.clients, String(id));
+      const normalized: any = {
+        ...doc,
+        id: doc.id ?? doc.$id,
+        created_at: doc.created_at ?? doc.$createdAt,
+        updated_at: doc.updated_at ?? doc.$updatedAt,
+      };
+      setClient(normalized as Client);
     } catch (error) {
       console.error('Error fetching client details:', error);
-      setError('Failed to load client details');
+      setError('Client not found');
     } finally {
       setLoading(false);
     }
@@ -78,54 +78,35 @@ export default function ClientDetail() {
 
   const fetchClientMatters = async () => {
     try {
-      const response = await fetch(`/api/matters?client_id=${id}`, {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setMatters(data);
-      }
+      const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, [
+        Query.equal('client_id', String(id)),
+      ]);
+      const rows = (list.documents || []).map((d: any) => ({
+        ...d,
+        id: d.id ?? d.$id,
+        created_at: d.created_at ?? d.$createdAt,
+      }));
+      setMatters(rows as any);
     } catch (error) {
       console.error('Error fetching client matters:', error);
     }
   };
 
   const fetchClientBalance = async () => {
-    try {
-      const response = await fetch(`/api/clients/${id}/balance`, {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setClientBalance(data);
-      }
-    } catch (error) {
-      console.error('Error fetching client balance:', error);
-    }
+    // Not yet implemented against Appwrite. Leave empty to avoid blocking page render.
+    setClientBalance(null);
   };
 
   const togglePortalAccess = async () => {
     if (!client) return;
-
     try {
-      const response = await fetch(`/api/clients/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...client,
-          portal_enabled: !client.portal_enabled,
-        }),
-      });
-
-      if (response.ok) {
-        const updatedClient = await response.json();
-        setClient(updatedClient);
-      }
+      const updated: any = await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.clients,
+        String(id),
+        { portal_enabled: !client.portal_enabled }
+      );
+      setClient({ ...(updated as any) });
     } catch (error) {
       console.error('Error updating client:', error);
     }
@@ -133,23 +114,12 @@ export default function ClientDetail() {
 
   const deleteClient = async () => {
     if (!client) return;
-
     if (!confirm(`Are you sure you want to delete ${client.first_name} ${client.last_name}? This action cannot be undone.`)) {
       return;
     }
-
     try {
-      const response = await fetch(`/api/clients/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        navigate('/clients');
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to delete client');
-      }
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.clients, String(id));
+      navigate('/clients');
     } catch (error) {
       console.error('Error deleting client:', error);
       setError('Failed to delete client');
