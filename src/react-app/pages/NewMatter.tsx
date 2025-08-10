@@ -80,8 +80,6 @@ export default function NewMatter() {
         client_id: formData.client_id,
         fee_model: formData.fee_model,
         opened_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       };
       if (formData.description.trim()) {
         payload.description = formData.description.trim();
