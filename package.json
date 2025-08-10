@@ -12,6 +12,7 @@
     "html-docx-js": "^0.3.1",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.510.0",
+    "node-appwrite": "^13.0.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-router": "^7.5.3",

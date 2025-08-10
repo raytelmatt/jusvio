@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { ArrowLeft, Save, User, FolderOpen, DollarSign } from 'lucide-react';
 import type { Client } from '@/shared/types';
-import { databases, DATABASE_ID } from '@/react-app/lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
 
 export default function NewMatter() {
   const navigate = useNavigate();
@@ -24,8 +24,14 @@ export default function NewMatter() {
 
   const fetchClients = async () => {
     try {
-      const list = await databases.listDocuments(DATABASE_ID, 'clients', []);
-      setClients((list.documents || []) as unknown as Client[]);
+      const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, []);
+      const rows = (list.documents || []).map((d: any) => ({
+        ...d,
+        id: d.id ?? d.$id,
+        created_at: d.created_at ?? d.$createdAt,
+        updated_at: d.updated_at ?? d.$updatedAt,
+      }));
+      setClients(rows as unknown as Client[]);
     } catch (error) {
       console.error('Error fetching clients:', error);
     }
@@ -53,7 +59,7 @@ export default function NewMatter() {
     setLoading(true);
     try {
       const matterNumber = `MT${Date.now().toString().slice(-6)}`;
-      const created = await databases.createDocument(DATABASE_ID, 'matters', 'unique()', {
+      const created = await databases.createDocument(DATABASE_ID, COLLECTIONS.matters, 'unique()', {
         matter_number: matterNumber,
         title: formData.title,
         practice_area: formData.practice_area,
