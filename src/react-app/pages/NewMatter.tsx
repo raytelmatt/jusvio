@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
+import { Permission, Role } from 'appwrite';
+import { useAuth } from '@/react-app/auth/AuthProvider';
 import { ArrowLeft, Save, User, FolderOpen, DollarSign } from 'lucide-react';
 import type { Client } from '@/shared/types';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
 
 export default function NewMatter() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -60,7 +63,7 @@ export default function NewMatter() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -87,11 +90,18 @@ export default function NewMatter() {
         payload.flat_rate_amount = parseFloat(formData.flat_rate_amount);
       }
 
+      const permissions = user ? [
+        Permission.read(Role.user((user as any).$id)),
+        Permission.update(Role.user((user as any).$id)),
+        Permission.delete(Role.user((user as any).$id)),
+      ] : [];
+
       const created = await databases.createDocument(
         DATABASE_ID,
         COLLECTIONS.matters,
         'unique()',
-        payload
+        payload,
+        permissions
       );
       // Ensure navigation occurs after state update cycle
       setTimeout(() => navigate(`/matters/${created.$id}`), 0);
@@ -334,7 +344,6 @@ export default function NewMatter() {
           <button
             type="submit"
             disabled={loading}
-            onClick={handleSubmit}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             {loading ? (
