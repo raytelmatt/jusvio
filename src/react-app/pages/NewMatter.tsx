@@ -22,6 +22,15 @@ export default function NewMatter() {
     fetchClients();
   }, []);
 
+  useEffect(() => {
+    // Preselect client if provided via query param
+    const params = new URLSearchParams(window.location.search);
+    const preselectedClientId = params.get('client_id');
+    if (preselectedClientId) {
+      setFormData((prev) => ({ ...prev, client_id: preselectedClientId }));
+    }
+  }, []);
+
   const fetchClients = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, []);
@@ -51,8 +60,9 @@ export default function NewMatter() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
+    e.stopPropagation();
     
     if (!validateForm()) return;
 
@@ -78,13 +88,13 @@ export default function NewMatter() {
       }
 
       const created = await databases.createDocument(DATABASE_ID, COLLECTIONS.matters, 'unique()', payload);
-
-      navigate(`/matters/${created.$id}`);
+      // Ensure navigation occurs after state update cycle
+      setTimeout(() => navigate(`/matters/${created.$id}`), 0);
     } catch (error) {
       console.error('Error creating matter:', error);
       const message = (error as any)?.message || 'Error creating matter. Please check required fields and try again.';
       setErrors({ submit: message });
-      alert(message);
+      try { alert(message); } catch {}
     } finally {
       setLoading(false);
     }
@@ -105,7 +115,7 @@ export default function NewMatter() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8">
+      <form id="new-matter-form" onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8">
         {/* Client Selection */}
         <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 p-6">
           <div className="flex items-center mb-4">
@@ -319,6 +329,7 @@ export default function NewMatter() {
           <button
             type="submit"
             disabled={loading}
+            onClick={handleSubmit}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             {loading ? (
