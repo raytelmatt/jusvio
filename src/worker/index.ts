@@ -6,17 +6,17 @@ import {
   deleteSession,
   getCurrentUser,
   MOCHA_SESSION_TOKEN_COOKIE_NAME,
-} from "@getmocha/users-service/backend";
+} from "./mocha-users-service-backend";
 import { getCookie, setCookie } from "hono/cookie";
 import { handleClientPortalLookup, handleClientPortalData } from "./client-portal-routes";
 import r2Routes from "./r2-routes";
 import emailWebhook from "./email-webhook";
-import type { Env } from "./types";
+import type { Env, AuthUser } from "./types";
 
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Env; Variables: { user: AuthUser } }>();
 
 // Create a separate app for API routes with basePath
-const apiApp = new Hono<{ Bindings: Env }>().basePath("/api");
+const apiApp = new Hono<{ Bindings: Env; Variables: { user: AuthUser } }>().basePath("/api");
 
 // CORS middleware for both apps
 app.use("*", cors({
@@ -500,7 +500,7 @@ apiApp.get("/matters", customAuthMiddleware, async (c) => {
       LEFT JOIN clients c ON m.client_id = c.id
       WHERE 1=1
     `;
-    const params = [];
+    const params: any[] = [];
     
     if (client_id) {
       query += " AND m.client_id = ?";
@@ -651,7 +651,7 @@ apiApp.get("/time-entries", customAuthMiddleware, async (c) => {
   
   try {
     let query = "SELECT * FROM time_entries";
-    const params = [];
+    const params: any[] = [];
     
     if (matter_id) {
       query += " WHERE matter_id = ?";
@@ -674,7 +674,7 @@ apiApp.get("/documents", customAuthMiddleware, async (c) => {
   
   try {
     let query = "SELECT * FROM documents";
-    const params = [];
+    const params: any[] = [];
     
     if (matter_id) {
       query += " WHERE matter_id = ?";
@@ -716,7 +716,7 @@ apiApp.get("/hearings", customAuthMiddleware, async (c) => {
   
   try {
     let query = "SELECT * FROM hearings";
-    const params = [];
+    const params: any[] = [];
     
     if (matter_id) {
       query += " WHERE matter_id = ?";
@@ -819,7 +819,7 @@ apiApp.get("/deadlines", customAuthMiddleware, async (c) => {
   
   try {
     let query = "SELECT * FROM deadlines";
-    const params = [];
+    const params: any[] = [];
     
     if (matter_id) {
       query += " WHERE matter_id = ?";
@@ -869,7 +869,7 @@ apiApp.get("/communications", customAuthMiddleware, async (c) => {
   
   try {
     let query = "SELECT * FROM communications";
-    const params = [];
+    const params: any[] = [];
     
     if (matter_id) {
       query += " WHERE matter_id = ?";
@@ -899,7 +899,7 @@ apiApp.get("/tasks", customAuthMiddleware, async (c) => {
              END as days_until_due
       FROM tasks t
     `;
-    const params = [];
+    const params: any[] = [];
     
     if (matter_id) {
       query += " WHERE t.matter_id = ?";
@@ -1037,7 +1037,7 @@ apiApp.get("/invoices", customAuthMiddleware, async (c) => {
   
   try {
     let query = "SELECT * FROM invoices";
-    const params = [];
+    const params: any[] = [];
     
     if (matter_id) {
       query += " WHERE matter_id = ?";
@@ -1065,7 +1065,7 @@ apiApp.get("/payments", customAuthMiddleware, async (c) => {
       LEFT JOIN invoices i ON p.invoice_id = i.id
       LEFT JOIN matters m ON i.matter_id = m.id
     `;
-    const params = [];
+    const params: any[] = [];
     
     if (matter_id) {
       query += " WHERE i.matter_id = ?";

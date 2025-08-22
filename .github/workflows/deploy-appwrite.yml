@@ -13,17 +13,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create deployment archive (repo for Appwrite build)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site (Vite)
+        env:
+          # Build-time flags (adjust if needed by app)
+          VITE_ENABLE_LEGACY_API: "false"
+        run: npm run build
+
+      - name: Create deployment archive (from dist)
         run: |
           set -x
-          ls -la
-          # Try tar first with robust exclude flags
-          tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=.DS_Store --exclude=.wrangler --exclude=.vscode --exclude=.idea -czf code.tar.gz . || true
-          if [ ! -s code.tar.gz ]; then
-            echo "tar failed or produced empty archive, falling back to zip"
-            zip -r code.zip . -x ".git/*" "node_modules/*" "dist/*" ".wrangler/*" ".vscode/*" ".idea/*" "**/.DS_Store" || true
-          fi
-          ls -lh
+          test -d dist || { echo "dist not found. Build likely failed"; exit 1; }
+          # Package the built static assets so index.html sits at archive root
+          tar -czf code.tar.gz -C dist . || true
+          (cd dist && zip -r ../code.zip .) || true
+          ls -lh code.* || true
 
       - name: Deploy to Appwrite Sites
         env:
@@ -33,11 +44,11 @@ jobs:
           set -x
           APPWRITE_ENDPOINT="https://nyc.cloud.appwrite.io/v1"
           APPWRITE_PROJECT_ID="6897443a0034c54b3fd8"
-          FILE="code.tar.gz"
+          FILE="code.zip"
           if [ ! -s "$FILE" ]; then
-            FILE="code.zip"
+            FILE="code.tar.gz"
           fi
-          ls -lh "$FILE"
+          ls -lh "$FILE" || { echo "Archive missing"; exit 1; }
           curl -fsS -X POST "$APPWRITE_ENDPOINT/sites/$APPWRITE_SITE_ID/deployments" \
             -H "X-Appwrite-Project: $APPWRITE_PROJECT_ID" \
             -H "X-Appwrite-Key: $APPWRITE_API_KEY" \
