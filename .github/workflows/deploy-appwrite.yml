@@ -15,27 +15,33 @@ jobs:
 
       - name: Create deployment archive (repo for Appwrite build)
         run: |
-          tar -czf code.tar.gz \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='dist' \
-            --exclude='.DS_Store' \
-            --exclude='.wrangler' \
-            --exclude='.vscode' \
-            --exclude='.idea' \
-            .
+          set -x
+          ls -la
+          # Try tar first with robust exclude flags
+          tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=.DS_Store --exclude=.wrangler --exclude=.vscode --exclude=.idea -czf code.tar.gz . || true
+          if [ ! -s code.tar.gz ]; then
+            echo "tar failed or produced empty archive, falling back to zip"
+            zip -r code.zip . -x ".git/*" "node_modules/*" "dist/*" ".wrangler/*" ".vscode/*" ".idea/*" "**/.DS_Store" || true
+          fi
+          ls -lh
 
       - name: Deploy to Appwrite Sites
         env:
           APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
           APPWRITE_SITE_ID: ${{ secrets.APPWRITE_SITE_ID }}
         run: |
+          set -x
           APPWRITE_ENDPOINT="https://nyc.cloud.appwrite.io/v1"
           APPWRITE_PROJECT_ID="6897443a0034c54b3fd8"
+          FILE="code.tar.gz"
+          if [ ! -s "$FILE" ]; then
+            FILE="code.zip"
+          fi
+          ls -lh "$FILE"
           curl -fsS -X POST "$APPWRITE_ENDPOINT/sites/$APPWRITE_SITE_ID/deployments" \
             -H "X-Appwrite-Project: $APPWRITE_PROJECT_ID" \
             -H "X-Appwrite-Key: $APPWRITE_API_KEY" \
-            -F "code=@code.tar.gz" \
+            -F "code=@${FILE}" \
             -F "activate=true"
 
 
