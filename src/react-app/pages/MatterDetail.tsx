@@ -23,6 +23,9 @@ import {
   X
 } from 'lucide-react';
 import DocumentPreview from '../components/DocumentPreview';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
+import { Query } from 'appwrite';
+import { resolveDownloadUrl } from '@/react-app/lib/storage-url';
 
 export default function MatterDetail() {
   const { id } = useParams();
@@ -67,6 +70,8 @@ export default function MatterDetail() {
     status: 'Open'
   });
 
+  const ENABLE_LEGACY_API = (import.meta as any).env?.VITE_ENABLE_LEGACY_API === 'true';
+
   useEffect(() => {
     if (id) {
       fetchMatter();
@@ -101,24 +106,43 @@ export default function MatterDetail() {
     setLoading(true);
     try {
       console.log('Fetching matter with ID:', id);
-      const response = await fetch(`/api/matters/${id}`, {
-        credentials: 'include',
-      });
-      
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error:', errorText);
-        throw new Error(`Failed to fetch matter: ${response.status} - ${errorText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Matter data received:', data);
-      
-      setMatter(data);
-      if (data.case_data) {
-        setCriminalData(data.case_data);
+      if (ENABLE_LEGACY_API) {
+        const response = await fetch(`/api/matters/${id}`, {
+          credentials: 'include',
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error:', errorText);
+          throw new Error(`Failed to fetch matter: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Matter data received (legacy API):', data);
+        
+        setMatter(data);
+        if (data.case_data) {
+          setCriminalData(data.case_data);
+        }
+      } else {
+        const doc = await databases.getDocument(
+          DATABASE_ID,
+          COLLECTIONS.matters,
+          String(id)
+        );
+        const normalized: any = {
+          ...doc,
+          id: (doc as any).id ?? (doc as any).$id,
+          created_at: (doc as any).created_at ?? (doc as any).$createdAt,
+          updated_at: (doc as any).updated_at ?? (doc as any).$updatedAt,
+        };
+        console.log('Matter data received (Appwrite):', normalized);
+        setMatter(normalized);
+        if (normalized.case_data) {
+          setCriminalData(normalized.case_data);
+        }
       }
       setError(null);
     } catch (error) {
@@ -135,13 +159,11 @@ export default function MatterDetail() {
     try {
       const [
         timeEntriesRes,
-        documentsRes,
         hearingsRes,
         deadlinesRes,
         communicationsRes
       ] = await Promise.all([
         fetch(`/api/time-entries?matter_id=${id}`, { credentials: 'include' }),
-        fetch(`/api/documents?matter_id=${id}`, { credentials: 'include' }),
         fetch(`/api/hearings?matter_id=${id}`, { credentials: 'include' }),
         fetch(`/api/deadlines?matter_id=${id}`, { credentials: 'include' }),
         fetch(`/api/communications?matter_id=${id}`, { credentials: 'include' })
@@ -152,7 +174,7 @@ export default function MatterDetail() {
       // Add matter creation event
       if (matter) {
         events.push({
-          id: `matter-${matter.id}`,
+          id: `matter-${String(matter.id ?? (matter as any).$id)}`,
           type: 'matter_created',
           title: 'Matter Opened',
           description: `${matter.title} was opened`,
@@ -179,21 +201,27 @@ export default function MatterDetail() {
         });
       }
 
-      // Add documents
-      if (documentsRes.ok) {
-        const docData = await documentsRes.json();
-        docData.forEach((doc: any) => {
+      // Add documents (Appwrite)
+      try {
+        const docsList = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTIONS.documents,
+          [Query.equal('matter_id', String(id))]
+        );
+        (docsList.documents || []).forEach((doc: any) => {
           events.push({
-            id: `doc-${doc.id}`,
+            id: `doc-${doc.id ?? doc.$id}`,
             type: 'document',
             title: 'Document Created',
             description: doc.title,
-            date: doc.created_at,
+            date: doc.created_at ?? doc.$createdAt,
             icon: FileText,
             color: 'purple',
             meta: `Version ${doc.version} • ${doc.status}`
           });
         });
+      } catch (e) {
+        console.error('Error fetching documents for timeline:', e);
       }
 
       // Add hearings
@@ -465,13 +493,18 @@ export default function MatterDetail() {
     if (!id) return;
     
     try {
-      const response = await fetch(`/api/documents?matter_id=${id}`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setDocuments(data);
-      }
+      const list = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.documents,
+        [Query.equal('matter_id', String(id))]
+      );
+      const rows = (list.documents || []).map((d: any) => ({
+        ...d,
+        id: d.id ?? d.$id,
+        created_at: d.created_at ?? d.$createdAt,
+        updated_at: d.updated_at ?? d.$updatedAt,
+      }));
+      setDocuments(rows);
     } catch (error) {
       console.error('Error fetching documents:', error);
     }
@@ -594,17 +627,16 @@ export default function MatterDetail() {
     }
   };
 
-  const deleteDocument = async (docId: number) => {
+  const deleteDocument = async (docId: string | number) => {
     if (!confirm('Are you sure you want to delete this document?')) return;
     
     try {
-      const response = await fetch(`/api/documents/${docId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (response.ok) {
-        setDocuments(documents.filter(doc => doc.id !== docId));
-      }
+      await databases.deleteDocument(
+        DATABASE_ID,
+        COLLECTIONS.documents,
+        String(docId)
+      );
+      setDocuments(documents.filter(doc => String(doc.id ?? doc.$id) !== String(docId)));
     } catch (error) {
       console.error('Error deleting document:', error);
     }
@@ -1040,7 +1072,10 @@ export default function MatterDetail() {
                         </button>
                         {doc.file_url && (
                           <button 
-                            onClick={() => window.open(doc.file_url, '_blank')}
+                            onClick={() => {
+                              const url = resolveDownloadUrl(doc.file_url);
+                              if (url) window.open(url, '_blank');
+                            }}
                             className="p-2 text-gray-400 hover:text-gray-600"
                             title="Download Document"
                           >
