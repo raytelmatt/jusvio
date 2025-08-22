@@ -13,24 +13,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-        env:
-          VITE_APPWRITE_ENDPOINT: https://nyc.cloud.appwrite.io/v1
-          VITE_APPWRITE_PROJECT_ID: 6897443a0034c54b3fd8
-          VITE_ENABLE_LEGACY_API: false
-
-      - name: Create deployment archive
-        run: tar -czf code.tar.gz -C dist .
+      - name: Create deployment archive (repo for Appwrite build)
+        run: |
+          tar -czf code.tar.gz \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='dist' \
+            --exclude='.DS_Store' \
+            --exclude='.wrangler' \
+            --exclude='.vscode' \
+            --exclude='.idea' \
+            .
 
       - name: Deploy to Appwrite Sites
         env:
