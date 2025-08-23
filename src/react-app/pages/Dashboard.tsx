@@ -109,7 +109,8 @@ export default function Dashboard() {
         <div className="flex space-x-3">
           <button
             onClick={() => navigate('/clients/new')}
-            className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer"
+            type="button"
+            className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer relative z-10"
           >
             <Plus className="mr-2 h-4 w-4" />
             New Client
