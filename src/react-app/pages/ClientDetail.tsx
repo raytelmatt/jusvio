@@ -145,20 +145,23 @@ export default function ClientDetail() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Link to="/clients" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button 
+            onClick={() => navigate('/clients')} 
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-blue-200"
+          >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <div>
-            <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded w-32 mt-2 animate-pulse"></div>
+            <div className="h-8 bg-white/20 rounded w-48 animate-pulse"></div>
+            <div className="h-4 bg-white/20 rounded w-32 mt-2 animate-pulse"></div>
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 p-6">
               <div className="animate-pulse space-y-4">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-4 bg-gray-200 rounded"></div>
+                  <div key={i} className="h-4 bg-white/20 rounded"></div>
                 ))}
               </div>
             </div>
@@ -172,17 +175,20 @@ export default function ClientDetail() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Link to="/clients" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button 
+            onClick={() => navigate('/clients')} 
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-blue-200"
+          >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Client Not Found</h1>
+            <h1 className="text-2xl font-bold text-white">Client Not Found</h1>
           </div>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+        <div className="bg-red-500/20 border border-red-400/30 rounded-xl p-6">
           <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
-            <p className="text-red-800">{error || 'Client not found'}</p>
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+            <p className="text-red-200">{error || 'Client not found'}</p>
           </div>
         </div>
       </div>
@@ -204,21 +210,24 @@ export default function ClientDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link to="/clients" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button 
+            onClick={() => navigate('/clients')} 
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-blue-200"
+          >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-white">
               {client.first_name} {client.last_name}
             </h1>
-            <p className="text-gray-600">Client #{client.client_number || id}</p>
+            <p className="text-blue-200">Client #{client.client_number || id}</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
           {client.email && (
             <button
               onClick={sendEmail}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-3 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 backdrop-blur-sm hover:bg-white/20"
             >
               <Mail className="mr-2 h-4 w-4" />
               Email
@@ -227,22 +236,22 @@ export default function ClientDetail() {
           {phones.length > 0 && (
             <button
               onClick={callClient}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-3 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 backdrop-blur-sm hover:bg-white/20"
             >
               <Phone className="mr-2 h-4 w-4" />
               Call
             </button>
           )}
-          <Link
-            to={`/clients/${id}/edit`}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+          <button
+            onClick={() => navigate(`/clients/${id}/edit`)}
+            className="inline-flex items-center px-3 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 backdrop-blur-sm hover:bg-white/20"
           >
             <Edit className="mr-2 h-4 w-4" />
             Edit
-          </Link>
+          </button>
           <button
             onClick={deleteClient}
-            className="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50"
+            className="inline-flex items-center px-3 py-2 border border-red-400/30 text-sm font-medium rounded-lg text-red-200 bg-red-500/20 hover:bg-red-500/30"
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
@@ -270,8 +279,8 @@ export default function ClientDetail() {
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="border-b border-gray-200">
+      <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10">
+        <div className="border-b border-white/20">
           <nav className="flex space-x-8 px-6" aria-label="Tabs">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -281,8 +290,8 @@ export default function ClientDetail() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-blue-400 text-blue-300'
+                      : 'border-transparent text-blue-200 hover:text-white hover:border-blue-300/50'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -311,21 +320,21 @@ export default function ClientDetail() {
               </div>
               {client.date_of_birth && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Date of Birth</label>
-                  <p className="text-sm text-gray-900">
+                  <label className="block text-sm font-medium text-blue-200">Date of Birth</label>
+                  <p className="text-sm text-white">
                     {new Date(client.date_of_birth).toLocaleDateString()}
                   </p>
                 </div>
               )}
               {client.ssn_last4 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">SSN (Last 4)</label>
-                  <p className="text-sm text-gray-900">***-**-{client.ssn_last4}</p>
+                  <label className="block text-sm font-medium text-blue-200">SSN (Last 4)</label>
+                  <p className="text-sm text-white">***-**-{client.ssn_last4}</p>
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-500">Client Since</label>
-                <p className="text-sm text-gray-900">
+                <label className="block text-sm font-medium text-blue-200">Client Since</label>
+                <p className="text-sm text-white">
                   {new Date(client.created_at).toLocaleDateString()}
                 </p>
               </div>
@@ -341,24 +350,24 @@ export default function ClientDetail() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {client.email && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-sm text-gray-900">{client.email}</p>
+                  <label className="block text-sm font-medium text-blue-200">Email</label>
+                  <p className="text-sm text-white">{client.email}</p>
                 </div>
               )}
               {phones.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Phone Numbers</label>
+                  <label className="block text-sm font-medium text-blue-200">Phone Numbers</label>
                   <div className="space-y-1">
                     {phones.map((phone: string, index: number) => (
-                      <p key={index} className="text-sm text-gray-900">{phone}</p>
+                      <p key={index} className="text-sm text-white">{phone}</p>
                     ))}
                   </div>
                 </div>
               )}
               {client.preferred_contact_method && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Preferred Contact Method</label>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <label className="block text-sm font-medium text-blue-200">Preferred Contact Method</label>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200">
                     {client.preferred_contact_method}
                   </span>
                 </div>
@@ -368,14 +377,14 @@ export default function ClientDetail() {
 
           {/* Address */}
           {address && (address.street || address.city || address.state || address.zip) && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 p-6">
               <div className="flex items-center mb-4">
-                <MapPin className="h-5 w-5 text-purple-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">Address</h3>
+                <MapPin className="h-5 w-5 text-purple-400 mr-2" />
+                <h3 className="text-lg font-semibold text-white">Address</h3>
               </div>
               <div className="space-y-1">
-                {address.street && <p className="text-sm text-gray-900">{address.street}</p>}
-                <p className="text-sm text-gray-900">
+                {address.street && <p className="text-sm text-white">{address.street}</p>}
+                <p className="text-sm text-white">
                   {[address.city, address.state, address.zip].filter(Boolean).join(', ')}
                 </p>
               </div>
@@ -384,28 +393,28 @@ export default function ClientDetail() {
 
           {/* Emergency Contact */}
           {emergencyContact && (emergencyContact.name || emergencyContact.phone) && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 p-6">
               <div className="flex items-center mb-4">
-                <Shield className="h-5 w-5 text-red-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">Emergency Contact</h3>
+                <Shield className="h-5 w-5 text-red-400 mr-2" />
+                <h3 className="text-lg font-semibold text-white">Emergency Contact</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {emergencyContact.name && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Name</label>
-                    <p className="text-sm text-gray-900">{emergencyContact.name}</p>
+                    <label className="block text-sm font-medium text-blue-200">Name</label>
+                    <p className="text-sm text-white">{emergencyContact.name}</p>
                   </div>
                 )}
                 {emergencyContact.relationship && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Relationship</label>
-                    <p className="text-sm text-gray-900">{emergencyContact.relationship}</p>
+                    <label className="block text-sm font-medium text-blue-200">Relationship</label>
+                    <p className="text-sm text-white">{emergencyContact.relationship}</p>
                   </div>
                 )}
                 {emergencyContact.phone && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Phone</label>
-                    <p className="text-sm text-gray-900">{emergencyContact.phone}</p>
+                    <label className="block text-sm font-medium text-blue-200">Phone</label>
+                    <p className="text-sm text-white">{emergencyContact.phone}</p>
                   </div>
                 )}
               </div>
@@ -417,14 +426,14 @@ export default function ClientDetail() {
               {/* Sidebar */}
               <div className="space-y-6">
                 {/* Client Status */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 p-6">
                   <div className="flex items-center mb-4">
-                    <Settings className="h-5 w-5 text-gray-600 mr-2" />
-                    <h3 className="text-lg font-semibold text-gray-900">Client Portal</h3>
+                    <Settings className="h-5 w-5 text-blue-400 mr-2" />
+                    <h3 className="text-lg font-semibold text-white">Client Portal</h3>
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-700">Portal Access</span>
+                      <span className="text-sm text-blue-200">Portal Access</span>
                       <button
                         onClick={togglePortalAccess}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
@@ -439,9 +448,9 @@ export default function ClientDetail() {
                       </button>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-700">Notifications</span>
+                      <span className="text-sm text-blue-200">Notifications</span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        client.notifications_opt_in ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        client.notifications_opt_in ? 'bg-green-500/20 text-green-200' : 'bg-gray-500/20 text-gray-200'
                       }`}>
                         {client.notifications_opt_in ? 'Enabled' : 'Disabled'}
                       </span>
@@ -458,44 +467,44 @@ export default function ClientDetail() {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+                <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Quick Stats</h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Total Matters</span>
-                      <span className="text-sm font-medium text-gray-900">{matters.length}</span>
+                      <span className="text-sm text-blue-200">Total Matters</span>
+                      <span className="text-sm font-medium text-white">{matters.length}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Active Matters</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm text-blue-200">Active Matters</span>
+                      <span className="text-sm font-medium text-white">
                         {matters.filter(m => m.status === 'Open').length}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Client Since</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm text-blue-200">Client Since</span>
+                      <span className="text-sm font-medium text-white">
                         {new Date(client.created_at).toLocaleDateString()}
                       </span>
                     </div>
                     {clientBalance && (
                       <>
-                        <hr className="border-gray-200" />
+                        <hr className="border-white/20" />
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Total Invoiced</span>
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm text-blue-200">Total Invoiced</span>
+                          <span className="text-sm font-medium text-white">
                             ${clientBalance.total_invoiced?.toLocaleString() || '0'}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Total Paid</span>
-                          <span className="text-sm font-medium text-green-600">
+                          <span className="text-sm text-blue-200">Total Paid</span>
+                          <span className="text-sm font-medium text-green-400">
                             ${clientBalance.total_paid?.toLocaleString() || '0'}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Balance Due</span>
+                          <span className="text-sm text-blue-200">Balance Due</span>
                           <span className={`text-sm font-medium ${
-                            clientBalance.total_balance > 0 ? 'text-red-600' : 'text-green-600'
+                            clientBalance.total_balance > 0 ? 'text-red-400' : 'text-green-400'
                           }`}>
                             ${clientBalance.total_balance?.toLocaleString() || '0'}
                           </span>
@@ -692,13 +701,13 @@ export default function ClientDetail() {
                   <DollarSign className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                   <h3 className="text-sm font-medium text-gray-900 mb-2">No billing activity</h3>
                   <p className="text-sm text-gray-500 mb-4">This client has no invoices or payments yet.</p>
-                  <Link
-                    to={`/matters/new?client_id=${id}`}
+                  <button
+                    onClick={() => navigate(`/matters/new?client_id=${id}`)}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Create Matter
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -707,28 +716,28 @@ export default function ClientDetail() {
           {activeTab === 'matters' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Client Matters</h3>
-                <Link
-                  to={`/matters/new?client_id=${id}`}
+                <h3 className="text-lg font-semibold text-white">Client Matters</h3>
+                <button
+                  onClick={() => navigate(`/matters/new?client_id=${id}`)}
                   className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   New Matter
-                </Link>
+                </button>
               </div>
               
               {matters.length === 0 ? (
                 <div className="text-center py-8">
-                  <FolderOpen className="mx-auto h-12 w-12 text-gray-400" />
-                  <h4 className="mt-2 text-sm font-medium text-gray-900">No matters yet</h4>
-                  <p className="mt-1 text-sm text-gray-500">Get started by creating a new matter for this client.</p>
-                  <Link
-                    to={`/matters/new?client_id=${id}`}
+                  <FolderOpen className="mx-auto h-12 w-12 text-blue-400" />
+                  <h4 className="mt-2 text-sm font-medium text-white">No matters yet</h4>
+                  <p className="mt-1 text-sm text-blue-200">Get started by creating a new matter for this client.</p>
+                  <button
+                    onClick={() => navigate(`/matters/new?client_id=${id}`)}
                     className="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Create Matter
-                  </Link>
+                  </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
