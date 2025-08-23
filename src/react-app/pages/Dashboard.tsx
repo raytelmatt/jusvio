@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/react-app/auth/AuthProvider';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { fetchDashboardStats } from '@/react-app/lib/dashboard';
 import { 
   Users, 
@@ -21,7 +21,7 @@ import type { DashboardStats } from '@/shared/types';
 interface StatCardProps {
   title: string;
   value: number;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   href?: string;
   trend?: number;
@@ -53,6 +53,7 @@ function StatCard({ title, value, icon: Icon, color, href, trend }: StatCardProp
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -106,13 +107,13 @@ export default function Dashboard() {
           <p className="text-blue-200 mt-1">Welcome back to Jusivo Case Manager Version 1.0</p>
         </div>
         <div className="flex space-x-3">
-          <Link
-            to="/clients/new"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          <button
+            onClick={() => navigate('/clients/new')}
+            className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer"
           >
             <Plus className="mr-2 h-4 w-4" />
             New Client
-          </Link>
+          </button>
           <Link
             to="/matters/new"
             className="inline-flex items-center px-6 py-3 border border-white/20 text-sm font-semibold rounded-xl text-blue-100 bg-white/10 backdrop-blur-sm hover:bg-white/20 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
