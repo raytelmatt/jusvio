@@ -24,8 +24,8 @@ function getEnv(name: string, fallback?: string): string {
 }
 
 function createAppwriteClients() {
-  const endpoint = getEnv("APPWRITE_ENDPOINT");
-  const projectId = getEnv("APPWRITE_PROJECT_ID");
+  const endpoint = getEnv("APPWRITE_ENDPOINT", "https://nyc.cloud.appwrite.io/v1");
+  const projectId = getEnv("APPWRITE_PROJECT_ID", "6897443a0034c54b3fd8");
   if (!endpoint || !projectId) {
     // Allow rendering without crashing; auth will be disabled
     return { client: null as unknown as Client, account: null as unknown as Account };

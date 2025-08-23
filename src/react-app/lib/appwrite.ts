@@ -1,13 +1,9 @@
 import { Client, Account, Databases, Storage } from 'appwrite';
 
-const endpoint = (import.meta as any).env?.VITE_APPWRITE_ENDPOINT as string;
-const projectId = (import.meta as any).env?.VITE_APPWRITE_PROJECT_ID as string;
+const endpoint = ((import.meta as any).env?.VITE_APPWRITE_ENDPOINT as string) || 'https://nyc.cloud.appwrite.io/v1';
+const projectId = ((import.meta as any).env?.VITE_APPWRITE_PROJECT_ID as string) || '6897443a0034c54b3fd8';
 
-export const appwriteClient = new Client();
-
-if (endpoint && projectId) {
-  appwriteClient.setEndpoint(endpoint).setProject(projectId);
-}
+export const appwriteClient = new Client().setEndpoint(endpoint).setProject(projectId);
 
 export const account = new Account(appwriteClient);
 export const databases = new Databases(appwriteClient);

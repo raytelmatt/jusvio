@@ -87,7 +87,10 @@ export default function LoginPage() {
                   await loginWithEmailPassword(email.trim(), password);
                 } catch (err) {
                   console.error(err);
-                  setError("Invalid email or password");
+                  const message = (err && typeof err === 'object' && 'message' in (err as any))
+                    ? String((err as any).message)
+                    : 'Invalid email or password';
+                  setError(message);
                 } finally {
                   setIsLoading(false);
                 }
