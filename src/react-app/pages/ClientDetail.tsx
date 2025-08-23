@@ -698,9 +698,9 @@ export default function ClientDetail() {
               {/* Empty State */}
               {(!clientBalance || (clientBalance.recent_invoices?.length === 0 && clientBalance.recent_payments?.length === 0)) && (
                 <div className="text-center py-12">
-                  <DollarSign className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">No billing activity</h3>
-                  <p className="text-sm text-gray-500 mb-4">This client has no invoices or payments yet.</p>
+                  <DollarSign className="mx-auto h-12 w-12 text-blue-400 mb-4" />
+                  <h3 className="text-sm font-medium text-white mb-2">No billing activity</h3>
+                  <p className="text-sm text-blue-200 mb-4">This client has no invoices or payments yet.</p>
                   <button
                     onClick={() => navigate(`/matters/new?client_id=${id}`)}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
@@ -742,29 +742,29 @@ export default function ClientDetail() {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {matters.map((matter) => (
-                    <div key={matter.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div key={matter.id} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors">
                       <div className="flex items-center justify-between mb-3">
                         <Link
                           to={`/matters/${matter.id}`}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                          className="text-sm font-medium text-blue-300 hover:text-blue-200"
                         >
                           {matter.matter_number}
                         </Link>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          matter.status === 'Open' ? 'bg-green-100 text-green-800' :
-                          matter.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                          matter.status === 'Closed' ? 'bg-gray-100 text-gray-800' :
-                          'bg-blue-100 text-blue-800'
+                          matter.status === 'Open' ? 'bg-green-500/20 text-green-300' :
+                          matter.status === 'Pending' ? 'bg-yellow-500/20 text-yellow-300' :
+                          matter.status === 'Closed' ? 'bg-gray-500/20 text-gray-300' :
+                          'bg-blue-500/20 text-blue-300'
                         }`}>
                           {matter.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-900 mb-2">{matter.title}</p>
+                      <p className="text-sm text-white mb-2">{matter.title}</p>
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
                           {matter.practice_area === 'PersonalInjury' ? 'Personal Injury' : matter.practice_area}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-blue-200">
                           {new Date(matter.created_at).toLocaleDateString()}
                         </span>
                       </div>
@@ -779,14 +779,14 @@ export default function ClientDetail() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Client Status */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white/8 backdrop-blur-xl rounded-xl border border-white/10 p-6">
             <div className="flex items-center mb-4">
-              <Settings className="h-5 w-5 text-gray-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Client Portal</h3>
+              <Settings className="h-5 w-5 text-blue-400 mr-2" />
+              <h3 className="text-lg font-semibold text-white">Client Portal</h3>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">Portal Access</span>
+                <span className="text-sm text-blue-200">Portal Access</span>
                 <button
                   onClick={togglePortalAccess}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
@@ -801,30 +801,30 @@ export default function ClientDetail() {
                 </button>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">Notifications</span>
+                <span className="text-sm text-blue-200">Notifications</span>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  client.notifications_opt_in ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                  client.notifications_opt_in ? 'bg-green-500/20 text-green-300' : 'bg-gray-500/20 text-gray-300'
                 }`}>
                   {client.notifications_opt_in ? 'Enabled' : 'Disabled'}
                 </span>
               </div>
               {client.portal_enabled && (
                 <div className="mt-4 space-y-3">
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="text-xs text-blue-800 mb-2">
+                  <div className="p-3 bg-blue-500/10 rounded-lg">
+                    <p className="text-xs text-blue-200 mb-2">
                       Client portal access link:
                     </p>
                     <Link
                       to={`/client-portal/${id}`}
-                      className="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
+                      className="inline-flex items-center px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                     >
                       <Eye className="mr-2 h-3 w-3" />
                       View Portal
                     </Link>
                   </div>
-                  <div className="text-xs text-blue-600">
+                  <div className="text-xs text-blue-200">
                     Share this link: <br />
-                    <code className="text-blue-800 bg-blue-50 px-1 rounded">
+                    <code className="text-blue-300 bg-blue-500/20 px-1 rounded">
                       {window.location.origin}/client-portal/{id}
                     </code>
                   </div>
@@ -834,44 +834,44 @@ export default function ClientDetail() {
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+          <div className="bg-white/8 backdrop-blur-xl rounded-xl border border-white/10 p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Quick Stats</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Total Matters</span>
-                <span className="text-sm font-medium text-gray-900">{matters.length}</span>
+                <span className="text-sm text-blue-200">Total Matters</span>
+                <span className="text-sm font-medium text-white">{matters.length}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Active Matters</span>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm text-blue-200">Active Matters</span>
+                <span className="text-sm font-medium text-white">
                   {matters.filter(m => m.status === 'Open').length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Client Since</span>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm text-blue-200">Client Since</span>
+                <span className="text-sm font-medium text-white">
                   {new Date(client.created_at).toLocaleDateString()}
                 </span>
               </div>
               {clientBalance && (
                 <>
-                  <hr className="border-gray-200" />
+                  <hr className="border-white/20" />
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Total Invoiced</span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm text-blue-200">Total Invoiced</span>
+                    <span className="text-sm font-medium text-white">
                       ${clientBalance.total_invoiced?.toLocaleString() || '0'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Total Paid</span>
-                    <span className="text-sm font-medium text-green-600">
+                    <span className="text-sm text-blue-200">Total Paid</span>
+                    <span className="text-sm font-medium text-green-400">
                       ${clientBalance.total_paid?.toLocaleString() || '0'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Balance Due</span>
+                    <span className="text-sm text-blue-200">Balance Due</span>
                     <span className={`text-sm font-medium ${
-                      clientBalance.total_balance > 0 ? 'text-red-600' : 'text-green-600'
+                      clientBalance.total_balance > 0 ? 'text-red-400' : 'text-green-400'
                     }`}>
                       ${clientBalance.total_balance?.toLocaleString() || '0'}
                     </span>
@@ -882,72 +882,6 @@ export default function ClientDetail() {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Client Status */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center mb-4">
-              <Settings className="h-5 w-5 text-gray-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Client Portal</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">Portal Access</span>
-                <button
-                  onClick={togglePortalAccess}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    client.portal_enabled ? 'bg-blue-600' : 'bg-gray-200'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      client.portal_enabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">Notifications</span>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  client.notifications_opt_in ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {client.notifications_opt_in ? 'Enabled' : 'Disabled'}
-                </span>
-              </div>
-              {client.portal_enabled && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-blue-800">
-                    Client can access their portal at: <br />
-                    <code className="text-blue-600">/client-portal/{id}</code>
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Total Matters</span>
-                <span className="text-sm font-medium text-gray-900">{matters.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Active Matters</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {matters.filter(m => m.status === 'Open').length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Client Since</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {new Date(client.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
