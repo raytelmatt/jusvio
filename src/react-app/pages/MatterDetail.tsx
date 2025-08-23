@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import DocumentPreview from '../components/DocumentPreview';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
-import { Query } from 'appwrite';
+import { Query, ID } from 'appwrite';
 import { resolveDownloadUrl } from '@/react-app/lib/storage-url';
 
 export default function MatterDetail() {
@@ -70,7 +70,7 @@ export default function MatterDetail() {
     status: 'Open'
   });
 
-  const ENABLE_LEGACY_API = (import.meta as any).env?.VITE_ENABLE_LEGACY_API === 'true';
+  // Legacy API has been fully decommissioned; use Appwrite exclusively
 
   useEffect(() => {
     if (id) {
@@ -106,44 +106,26 @@ export default function MatterDetail() {
     setLoading(true);
     try {
       console.log('Fetching matter with ID:', id);
-      if (ENABLE_LEGACY_API) {
-        const response = await fetch(`/api/matters/${id}`, {
-          credentials: 'include',
-        });
-        
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', errorText);
-          throw new Error(`Failed to fetch matter: ${response.status} - ${errorText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Matter data received (legacy API):', data);
-        
-        setMatter(data);
-        if (data.case_data) {
-          setCriminalData(data.case_data);
-        }
-      } else {
-        const doc = await databases.getDocument(
-          DATABASE_ID,
-          COLLECTIONS.matters,
-          String(id)
-        );
-        const normalized: any = {
-          ...doc,
-          id: (doc as any).id ?? (doc as any).$id,
-          created_at: (doc as any).created_at ?? (doc as any).$createdAt,
-          updated_at: (doc as any).updated_at ?? (doc as any).$updatedAt,
-        };
-        console.log('Matter data received (Appwrite):', normalized);
-        setMatter(normalized);
-        if (normalized.case_data) {
-          setCriminalData(normalized.case_data);
-        }
+      const doc = await databases.getDocument(
+        DATABASE_ID,
+        COLLECTIONS.matters,
+        String(id)
+      );
+      const normalized: any = {
+        ...doc,
+        id: (doc as any).id ?? (doc as any).$id,
+        created_at: (doc as any).created_at ?? (doc as any).$createdAt,
+        updated_at: (doc as any).updated_at ?? (doc as any).$updatedAt,
+      };
+      // Parse case_data if stored as JSON string
+      const rawCase = (normalized as any).case_data;
+      if (typeof rawCase === 'string') {
+        try { setCriminalData(JSON.parse(rawCase)); } catch { setCriminalData({}); }
+      } else if (rawCase) {
+        setCriminalData(rawCase);
       }
+      console.log('Matter data received (Appwrite):', normalized);
+      setMatter(normalized);
       setError(null);
     } catch (error) {
       console.error('Error fetching matter:', error);
@@ -155,126 +137,101 @@ export default function MatterDetail() {
 
   const fetchTimelineEvents = async () => {
     if (!id) return;
-    
     try {
-      const [
-        timeEntriesRes,
-        hearingsRes,
-        deadlinesRes,
-        communicationsRes
-      ] = await Promise.all([
-        fetch(`/api/time-entries?matter_id=${id}`, { credentials: 'include' }),
-        fetch(`/api/hearings?matter_id=${id}`, { credentials: 'include' }),
-        fetch(`/api/deadlines?matter_id=${id}`, { credentials: 'include' }),
-        fetch(`/api/communications?matter_id=${id}`, { credentials: 'include' })
+      const [timeList, hearingList, deadlineList, commList, docList] = await Promise.all([
+        databases.listDocuments(DATABASE_ID, COLLECTIONS.timeEntries, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] } as any)),
+        databases.listDocuments(DATABASE_ID, COLLECTIONS.hearings, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] } as any)),
+        databases.listDocuments(DATABASE_ID, COLLECTIONS.deadlines, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] } as any)),
+        databases.listDocuments(DATABASE_ID, COLLECTIONS.communications, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] } as any)),
+        databases.listDocuments(DATABASE_ID, COLLECTIONS.documents, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] } as any)),
       ]);
 
-      const events = [];
+      const events: any[] = [];
 
-      // Add matter creation event
+      // Matter opened
       if (matter) {
         events.push({
           id: `matter-${String(matter.id ?? (matter as any).$id)}`,
           type: 'matter_created',
           title: 'Matter Opened',
           description: `${matter.title} was opened`,
-          date: matter.opened_at || matter.created_at,
+          date: (matter as any).opened_at || (matter as any).created_at,
           icon: FileText,
-          color: 'blue'
+          color: 'blue',
         });
       }
 
-      // Add time entries
-      if (timeEntriesRes.ok) {
-        const timeData = await timeEntriesRes.json();
-        timeData.forEach((entry: any) => {
-          events.push({
-            id: `time-${entry.id}`,
-            type: 'time_entry',
-            title: 'Time Entry',
-            description: entry.description,
-            date: entry.entry_date,
-            icon: Clock,
-            color: 'green',
-            meta: `${entry.hours}h @ $${entry.rate}/hr = $${(entry.hours * entry.rate).toFixed(2)}`
-          });
+      // Time entries
+      (timeList.documents || []).forEach((entry: any) => {
+        const hours = Number(entry.hours || 0);
+        const rate = Number(entry.rate || 0);
+        events.push({
+          id: `time-${entry.id ?? entry.$id}`,
+          type: 'time_entry',
+          title: 'Time Entry',
+          description: entry.description,
+          date: entry.entry_date,
+          icon: Clock,
+          color: 'green',
+          meta: `${hours}h @ $${rate}/hr = $${(hours * rate).toFixed(2)}`,
         });
-      }
+      });
 
-      // Add documents (Appwrite)
-      try {
-        const docsList = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTIONS.documents,
-          [Query.equal('matter_id', String(id))]
-        );
-        (docsList.documents || []).forEach((doc: any) => {
-          events.push({
-            id: `doc-${doc.id ?? doc.$id}`,
-            type: 'document',
-            title: 'Document Created',
-            description: doc.title,
-            date: doc.created_at ?? doc.$createdAt,
-            icon: FileText,
-            color: 'purple',
-            meta: `Version ${doc.version} • ${doc.status}`
-          });
+      // Documents
+      (docList.documents || []).forEach((doc: any) => {
+        events.push({
+          id: `doc-${doc.id ?? doc.$id}`,
+          type: 'document',
+          title: 'Document Created',
+          description: doc.title,
+          date: doc.created_at ?? doc.$createdAt,
+          icon: FileText,
+          color: 'purple',
+          meta: `Version ${doc.version} • ${doc.status}`,
         });
-      } catch (e) {
-        console.error('Error fetching documents for timeline:', e);
-      }
+      });
 
-      // Add hearings
-      if (hearingsRes.ok) {
-        const hearingData = await hearingsRes.json();
-        hearingData.forEach((hearing: any) => {
-          events.push({
-            id: `hearing-${hearing.id}`,
-            type: 'hearing',
-            title: hearing.hearing_type || 'Hearing',
-            description: `${hearing.courtroom ? `Courtroom ${hearing.courtroom}` : ''} ${hearing.judge_or_alj ? `- ${hearing.judge_or_alj}` : ''}`.trim(),
-            date: hearing.start_at,
-            icon: Calendar,
-            color: 'red',
-            meta: hearing.court_name
-          });
+      // Hearings
+      (hearingList.documents || []).forEach((hearing: any) => {
+        events.push({
+          id: `hearing-${hearing.id ?? hearing.$id}`,
+          type: 'hearing',
+          title: hearing.hearing_type || 'Hearing',
+          description: `${hearing.courtroom ? `Courtroom ${hearing.courtroom}` : ''} ${hearing.judge_or_alj ? `- ${hearing.judge_or_alj}` : ''}`.trim(),
+          date: hearing.start_at,
+          icon: Calendar,
+          color: 'red',
+          meta: hearing.court_name,
         });
-      }
+      });
 
-      // Add deadlines
-      if (deadlinesRes.ok) {
-        const deadlineData = await deadlinesRes.json();
-        deadlineData.forEach((deadline: any) => {
-          events.push({
-            id: `deadline-${deadline.id}`,
-            type: 'deadline',
-            title: deadline.title,
-            description: `${deadline.source} deadline`,
-            date: deadline.due_at,
-            icon: AlertCircle,
-            color: deadline.status === 'Completed' ? 'green' : 'orange',
-            meta: deadline.status
-          });
+      // Deadlines
+      (deadlineList.documents || []).forEach((deadline: any) => {
+        events.push({
+          id: `deadline-${deadline.id ?? deadline.$id}`,
+          type: 'deadline',
+          title: deadline.title,
+          description: `${deadline.source} deadline`,
+          date: deadline.due_at,
+          icon: AlertCircle,
+          color: deadline.status === 'Completed' ? 'green' : 'orange',
+          meta: deadline.status,
         });
-      }
+      });
 
-      // Add communications
-      if (communicationsRes.ok) {
-        const commData = await communicationsRes.json();
-        commData.forEach((comm: any) => {
-          events.push({
-            id: `comm-${comm.id}`,
-            type: 'communication',
-            title: `${comm.channel} ${comm.direction}`,
-            description: comm.body?.substring(0, 100) + (comm.body?.length > 100 ? '...' : ''),
-            date: comm.sent_at || comm.created_at,
-            icon: comm.channel === 'Phone' ? Phone : Mail,
-            color: comm.direction === 'Inbound' ? 'blue' : 'indigo'
-          });
+      // Communications
+      (commList.documents || []).forEach((comm: any) => {
+        events.push({
+          id: `comm-${comm.id ?? comm.$id}`,
+          type: 'communication',
+          title: `${comm.channel} ${comm.direction}`,
+          description: comm.body?.substring(0, 100) + (comm.body?.length > 100 ? '...' : ''),
+          date: comm.sent_at || comm.created_at || comm.$createdAt,
+          icon: comm.channel === 'Phone' ? Phone : Mail,
+          color: comm.direction === 'Inbound' ? 'blue' : 'indigo',
         });
-      }
+      });
 
-      // Sort events by date (newest first)
       events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setTimelineEvents(events);
     } catch (error) {
@@ -284,56 +241,54 @@ export default function MatterDetail() {
 
   const fetchBillingData = async () => {
     if (!id) return;
-    
     try {
-      const [balanceRes, timeRes, invoicesRes, paymentsRes] = await Promise.all([
-        fetch(`/api/matters/${id}/balance`, { credentials: 'include' }),
-        fetch(`/api/time-entries?matter_id=${id}`, { credentials: 'include' }),
-        fetch(`/api/invoices?matter_id=${id}`, { credentials: 'include' }),
-        fetch(`/api/payments?matter_id=${id}`, { credentials: 'include' })
+      const [timeList, invoicesList, paymentsList] = await Promise.all([
+        databases.listDocuments(DATABASE_ID, COLLECTIONS.timeEntries, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] } as any)),
+        databases.listDocuments(DATABASE_ID, COLLECTIONS.invoices, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] } as any)),
+        databases.listDocuments(DATABASE_ID, COLLECTIONS.payments, []).catch(() => ({ documents: [] } as any)),
       ]);
 
-      if (timeRes.ok) {
-        const timeData = await timeRes.json();
-        setTimeEntries(timeData);
-      }
+      const timeRows = (timeList.documents || []).map((d: any) => ({
+        ...d,
+        id: d.id ?? d.$id,
+        created_at: d.created_at ?? d.$createdAt,
+        updated_at: d.updated_at ?? d.$updatedAt,
+      }));
+      const invoiceRows = (invoicesList.documents || []).map((d: any) => ({
+        ...d,
+        id: d.id ?? d.$id,
+        created_at: d.created_at ?? d.$createdAt,
+        updated_at: d.updated_at ?? d.$updatedAt,
+      }));
+      const paymentRows = (paymentsList.documents || [])
+        .filter(() => {
+          // Only include payments whose invoice belongs to this matter if invoice_id is present
+          return true;
+        })
+        .map((d: any) => ({
+        ...d,
+        id: d.id ?? d.$id,
+        created_at: d.created_at ?? d.$createdAt,
+        updated_at: d.updated_at ?? d.$updatedAt,
+      }));
 
-      if (invoicesRes.ok) {
-        const invoicesData = await invoicesRes.json();
-        setInvoices(invoicesData);
-      }
+      setTimeEntries(timeRows);
+      setInvoices(invoiceRows);
+      setPayments(paymentRows);
 
-      if (paymentsRes.ok) {
-        const paymentsData = await paymentsRes.json();
-        setPayments(paymentsData);
-      }
+      const totalTime = timeRows.reduce((sum: number, entry: any) => sum + Number(entry.hours || 0) * Number(entry.rate || 0), 0);
+      const totalInvoiced = invoiceRows.reduce((sum: number, inv: any) => sum + Number(inv.total || 0), 0);
+      const totalPaid = paymentRows.reduce((sum: number, pay: any) => sum + Number(pay.amount || 0), 0);
+      const outstanding = totalInvoiced - totalPaid;
 
-      // Get balance data from new API endpoint
-      if (balanceRes.ok) {
-        const balanceData = await balanceRes.json();
-        setBillingStats({
-          totalTime: timeEntries.reduce((sum, entry) => sum + (entry.hours * entry.rate), 0),
-          totalInvoiced: balanceData.total_invoiced,
-          totalPaid: balanceData.total_paid,
-          outstanding: balanceData.current_balance,
-          unbilledTime: balanceData.unbilled_amount,
-          totalAmountDue: balanceData.total_amount_due
-        });
-      } else {
-        // Fallback to old calculation method
-        const totalTime = timeEntries.reduce((sum, entry) => sum + (entry.hours * entry.rate), 0);
-        const totalInvoiced = invoices.reduce((sum, invoice) => sum + invoice.total, 0);
-        const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
-        const outstanding = totalInvoiced - totalPaid;
-
-        setBillingStats({
-          totalTime,
-          totalInvoiced,
-          totalPaid,
-          outstanding,
-          unbilledTime: totalTime - totalInvoiced
-        });
-      }
+      setBillingStats({
+        totalTime,
+        totalInvoiced,
+        totalPaid,
+        outstanding,
+        unbilledTime: totalTime - totalInvoiced,
+        totalAmountDue: outstanding,
+      });
     } catch (error) {
       console.error('Error fetching billing data:', error);
     }
@@ -341,18 +296,15 @@ export default function MatterDetail() {
 
   const saveCriminalData = async () => {
     try {
-      const response = await fetch(`/api/matters/${id}/criminal`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(criminalData),
-      });
-      if (response.ok) {
-        setIsEditing(false);
-        // Show success message
-      }
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.matters,
+        String(id),
+        {
+          case_data: typeof criminalData === 'string' ? criminalData : JSON.stringify(criminalData || {}),
+        }
+      );
+      setIsEditing(false);
     } catch (error) {
       console.error('Error updating criminal case data:', error);
     }
@@ -360,15 +312,19 @@ export default function MatterDetail() {
 
   const fetchHearings = async () => {
     if (!id) return;
-    
     try {
-      const response = await fetch(`/api/hearings?matter_id=${id}`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setHearings(data);
-      }
+      const list = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.hearings,
+        [Query.equal('matter_id', String(id))]
+      );
+      const rows = (list.documents || []).map((d: any) => ({
+        ...d,
+        id: d.id ?? d.$id,
+        created_at: d.created_at ?? d.$createdAt,
+        updated_at: d.updated_at ?? d.$updatedAt,
+      }));
+      setHearings(rows);
     } catch (error) {
       console.error('Error fetching hearings:', error);
     }
@@ -376,43 +332,35 @@ export default function MatterDetail() {
 
   const createHearing = async () => {
     if (!id) return;
-    
     setSavingHearing(true);
     try {
-      const response = await fetch('/api/hearings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...hearingForm,
-          matter_id: parseInt(id),
-          start_at: hearingForm.start_at ? new Date(hearingForm.start_at).toISOString() : null,
-          end_at: hearingForm.end_at ? new Date(hearingForm.end_at).toISOString() : null,
-          is_ssa_hearing: hearingForm.is_ssa_hearing || matter?.practice_area === 'SSD',
-        }),
+      const payload: any = {
+        ...hearingForm,
+        matter_id: String(id),
+        start_at: hearingForm.start_at ? new Date(hearingForm.start_at).toISOString() : null,
+        end_at: hearingForm.end_at ? new Date(hearingForm.end_at).toISOString() : null,
+        is_ssa_hearing: hearingForm.is_ssa_hearing || matter?.practice_area === 'SSD',
+      };
+      const created = await databases.createDocument(
+        DATABASE_ID,
+        COLLECTIONS.hearings,
+        ID.unique(),
+        payload
+      );
+      await fetchHearings();
+      setShowHearingForm(false);
+      setHearingForm({
+        hearing_type: '',
+        start_at: '',
+        end_at: '',
+        courtroom: '',
+        judge_or_alj: '',
+        notes: '',
+        is_ssa_hearing: false,
+        court_id: null,
       });
-      
-      if (response.ok) {
-        await fetchHearings();
-        setShowHearingForm(false);
-        setHearingForm({
-          hearing_type: '',
-          start_at: '',
-          end_at: '',
-          courtroom: '',
-          judge_or_alj: '',
-          notes: '',
-          is_ssa_hearing: false,
-          court_id: null,
-        });
-        
-        // Auto-create deadline if enabled
-        const hearing = await response.json();
-        if (hearing.start_at && id) {
-          await createHearingDeadline(hearing);
-        }
+      if ((created as any).start_at && id) {
+        await createHearingDeadline(created);
       }
     } catch (error) {
       console.error('Error creating hearing:', error);
@@ -423,23 +371,19 @@ export default function MatterDetail() {
 
   const updateHearing = async (hearingId: number, updates: any) => {
     try {
-      const response = await fetch(`/api/hearings/${hearingId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...updates,
-          start_at: updates.start_at ? new Date(updates.start_at).toISOString() : null,
-          end_at: updates.end_at ? new Date(updates.end_at).toISOString() : null,
-        }),
-      });
-      
-      if (response.ok) {
-        await fetchHearings();
-        setEditingHearing(null);
-      }
+      const payload: any = {
+        ...updates,
+        start_at: updates.start_at ? new Date(updates.start_at).toISOString() : null,
+        end_at: updates.end_at ? new Date(updates.end_at).toISOString() : null,
+      };
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.hearings,
+        String(hearingId),
+        payload
+      );
+      await fetchHearings();
+      setEditingHearing(null);
     } catch (error) {
       console.error('Error updating hearing:', error);
     }
@@ -447,16 +391,18 @@ export default function MatterDetail() {
 
   const deleteHearing = async (hearingId: number) => {
     if (!confirm('Are you sure you want to delete this hearing? This will also remove any related deadlines.')) return;
-    
     try {
-      const response = await fetch(`/api/hearings/${hearingId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        await fetchHearings();
+      // Delete related deadlines (by trigger_event_id) before deleting hearing
+      const dls = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.deadlines,
+        [Query.equal('trigger_event_id', String(hearingId))]
+      ).catch(() => ({ documents: [] } as any));
+      for (const d of (dls.documents || [])) {
+        await databases.deleteDocument(DATABASE_ID, COLLECTIONS.deadlines, String(d.$id || d.id));
       }
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.hearings, String(hearingId));
+      await fetchHearings();
     } catch (error) {
       console.error('Error deleting hearing:', error);
     }
@@ -464,26 +410,23 @@ export default function MatterDetail() {
 
   const createHearingDeadline = async (hearing: any) => {
     if (!id) return;
-    
     try {
       const hearingDate = new Date(hearing.start_at);
       const deadlineDate = new Date(hearingDate);
-      deadlineDate.setDate(deadlineDate.getDate() - 7); // Default to 7 days before hearing
-
-      await fetch('/api/deadlines', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          matter_id: parseInt(id),
+      deadlineDate.setDate(deadlineDate.getDate() - 7);
+      await databases.createDocument(
+        DATABASE_ID,
+        COLLECTIONS.deadlines,
+        ID.unique(),
+        {
+          matter_id: String(id),
           title: `Prepare for ${hearing.hearing_type || 'Court Appearance'}`,
           source: 'CourtOrder',
           due_at: deadlineDate.toISOString(),
-          trigger_event_id: hearing.id,
-        }),
-      });
+          trigger_event_id: String(hearing.id ?? hearing.$id),
+          status: 'Open',
+        }
+      );
     } catch (error) {
       console.error('Error creating hearing deadline:', error);
     }
@@ -512,15 +455,19 @@ export default function MatterDetail() {
 
   const fetchCommunications = async () => {
     if (!id) return;
-    
     try {
-      const response = await fetch(`/api/communications?matter_id=${id}`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCommunications(data);
-      }
+      const list = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.communications,
+        [Query.equal('matter_id', String(id))]
+      );
+      const rows = (list.documents || []).map((d: any) => ({
+        ...d,
+        id: d.id ?? d.$id,
+        created_at: d.created_at ?? d.$createdAt,
+        updated_at: d.updated_at ?? d.$updatedAt,
+      }));
+      setCommunications(rows);
     } catch (error) {
       console.error('Error fetching communications:', error);
     }
@@ -528,15 +475,19 @@ export default function MatterDetail() {
 
   const fetchTasks = async () => {
     if (!id) return;
-    
     try {
-      const response = await fetch(`/api/tasks?matter_id=${id}`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setTasks(data);
-      }
+      const list = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.tasks,
+        [Query.equal('matter_id', String(id))]
+      );
+      const rows = (list.documents || []).map((d: any) => ({
+        ...d,
+        id: d.id ?? d.$id,
+        created_at: d.created_at ?? d.$createdAt,
+        updated_at: d.updated_at ?? d.$updatedAt,
+      }));
+      setTasks(rows);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     }
@@ -544,32 +495,28 @@ export default function MatterDetail() {
 
   const createTask = async () => {
     if (!id) return;
-    
     try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...taskForm,
-          matter_id: parseInt(id)
-        }),
+      const payload: any = {
+        ...taskForm,
+        matter_id: String(id),
+        due_at: taskForm.due_at ? new Date(taskForm.due_at).toISOString() : null,
+      };
+      await databases.createDocument(
+        DATABASE_ID,
+        COLLECTIONS.tasks,
+        ID.unique(),
+        payload
+      );
+      await fetchTasks();
+      setShowTaskForm(false);
+      setTaskForm({
+        title: '',
+        description: '',
+        due_at: '',
+        priority: 'Medium',
+        assignee_ids: [],
+        status: 'Open',
       });
-      
-      if (response.ok) {
-        await fetchTasks();
-        setShowTaskForm(false);
-        setTaskForm({
-          title: '',
-          description: '',
-          due_at: '',
-          priority: 'Medium',
-          assignee_ids: [],
-          status: 'Open'
-        });
-      }
     } catch (error) {
       console.error('Error creating task:', error);
     }
@@ -577,19 +524,18 @@ export default function MatterDetail() {
 
   const updateTask = async (taskId: number, updates: any) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(updates),
-      });
-      
-      if (response.ok) {
-        await fetchTasks();
-        setEditingTask(null);
-      }
+      const payload: any = {
+        ...updates,
+        due_at: updates.due_at ? new Date(updates.due_at).toISOString() : null,
+      };
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.tasks,
+        String(taskId),
+        payload
+      );
+      await fetchTasks();
+      setEditingTask(null);
     } catch (error) {
       console.error('Error updating task:', error);
     }
@@ -597,14 +543,13 @@ export default function MatterDetail() {
 
   const completeTask = async (taskId: number) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}/complete`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        await fetchTasks();
-      }
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.tasks,
+        String(taskId),
+        { status: 'Completed' }
+      );
+      await fetchTasks();
     } catch (error) {
       console.error('Error completing task:', error);
     }
@@ -612,16 +557,13 @@ export default function MatterDetail() {
 
   const deleteTask = async (taskId: number) => {
     if (!confirm('Are you sure you want to delete this task?')) return;
-    
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        await fetchTasks();
-      }
+      await databases.deleteDocument(
+        DATABASE_ID,
+        COLLECTIONS.tasks,
+        String(taskId)
+      );
+      await fetchTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
     }

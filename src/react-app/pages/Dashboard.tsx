@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/react-app/auth/AuthProvider';
 import { Link } from 'react-router';
+import { fetchDashboardStats } from '@/react-app/lib/dashboard';
 import { 
   Users, 
   FolderOpen, 
@@ -50,22 +52,19 @@ function StatCard({ title, value, icon: Icon, color, href, trend }: StatCardProp
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     fetchStats();
-  }, []);
+  }, [user]);
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/dashboard/stats', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      const data = await fetchDashboardStats();
+      setStats(data);
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
     } finally {

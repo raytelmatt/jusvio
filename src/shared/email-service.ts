@@ -18,10 +18,52 @@ export interface EmailContext {
   type: 'deadline' | 'hearing' | 'reminder';
 }
 
+// Lightweight domain types used by email templates
+export interface Matter {
+  id: number;
+  title: string;
+  matter_number: string | number;
+  client_first_name: string;
+  client_last_name: string;
+}
+
+export interface Deadline {
+  id: number;
+  title: string;
+  due_at: string | number | Date;
+}
+
+export interface Hearing {
+  id: number;
+  hearing_type?: string;
+  start_at: string | number | Date;
+  courtroom?: string;
+  judge_or_alj?: string;
+  court_name?: string;
+}
+
+export interface RelevantParty {
+  notify_deadlines?: boolean;
+  notify_hearings?: boolean;
+  email?: string;
+  name?: string;
+}
+
+export interface IncomingEmail {
+  headers?: Record<string, string>;
+  from?: string | { email: string; name?: string };
+  subject?: string;
+  text?: string;
+  html?: string;
+  messageId?: string;
+}
+
 export class EmailService {
   private fromAddress: EmailAddress;
+  // Base URL for links in emails (Appwrite Sites domain)
+  private siteUrl: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, siteUrl: string = 'https://jusivo.app') {
     sgMail.setApiKey(apiKey);
     
     // Default from address - can be configured
@@ -29,6 +71,8 @@ export class EmailService {
       email: 'notifications@jusivo.app',
       name: 'Jusivo'
     };
+
+    this.siteUrl = siteUrl;
   }
 
   /**
@@ -78,12 +122,13 @@ export class EmailService {
         success: true,
         messageIds: [],
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to send email';
       console.error('Email sending failed:', error);
       return {
         success: false,
         messageIds: [],
-        error: error.message || 'Failed to send email'
+        error: message
       };
     }
   }
@@ -92,19 +137,19 @@ export class EmailService {
    * Send deadline reminder emails
    */
   async sendDeadlineReminder(
-    matter: any,
-    deadline: any,
-    relevantParties: any[]
+    matter: Matter,
+    deadline: Deadline,
+    relevantParties: RelevantParty[]
   ): Promise<{ success: boolean; messageIds: string[]; error?: string }> {
     const recipients = relevantParties
-      .filter((party: any) => party.notify_deadlines && party.email)
-      .map((party: any) => ({ email: party.email, name: party.name }));
+      .filter((party) => party.notify_deadlines && party.email)
+      .map((party) => ({ email: party.email as string, name: party.name }));
 
     if (recipients.length === 0) {
       return { success: true, messageIds: [] };
     }
 
-    const dueDate = new Date(deadline.due_at);
+    const dueDate = this.toDate(deadline.due_at);
     const daysUntil = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     
     const subject = `Deadline Reminder: ${deadline.title} - ${matter.title}`;
@@ -121,7 +166,7 @@ Client: ${matter.client_first_name} ${matter.client_last_name}
 
 Please ensure all necessary actions are completed before the deadline.
 
-You can view more details and update the status at: https://jusivo.mocha.app/matters/${matter.id}
+You can view more details and update the status at: ${this.siteUrl}/matters/${matter.id}
 
 Best regards,
 Jusivo Notification System
@@ -153,7 +198,7 @@ Reply to this email to add notes or updates to this deadline.
           <p style="color: #374151; margin: 20px 0;">Please ensure all necessary actions are completed before the deadline.</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://jusivo.mocha.app/matters/${matter.id}" 
+            <a href="${this.siteUrl}/matters/${matter.id}" 
                style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
               View Matter Details
             </a>
@@ -179,19 +224,19 @@ Reply to this email to add notes or updates to this deadline.
    * Send hearing notification emails
    */
   async sendHearingNotification(
-    matter: any,
-    hearing: any,
-    relevantParties: any[]
+    matter: Matter,
+    hearing: Hearing,
+    relevantParties: RelevantParty[]
   ): Promise<{ success: boolean; messageIds: string[]; error?: string }> {
     const recipients = relevantParties
-      .filter((party: any) => party.notify_hearings && party.email)
-      .map((party: any) => ({ email: party.email, name: party.name }));
+      .filter((party) => party.notify_hearings && party.email)
+      .map((party) => ({ email: party.email as string, name: party.name }));
 
     if (recipients.length === 0) {
       return { success: true, messageIds: [] };
     }
 
-    const hearingDate = new Date(hearing.start_at);
+    const hearingDate = this.toDate(hearing.start_at);
     
     const subject = `Hearing Scheduled: ${hearing.hearing_type || 'Court Hearing'} - ${matter.title}`;
     const text = `
@@ -210,7 +255,7 @@ Client: ${matter.client_first_name} ${matter.client_last_name}
 
 Please mark your calendar and prepare accordingly.
 
-You can view more details at: https://jusivo.mocha.app/matters/${matter.id}
+You can view more details at: ${this.siteUrl}/matters/${matter.id}
 
 Best regards,
 Jusivo Notification System
@@ -244,7 +289,7 @@ Reply to this email to add notes or updates to this hearing.
           <p style="color: #374151; margin: 20px 0;">Please mark your calendar and prepare accordingly.</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://jusivo.mocha.app/matters/${matter.id}" 
+            <a href="${this.siteUrl}/matters/${matter.id}" 
                style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
               View Matter Details
             </a>
@@ -269,11 +314,11 @@ Reply to this email to add notes or updates to this hearing.
   /**
    * Process incoming email replies and extract context
    */
-  parseIncomingEmail(email: any): {
+  parseIncomingEmail(email: IncomingEmail): {
     matter_id?: number;
     deadline_id?: number;
     hearing_id?: number;
-    type?: string;
+    type?: EmailContext['type'];
     from: EmailAddress;
     subject: string;
     body: string;
@@ -282,18 +327,22 @@ Reply to this email to add notes or updates to this hearing.
   } {
     const headers = email.headers || {};
     
+    const rawType = headers['X-Jusivo-Type'];
+    const parsedType: EmailContext['type'] | undefined =
+      rawType === 'deadline' || rawType === 'hearing' || rawType === 'reminder' ? rawType : undefined;
+
     return {
       matter_id: headers['X-Jusivo-Matter-ID'] ? parseInt(headers['X-Jusivo-Matter-ID']) : undefined,
       deadline_id: headers['X-Jusivo-Deadline-ID'] ? parseInt(headers['X-Jusivo-Deadline-ID']) : undefined,
       hearing_id: headers['X-Jusivo-Hearing-ID'] ? parseInt(headers['X-Jusivo-Hearing-ID']) : undefined,
-      type: headers['X-Jusivo-Type'],
+      type: parsedType,
       from: {
-        email: email.from?.email || email.from,
-        name: email.from?.name
+        email: typeof email.from === 'string' ? email.from : (email.from?.email || ''),
+        name: typeof email.from === 'string' ? undefined : email.from?.name
       },
-      subject: email.subject,
-      body: this.extractReplyContent(email.text || email.html),
-      messageId: headers['Message-ID'] || email.messageId,
+      subject: email.subject || '',
+      body: this.extractReplyContent(email.text || email.html || ''),
+      messageId: headers['Message-ID'] || email.messageId || '',
       references: headers['References'] ? headers['References'].split(' ') : []
     };
   }
@@ -368,5 +417,10 @@ Reply to this email to add notes or updates to this hearing.
     });
 
     return cleanBody.trim();
+  }
+
+  /** Coerce string/number/Date to Date */
+  private toDate(input: string | number | Date): Date {
+    return input instanceof Date ? input : new Date(input);
   }
 }

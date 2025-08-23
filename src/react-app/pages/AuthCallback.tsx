@@ -20,13 +20,6 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      // Check if we have an authorization code
-      const code = searchParams.get('code');
-      if (!code) {
-        setError('No authorization code received from Google. Please try signing in again.');
-        return;
-      }
-
       try {
         await refreshUser();
       } catch (err) {

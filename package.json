@@ -4,11 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "@hono/zod-validator": "^0.5.0",
     "@sendgrid/mail": "^8.1.5",
     "appwrite": "13.0.1",
     "docx": "^9.5.1",
-    "hono": "4.7.7",
     "html-docx-js": "^0.3.1",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.510.0",
@@ -19,7 +17,6 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250822.0",
     "@eslint/js": "9.25.1",
     "@types/node": "22.14.1",
     "@types/react": "19.0.10",

@@ -12,18 +12,15 @@ import {
   Check,
   CheckCheck
 } from 'lucide-react';
+import {
+  fetchNotifications as fetchAppwriteNotifications,
+  markAsRead as markAsReadAppwrite,
+  markAllAsRead as markAllAsReadAppwrite,
+  deleteNotification as deleteNotificationAppwrite,
+  type AppwriteNotification,
+} from '@/react-app/lib/notifications';
 
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  type: 'deadline' | 'hearing' | 'payment' | 'document' | 'message' | 'system';
-  is_read: boolean;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  action_url?: string;
-  created_at: string;
-  related_matter_id?: number;
-}
+// AppwriteNotification is imported and used as the notification model
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -89,7 +86,7 @@ const formatTimeAgo = (dateString: string) => {
 };
 
 export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnreadCountChange }: NotificationPanelProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppwriteNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const panelRef = useRef<HTMLDivElement>(null);
@@ -119,15 +116,9 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/notifications?filter=${filter}`, {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.notifications);
-        onUnreadCountChange(data.unread_count);
-      }
+      const { notifications, unreadCount } = await fetchAppwriteNotifications(filter);
+      setNotifications(notifications);
+      onUnreadCountChange(unreadCount);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -135,23 +126,11 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
     }
   };
 
-  const markAsRead = async (notificationId: number) => {
+  const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
-        method: 'PUT',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        setNotifications(prev => 
-          prev.map(notif => 
-            notif.id === notificationId 
-              ? { ...notif, is_read: true }
-              : notif
-          )
-        );
-        onUnreadCountChange(Math.max(0, unreadCount - 1));
-      }
+      await markAsReadAppwrite(notificationId);
+      setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
+      onUnreadCountChange(Math.max(0, unreadCount - 1));
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -159,43 +138,28 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
 
   const markAllAsRead = async () => {
     try {
-      const response = await fetch('/api/notifications/mark-all-read', {
-        method: 'PUT',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        setNotifications(prev => 
-          prev.map(notif => ({ ...notif, is_read: true }))
-        );
-        onUnreadCountChange(0);
-      }
+      await markAllAsReadAppwrite();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      onUnreadCountChange(0);
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
   };
 
-  const deleteNotification = async (notificationId: number) => {
+  const deleteNotification = async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const notification = notifications.find(n => n.id === notificationId);
-        setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
-        
-        if (notification && !notification.is_read) {
-          onUnreadCountChange(Math.max(0, unreadCount - 1));
-        }
+      const notification = notifications.find(n => n.id === notificationId);
+      await deleteNotificationAppwrite(notificationId);
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      if (notification && !notification.is_read) {
+        onUnreadCountChange(Math.max(0, unreadCount - 1));
       }
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
   };
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: AppwriteNotification) => {
     if (!notification.is_read) {
       markAsRead(notification.id);
     }

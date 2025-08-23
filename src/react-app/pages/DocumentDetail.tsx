@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import DocumentPreview from '../components/DocumentPreview';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
+import { useAuth } from '@/react-app/auth/AuthProvider';
+import { resolveDownloadUrl, resolveViewUrl } from '@/react-app/lib/storage-url';
 
 interface Document {
   id: number;
@@ -50,6 +52,7 @@ interface DocumentVersion {
 export default function DocumentDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [document, setDocument] = useState<Document | null>(null);
   const [versions, setVersions] = useState<DocumentVersion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,7 +116,7 @@ export default function DocumentDetail() {
       const newVersion = await databases.createDocument(DATABASE_ID, COLLECTIONS.documentVersions, 'unique()', {
         document_id: String(id),
         version: nextVersion,
-        created_by: 'system',
+        created_by: user?.$id ?? 'system',
         created_at: new Date().toISOString(),
         changes_summary: 'Manual version creation',
       } as any);
@@ -128,25 +131,17 @@ export default function DocumentDetail() {
     if (!document) return;
     
     try {
-      const response = await fetch('/api/documents', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          matter_id: document.matter_id,
-          template_id: document.template_id,
-          title: `${document.title} (Copy)`,
-          status: 'Draft',
-          file_url: document.file_url,
-        }),
-      });
-
-      if (response.ok) {
-        const newDoc = await response.json();
-        navigate(`/documents/${newDoc.id}`);
-      }
+      const created = await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
+        matter_id: (document as any).matter_id?.toString?.() ?? String((document as any).matter_id),
+        template_id: (document as any).template_id?.toString?.() ?? null,
+        title: `${document.title} (Copy)`,
+        status: 'Draft',
+        version: 1,
+        file_url: document.file_url || null,
+        created_by: user?.$id ?? 'system',
+      } as any);
+      const newId = (created as any).id ?? (created as any).$id;
+      navigate(`/documents/${newId}`);
     } catch (error) {
       console.error('Error duplicating document:', error);
     }
@@ -179,7 +174,8 @@ export default function DocumentDetail() {
 
   const downloadDocument = () => {
     if (document?.file_url) {
-      window.open(document.file_url, '_blank');
+      const url = resolveDownloadUrl(document.file_url);
+      if (url) window.open(url, '_blank');
     } else {
       alert('No file available for download');
     }
@@ -451,7 +447,7 @@ export default function DocumentDetail() {
                       <dt className="text-sm font-medium text-gray-500">File URL</dt>
                       <dd className="text-sm text-gray-900">
                         {document.file_url ? (
-                          <a href={document.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700">
+                          <a href={resolveViewUrl(document.file_url) || resolveDownloadUrl(document.file_url) || '#'} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700">
                             View File
                           </a>
                         ) : (
@@ -530,7 +526,10 @@ export default function DocumentDetail() {
                         <div className="flex items-center space-x-2">
                           {version.file_url && (
                             <button
-                              onClick={() => window.open(version.file_url, '_blank')}
+                              onClick={() => {
+                                const url = resolveViewUrl(version.file_url) || resolveDownloadUrl(version.file_url);
+                                if (url) window.open(url, '_blank');
+                              }}
                               className="p-1 text-gray-400 hover:text-gray-600"
                             >
                               <Eye className="h-4 w-4" />

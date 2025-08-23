@@ -1,0 +1,574 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 612. 792.]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 4900
+>>
+stream
+0.200025 w
+0 G
+BT
+/F2 20 Tf
+23. TL
+0 g
+56. 736. Td
+(Jusivo Case Manager — Codebase Summary) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0 g
+56. 710. Td
+(Generated: 2025-08-10 19:23:29 -05:00) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0 g
+56. 690. Td
+(What it is) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 668. Td
+(A legal case manager app with:) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 648. Td
+(• Frontend: React 19 + Vite 6 + React Router + Tailwind) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 634. Td
+(• Backend: Cloudflare Worker \(Hono\) with D1 \(SQLite\) for data, R2 for file storage, SendGrid for email) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 620. Td
+(• Auth: Mocha Users Service \(Google OAuth\) via secure cookies; MOCK_AUTH available for local) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 606. Td
+(development) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 592. Td
+(• Hosting: Static site deployed to Appwrite Sites via GitHub Actions) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0 g
+56. 566. Td
+(Key directories and files) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 544. Td
+(Frontend \(SPA\): index.html boots /src/react-app/main.tsx; pages live under src/react-app/pages; shared) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 530. Td
+(components in src/react-app/components; ProtectedRoute guards auth-only routes; AuthProvider) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 516. Td
+(manages session context; lib/appwrite.ts wires Appwrite SDK; lib/storage-url.ts resolves storage://) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 502. Td
+(URIs.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 482. Td
+(Backend \(Cloudflare Worker\): src/worker/index.ts defines Hono app, CORS, and API routes;) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 468. Td
+(client-portal-routes.ts provides lookup/data endpoints; r2-routes.ts serves files and metadata from R2;) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 454. Td
+(email-webhook.ts stores SendGrid inbound replies as communications; types.ts defines Env bindings.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 434. Td
+(Shared utilities: src/shared/email-service.ts \(SendGrid send/parse, templates, reply tracking\),) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 420. Td
+(src/shared/r2storage.ts \(R2 helper\), src/shared/document-generator.ts \(docx/html-docx-js/jsPDF\).) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 400. Td
+(Data & infra: migrations/ contains D1 schema \(clients, matters, documents, deadlines, hearings,) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 386. Td
+(invoices, communications, etc.\); wrangler.jsonc configures Worker \(D1 binding, SPA assets,) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 372. Td
+(nodejs_compat\); vite.config.ts wires React, Cloudflare plugin, Mocha plugins; Tailwind/PostCSS configs) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 358. Td
+(present; CI deploys dist/client to Appwrite Sites.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0 g
+56. 332. Td
+(How it works \(end-to-end\)) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 310. Td
+(• Auth: UI requests /api/oauth/google/redirect_url -> Google -> POST /api/sessions; Worker exchanges) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 296. Td
+(code for session token and sets cookie; UI calls /api/users/me to load user. MOCK_AUTH=true) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 282. Td
+(bypasses remote auth locally.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 268. Td
+(• Data: UI interacts with Worker API \(D1\); file downloads via /api/files/:fileKey \(R2\).) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 254. Td
+(• Email: SendGrid sends notifications; inbound replies POST to /api/webhook/email/inbound and are) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 240. Td
+(stored/linked to matters, deadlines, or hearings.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 226. Td
+(• Hosting: Frontend on Appwrite Sites; Worker on Cloudflare.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0 g
+56. 200. Td
+(Commands) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 178. Td
+(• npm install) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 164. Td
+(• npm run dev \(Vite dev server; CORS allows http://localhost:5173\)) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 150. Td
+(• npm run build) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 136. Td
+(• npm run lint) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 122. Td
+(• npm run check \(build + wrangler deploy --dry-run\)) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0 g
+56. 96. Td
+(Environment & bindings) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 74. Td
+(• Frontend build: VITE_APPWRITE_ENDPOINT, VITE_APPWRITE_PROJECT_ID) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 60. Td
+(• Worker: DB \(D1\), DOCUMENTS_BUCKET \(R2\), MOCHA_USERS_SERVICE_API_URL,) Tj
+ET
+endstream
+endobj
+5 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 612. 792.]
+/Contents 6 0 R
+>>
+endobj
+6 0 obj
+<<
+/Length 734
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 736. Td
+(MOCHA_USERS_SERVICE_API_KEY, optional MOCK_AUTH, SENDGRID_API_KEY) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0 g
+56. 710. Td
+(Notable issues / to-dos) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 688. Td
+(• tsconfig.worker.json is invalid JSON: move baseUrl/paths inside compilerOptions and fix missing) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 674. Td
+(comma after types) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 660. Td
+(• wrangler.jsonc is missing r2_buckets binding for DOCUMENTS_BUCKET) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 646. Td
+(• src/worker/index.ts defines apiApp but does not mount it; either route it or remove) Tj
+ET
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R 5 0 R ]
+/Count 2
+>>
+endobj
+7 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+8 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+9 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+10 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+11 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+12 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+13 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+14 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+15 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+16 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+17 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+18 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+19 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+20 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 7 0 R
+/F2 8 0 R
+/F3 9 0 R
+/F4 10 0 R
+/F5 11 0 R
+/F6 12 0 R
+/F7 13 0 R
+/F8 14 0 R
+/F9 15 0 R
+/F10 16 0 R
+/F11 17 0 R
+/F12 18 0 R
+/F13 19 0 R
+/F14 20 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+21 0 obj
+<<
+/Producer (jsPDF 3.0.1)
+/CreationDate (D:20250810192559-05'00')
+>>
+endobj
+22 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 23
+0000000000 65535 f 
+0000005962 00000 n 
+0000007787 00000 n 
+0000000015 00000 n 
+0000000120 00000 n 
+0000005072 00000 n 
+0000005177 00000 n 
+0000006025 00000 n 
+0000006150 00000 n 
+0000006280 00000 n 
+0000006413 00000 n 
+0000006551 00000 n 
+0000006675 00000 n 
+0000006804 00000 n 
+0000006936 00000 n 
+0000007072 00000 n 
+0000007200 00000 n 
+0000007327 00000 n 
+0000007456 00000 n 
+0000007589 00000 n 
+0000007691 00000 n 
+0000008037 00000 n 
+0000008123 00000 n 
+trailer
+<<
+/Size 23
+/Root 22 0 R
+/Info 21 0 R
+/ID [ <6FD032D78FDF38B40522D5E20FC08A50> <6FD032D78FDF38B40522D5E20FC08A50> ]
+>>
+startxref
+8227
+%%EOF

@@ -17,6 +17,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import NotificationPanel from './NotificationPanel';
+import { getUnreadCount as getAppwriteUnreadCount } from '@/react-app/lib/notifications';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -35,20 +36,18 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const displayName = user?.name || user?.email || 'User';
+  const displayEmail = user?.email || '';
 
   useEffect(() => {
+    if (!user) return;
     fetchUnreadNotificationCount();
-  }, []);
+  }, [user]);
 
   const fetchUnreadNotificationCount = async () => {
     try {
-      const response = await fetch('/api/notifications/count', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadNotificationCount(data.unread_count);
-      }
+      const count = await getAppwriteUnreadCount();
+      setUnreadNotificationCount(count);
     } catch (error) {
       console.error('Error fetching notification count:', error);
     }
@@ -127,18 +126,18 @@ export default function DashboardLayout() {
             <div className="flex items-center space-x-3 mb-4">
               <img
                 className="w-10 h-10 rounded-xl shadow-md"
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent((user as any)?.name || (user as any)?.email || 'User')}&background=3b82f6&color=fff&size=64`}
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3b82f6&color=fff&size=64`}
                 alt="Profile"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((user as any)?.name || (user as any)?.email || 'User')}&background=3b82f6&color=fff&size=64`;
+                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3b82f6&color=fff&size=64`;
                 }}
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
-                  {(user as any)?.name || (user as any)?.email || 'User'}
+                  {displayName}
                 </p>
-                <p className="text-xs text-blue-200 truncate">{(user as any)?.email || ''}</p>
+                <p className="text-xs text-blue-200 truncate">{displayEmail}</p>
               </div>
             </div>
             <button

@@ -22,9 +22,6 @@ jobs:
         run: npm ci
 
       - name: Build site (Vite)
-        env:
-          # Build-time flags (adjust if needed by app)
-          VITE_ENABLE_LEGACY_API: "false"
         run: npm run build
 
       - name: Create deployment archive (from dist)

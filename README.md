@@ -1,10 +1,11 @@
-## Jusivo Case Manager Version 1.0
+# Jusivo Case Manager Version 1.0
 
-This app was created using https://getmocha.com.
-Need help or want to join the community? Join our [Discord](https://discord.gg/shDEGBSe2d).
+This app runs entirely on Appwrite for auth, database, storage, and hosting.
+Frontend is React + Vite and is deployed to Appwrite Sites via GitHub Actions.
 
 To run the devserver:
-```
+
+```bash
 npm install
 npm run dev
 ```

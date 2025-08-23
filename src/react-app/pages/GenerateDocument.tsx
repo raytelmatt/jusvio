@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router';
 import { ArrowLeft, Save, FileText, FolderOpen, Download, Eye } from 'lucide-react';
 import { generateDocumentContent, downloadDocument } from '@/shared/document-generator';
 import { databases, storage, DATABASE_ID, COLLECTIONS, BUCKETS } from '@/react-app/lib/appwrite';
+import { useAuth } from '@/react-app/auth/AuthProvider';
 
 interface DocumentTemplate {
   id: number;
@@ -28,6 +29,7 @@ export default function GenerateDocument() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const templateId = searchParams.get('template');
+  const { user } = useAuth();
   
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [matters, setMatters] = useState<Matter[]>([]);
@@ -146,9 +148,11 @@ export default function GenerateDocument() {
         status: 'Draft',
         version: 1,
         file_url: `storage://${BUCKETS.documents}/${fileId}`,
+        created_by: user?.$id ?? 'system',
       });
 
-      setGeneratedDocument(doc);
+      const normalized = { ...(doc as any), id: (doc as any).id ?? (doc as any).$id };
+      setGeneratedDocument(normalized);
       // local download for convenience; storage remains private
       downloadDocument(generatedDoc.blob, generatedDoc.filename);
       setTimeout(() => navigate('/documents'), 1200);

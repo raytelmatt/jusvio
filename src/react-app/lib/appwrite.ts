@@ -18,14 +18,18 @@ export const COLLECTIONS = {
   userProfiles: 'user_profiles',
   clients: 'clients',
   matters: 'matters',
+  hearings: 'hearings',
   documents: 'documents',
   documentTemplates: 'document_templates',
   documentVersions: 'document_versions',
   deadlines: 'deadlines',
   timeEntries: 'time_entries',
+  tasks: 'tasks',
   invoices: 'invoices',
+  payments: 'payments',
   communications: 'communications',
   deadlineNotes: 'deadline_notes',
+  notifications: 'notifications',
 };
 
 export const BUCKETS = {

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router';
 import { ArrowLeft, Save, Upload, FolderOpen } from 'lucide-react';
 import FileUploadZone from '../components/FileUploadZone';
 import { databases, storage, DATABASE_ID, COLLECTIONS, BUCKETS } from '@/react-app/lib/appwrite';
+import { useAuth } from '@/react-app/auth/AuthProvider';
 
 interface Matter {
   id: number;
@@ -15,6 +16,7 @@ interface Matter {
 
 export default function UploadDocument() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [matters, setMatters] = useState<Matter[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -75,11 +77,12 @@ export default function UploadDocument() {
       const created = await storage.createFile(BUCKETS.documents, 'unique()', selectedFile!);
       const fileId = (created as any).$id;
       await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
-        matter_id: formData.matter_id,
+        matter_id: formData.matter_id.toString(),
         title: formData.title,
         status: formData.status,
         version: 1,
         file_url: `storage://${BUCKETS.documents}/${fileId}`,
+        created_by: user?.$id ?? 'system',
       });
       navigate('/documents');
     } catch (error) {
