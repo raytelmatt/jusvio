@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from "@/react-app/auth/AuthProvider";
 import { 
   User, 
@@ -17,22 +17,27 @@ import {
   Search
 } from 'lucide-react';
 
+import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
+import { Query } from 'appwrite';
+
 interface UserProfile {
-  id?: number;
+  id?: string;
   first_name: string;
   last_name: string;
-  role: string;
+  role: RoleOption;
   bar_number: string;
   practice_areas: string[];
   phone: string;
 }
 
+type RoleOption = 'Admin' | 'Attorney' | 'Staff' | 'Client';
+
 interface UserManagement {
-  id?: number;
+  id?: string;
   user_id: string;
   first_name: string;
   last_name: string;
-  role: 'Admin' | 'Attorney' | 'Staff' | 'Client';
+  role: RoleOption;
   bar_number: string;
   practice_areas: string[];
   phone: string;
@@ -40,6 +45,49 @@ interface UserManagement {
   email?: string;
   created_at: string;
   updated_at: string;
+}
+
+type ThemeOption = 'light' | 'dark' | 'system';
+type DensityOption = 'compact' | 'comfortable' | 'spacious';
+
+interface Preferences {
+  notifications: {
+    email_deadlines: boolean;
+    email_hearings: boolean;
+    email_new_messages: boolean;
+    sms_urgent_deadlines: boolean;
+    desktop_notifications: boolean;
+  };
+  appearance: {
+    theme: ThemeOption;
+    sidebar_collapsed: boolean;
+    density: DensityOption;
+  };
+  practice: {
+    default_practice_area: string;
+    auto_generate_matter_numbers: boolean;
+    default_hourly_rate: number;
+    require_time_entry_descriptions: boolean;
+    default_invoice_due_days: number;
+  };
+}
+
+interface UserProfileDoc {
+  $id: string;
+  user_id?: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  role?: RoleOption;
+  bar_number?: string;
+  practice_areas?: string; // JSON string in DB
+  phone?: string;
+  is_active?: boolean;
+  preferences?: string; // JSON string in DB
+  created_at?: string;
+  updated_at?: string;
+  $createdAt?: string;
+  $updatedAt?: string;
 }
 
 export default function Settings() {
@@ -63,7 +111,7 @@ export default function Settings() {
     phone: '',
   });
 
-  const [preferences, setPreferences] = useState({
+  const [preferences, setPreferences] = useState<Preferences>({
     notifications: {
       email_deadlines: true,
       email_hearings: true,
@@ -85,27 +133,230 @@ export default function Settings() {
     }
   });
 
+
+  const fetchUserProfile = useCallback(async () => {
+    if (!user) return;
+    try {
+      // Find by Appwrite account user_id first, then by email
+      const byUserId = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.userProfiles,
+        [Query.equal('user_id', user.$id)]
+      );
+
+      let doc = byUserId.documents[0] as unknown as UserProfileDoc | undefined;
+
+      if (!doc && user?.email) {
+        const byEmail = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTIONS.userProfiles,
+          [Query.equal('email', user.email)]
+        );
+        doc = byEmail.documents[0] as unknown as UserProfileDoc | undefined;
+      }
+
+      if (!doc) {
+        // Create a baseline profile linked to this Appwrite account
+        const name = user?.name || '';
+        const first = name ? name.split(' ')[0] : '';
+        const last = name ? name.split(' ').slice(1).join(' ') : '';
+        doc = await databases.createDocument(
+          DATABASE_ID,
+          COLLECTIONS.userProfiles,
+          'unique()',
+          {
+            user_id: user.$id,
+            email: user?.email || null,
+            first_name: first,
+            last_name: last,
+            role: 'Attorney',
+            bar_number: '',
+            practice_areas: JSON.stringify([]),
+            phone: '',
+            is_active: true,
+            preferences: JSON.stringify(preferences),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        ) as unknown as UserProfileDoc;
+      }
+
+      const docSafe = doc as UserProfileDoc;
+      setProfile({
+        id: docSafe.$id,
+        first_name: docSafe.first_name || '',
+        last_name: docSafe.last_name || '',
+        role: (docSafe.role as RoleOption) || 'Attorney',
+        bar_number: docSafe.bar_number || '',
+        practice_areas: docSafe.practice_areas ? JSON.parse(docSafe.practice_areas) : [],
+        phone: docSafe.phone || '',
+      });
+
+      const prefsRaw = docSafe.preferences;
+      if (prefsRaw) {
+        try {
+          setPreferences(JSON.parse(prefsRaw));
+        } catch (err) {
+          console.warn('Failed to parse stored preferences JSON; using defaults', err);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  }, [user, preferences]);
+
+  const saveProfile = async () => {
+    setLoading(true);
+    try {
+      if (!user) throw new Error('Not authenticated');
+      const payload: Partial<UserProfileDoc> & { practice_areas: string } = {
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        role: profile.role,
+        bar_number: profile.bar_number,
+        practice_areas: JSON.stringify(profile.practice_areas || []),
+        phone: profile.phone,
+        updated_at: new Date().toISOString(),
+      };
+
+      let doc: UserProfileDoc;
+      if (profile.id) {
+        doc = await databases.updateDocument(
+          DATABASE_ID,
+          COLLECTIONS.userProfiles,
+          profile.id,
+          payload
+        ) as unknown as UserProfileDoc;
+      } else {
+        doc = await databases.createDocument(
+          DATABASE_ID,
+          COLLECTIONS.userProfiles,
+          'unique()',
+          {
+            ...payload,
+            user_id: user.$id,
+            email: user?.email || null,
+            is_active: true,
+            preferences: JSON.stringify(preferences),
+            created_at: new Date().toISOString(),
+          }
+        ) as unknown as UserProfileDoc;
+      }
+
+      setProfile(prev => ({ ...prev, id: doc.$id }));
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Error saving profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const savePreferences = async () => {
+    setLoading(true);
+    try {
+      if (!user) throw new Error('Not authenticated');
+      if (profile.id) {
+        await databases.updateDocument(
+          DATABASE_ID,
+          COLLECTIONS.userProfiles,
+          profile.id,
+          {
+            preferences: JSON.stringify(preferences),
+            updated_at: new Date().toISOString(),
+          }
+        );
+      } else {
+        const created = await databases.createDocument(
+          DATABASE_ID,
+          COLLECTIONS.userProfiles,
+          'unique()',
+          {
+            user_id: user.$id,
+            email: user?.email || null,
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            role: profile.role || 'Attorney',
+            bar_number: profile.bar_number || '',
+            practice_areas: JSON.stringify(profile.practice_areas || []),
+            phone: profile.phone || '',
+            is_active: true,
+            preferences: JSON.stringify(preferences),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        ) as unknown as UserProfileDoc;
+        setProfile(prev => ({ ...prev, id: created.$id }));
+      }
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      alert('Error saving preferences');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.userProfiles
+      );
+      const docs = res.documents as unknown as UserProfileDoc[];
+      const mapped: UserManagement[] = docs.map((d) => ({
+        id: d.$id,
+        user_id: d.user_id || '',
+        first_name: d.first_name || '',
+        last_name: d.last_name || '',
+        role: (d.role as RoleOption) || 'Staff',
+        bar_number: d.bar_number || '',
+        practice_areas: d.practice_areas ? JSON.parse(d.practice_areas) : [],
+        phone: d.phone || '',
+        is_active: typeof d.is_active === 'boolean' ? d.is_active : true,
+        email: d.email || undefined,
+        created_at: d.created_at || d.$createdAt || '',
+        updated_at: d.updated_at || d.$updatedAt || '',
+      }));
+      setUsers(mapped);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  }, []);
+
+  // Effects (placed after callbacks to avoid use-before-assign issues)
   useEffect(() => {
-    fetchUserProfile();
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user, fetchUserProfile]);
+
+  useEffect(() => {
     if (activeTab === 'users') {
       fetchUsers();
     }
-  }, [activeTab]);
+  }, [activeTab, fetchUsers]);
 
   useEffect(() => {
     // Pre-populate form with Google account data when user is available
     if (user && !profile.first_name && !profile.last_name) {
+      const name = user?.name || '';
+      const first = name ? name.split(' ')[0] : '';
+      const last = name ? name.split(' ').slice(1).join(' ') : '';
       setProfile(prev => ({
         ...prev,
-        first_name: ((user as any)?.name as string)?.split(' ')[0] || (user as any)?.givenName || '',
-        last_name: ((user as any)?.name as string)?.split(' ').slice(1).join(' ') || (user as any)?.surname || '',
+        first_name: first,
+        last_name: last,
       }));
     }
-  }, [user]);
+  }, [user, profile.first_name, profile.last_name]);
 
   useEffect(() => {
     // Filter users based on search term and role
-    let filtered = users.filter(user => {
+    const filtered = users.filter(user => {
       const matchesSearch = 
         user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -119,142 +370,80 @@ export default function Settings() {
     setFilteredUsers(filtered);
   }, [users, searchTerm, selectedRole]);
 
-  const fetchUserProfile = async () => {
-    try {
-      const response = await fetch('/api/user-profile', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setProfile({
-          ...data,
-          practice_areas: data.practice_areas ? JSON.parse(data.practice_areas) : [],
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  };
-
-  const saveProfile = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/user-profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...profile,
-          practice_areas: JSON.stringify(profile.practice_areas),
-        }),
-      });
-      
-      if (response.ok) {
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-      }
-    } catch (error) {
-      console.error('Error saving profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const savePreferences = async () => {
-    setLoading(true);
-    try {
-      // In a real app, this would save to the backend
-      console.log('Saving preferences:', preferences);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-    } catch (error) {
-      console.error('Error saving preferences:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch('/api/users', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
-
   const saveUser = async (userData: Partial<UserManagement>) => {
     setLoading(true);
     try {
-      const url = editingUser ? `/api/users/${editingUser.id}` : '/api/users';
-      const method = editingUser ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...userData,
-          practice_areas: JSON.stringify(userData.practice_areas || []),
-        }),
-      });
-      
-      if (response.ok) {
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-        setShowUserModal(false);
-        setEditingUser(null);
-        fetchUsers();
+      const payload: Partial<UserProfileDoc> & { practice_areas: string } = {
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
+        role: userData.role ?? 'Staff',
+        bar_number: userData.bar_number || '',
+        phone: userData.phone || '',
+        is_active: userData.is_active !== undefined ? userData.is_active : true,
+        practice_areas: JSON.stringify(userData.practice_areas || []),
+        updated_at: new Date().toISOString(),
+      };
+
+      if (editingUser?.id) {
+        await databases.updateDocument(
+          DATABASE_ID,
+          COLLECTIONS.userProfiles,
+          editingUser.id,
+          payload
+        );
+      } else {
+        await databases.createDocument(
+          DATABASE_ID,
+          COLLECTIONS.userProfiles,
+          'unique()',
+          {
+            ...payload,
+            email: userData.email || null,
+            user_id: userData.user_id || null,
+            created_at: new Date().toISOString(),
+          }
+        );
       }
+
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      setShowUserModal(false);
+      setEditingUser(null);
+      fetchUsers();
     } catch (error) {
       console.error('Error saving user:', error);
+      alert('Error saving user');
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteUser = async (userId: number) => {
+  const deleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-    
     try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-        fetchUsers();
-      }
+      await databases.deleteDocument(
+        DATABASE_ID,
+        COLLECTIONS.userProfiles,
+        userId
+      );
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
+      alert('Error deleting user');
     }
   };
 
-  const toggleUserStatus = async (userId: number, isActive: boolean) => {
+  const toggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
-      const response = await fetch(`/api/users/${userId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ is_active: !isActive }),
-      });
-      
-      if (response.ok) {
-        fetchUsers();
-      }
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.userProfiles,
+        userId,
+        { is_active: !isActive, updated_at: new Date().toISOString() }
+      );
+      fetchUsers();
     } catch (error) {
       console.error('Error updating user status:', error);
     }
@@ -353,18 +542,18 @@ export default function Settings() {
                     <div className="flex items-center space-x-4">
                       <img
                         className="w-16 h-16 rounded-xl shadow-md"
-                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(((user as any)?.name as string) || (user as any)?.email || 'User')}&background=3b82f6&color=fff&size=64`}
+                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || user?.email || 'User')}&background=3b82f6&color=fff&size=64`}
                         alt="Profile"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((user as any)?.name || (user as any)?.email || 'User')}&background=3b82f6&color=fff&size=64`;
+                          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || user?.email || 'User')}&background=3b82f6&color=fff&size=64`;
                         }}
                       />
                       <div>
                         <h3 className="text-lg font-semibold text-white">
-                          {(user as any)?.name || (user as any)?.email || 'User'}
+                          {user?.name || user?.email || 'User'}
                         </h3>
-                        <p className="text-sm text-blue-200">{(user as any)?.email}</p>
+                        <p className="text-sm text-blue-200">{user?.email || ''}</p>
                         <p className="text-xs text-blue-300 font-medium">Appwrite Account</p>
                       </div>
                     </div>
@@ -392,9 +581,11 @@ export default function Settings() {
                       </label>
                       <input
                         type="text"
-                        value={profile.first_name || ((user as any)?.name as string)?.split(' ')[0] || ''}
+                        value={profile.first_name || (user?.name ? user.name.split(' ')[0] : '')}
                         onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                        placeholder={((user as any)?.name as string)?.split(' ')[0] || 'Enter first name'}
+                        placeholder={(user?.name ? user.name.split(' ')[0] : '') || 'Enter first name'}
+                        aria-label="First Name"
+                        title="First Name"
                         className="w-full px-4 py-3 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
                       />
                     </div>
@@ -404,9 +595,11 @@ export default function Settings() {
                       </label>
                       <input
                         type="text"
-                        value={profile.last_name || ((user as any)?.name as string)?.split(' ').slice(1).join(' ') || ''}
+                        value={profile.last_name || (user?.name ? user.name.split(' ').slice(1).join(' ') : '')}
                         onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                        placeholder={((user as any)?.name as string)?.split(' ').slice(1).join(' ') || 'Enter last name'}
+                        placeholder={(user?.name ? user.name.split(' ').slice(1).join(' ') : '') || 'Enter last name'}
+                        aria-label="Last Name"
+                        title="Last Name"
                         className="w-full px-4 py-3 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
                       />
                     </div>
@@ -416,7 +609,9 @@ export default function Settings() {
                       </label>
                       <select
                         value={profile.role}
-                        onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+                        onChange={(e) => setProfile({ ...profile, role: e.target.value as RoleOption })}
+                        aria-label="Role"
+                        title="Role"
                         className="w-full px-4 py-3 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
                       >
                         <option value="Attorney">Attorney</option>
@@ -433,6 +628,8 @@ export default function Settings() {
                         value={profile.bar_number}
                         onChange={(e) => setProfile({ ...profile, bar_number: e.target.value })}
                         placeholder="e.g., 12345"
+                        aria-label="Bar Number"
+                        title="Bar Number"
                         className="w-full px-4 py-3 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
                       />
                     </div>
@@ -445,6 +642,8 @@ export default function Settings() {
                         value={profile.phone}
                         onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                         placeholder="Enter phone number"
+                        aria-label="Phone Number"
+                        title="Phone Number"
                         className="w-full px-4 py-3 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
                       />
                     </div>
@@ -478,6 +677,8 @@ export default function Settings() {
                             e.target.value = '';
                           }
                         }}
+                        aria-label="Add practice area"
+                        title="Add practice area"
                         className="px-4 py-2 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
                       >
                         <option value="">Add practice area...</option>
@@ -537,6 +738,8 @@ export default function Settings() {
                             default_practice_area: e.target.value
                           }
                         })}
+                        aria-label="Default Practice Area"
+                        title="Default Practice Area"
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
                       >
                         <option value="">Select default...</option>
@@ -563,6 +766,8 @@ export default function Settings() {
                               default_hourly_rate: parseInt(e.target.value) || 0
                             }
                           })}
+                          aria-label="Default Hourly Rate"
+                          title="Default Hourly Rate"
                           className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
                         />
                       </div>
@@ -581,6 +786,8 @@ export default function Settings() {
                             default_invoice_due_days: parseInt(e.target.value) || 30
                           }
                         })}
+                        aria-label="Invoice Due Days"
+                        title="Invoice Due Days"
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
                       />
                     </div>
@@ -603,6 +810,7 @@ export default function Settings() {
                               auto_generate_matter_numbers: e.target.checked
                             }
                           })}
+                          aria-label="Auto-generate Matter Numbers"
                           className="sr-only"
                         />
                         <div className={`w-11 h-6 rounded-full transition-colors ${
@@ -631,6 +839,7 @@ export default function Settings() {
                               require_time_entry_descriptions: e.target.checked
                             }
                           })}
+                          aria-label="Require Time Entry Descriptions"
                           className="sr-only"
                         />
                         <div className={`w-11 h-6 rounded-full transition-colors ${
@@ -703,6 +912,8 @@ export default function Settings() {
                                   [key]: e.target.checked
                                 }
                               })}
+                              aria-label={label}
+                              title={label}
                               className="sr-only"
                             />
                             <div className={`w-11 h-6 rounded-full transition-colors ${
@@ -740,6 +951,8 @@ export default function Settings() {
                                 sms_urgent_deadlines: e.target.checked
                               }
                             })}
+                            aria-label="SMS Urgent Deadlines"
+                            title="SMS Urgent Deadlines"
                             className="sr-only"
                           />
                           <div className={`w-11 h-6 rounded-full transition-colors ${
@@ -806,9 +1019,10 @@ export default function Settings() {
                               ...preferences,
                               appearance: {
                                 ...preferences.appearance,
-                                theme: e.target.value as any
+                                theme: e.target.value as ThemeOption
                               }
                             })}
+                            aria-label={label}
                             className="sr-only"
                           />
                           <div className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
@@ -846,9 +1060,10 @@ export default function Settings() {
                               ...preferences,
                               appearance: {
                                 ...preferences.appearance,
-                                density: e.target.value as any
+                                density: e.target.value as DensityOption
                               }
                             })}
+                            aria-label={label}
                             className="sr-only"
                           />
                           <div className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 text-center ${
@@ -931,6 +1146,7 @@ export default function Settings() {
                         placeholder="Search users by name or email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        aria-label="Search users"
                         className="w-full pl-10 pr-4 py-3 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200"
                       />
                     </div>
@@ -939,6 +1155,8 @@ export default function Settings() {
                     <select
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value)}
+                      aria-label="Filter by role"
+                      title="Filter by role"
                       className="px-4 py-3 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
                     >
                       <option value="all">All Roles</option>
@@ -1022,6 +1240,7 @@ export default function Settings() {
                                   type="checkbox"
                                   checked={user.is_active}
                                   onChange={() => toggleUserStatus(user.id!, user.is_active)}
+                                  aria-label="Toggle user status"
                                   className="sr-only"
                                 />
                                 <div className={`w-10 h-6 rounded-full transition-colors ${
@@ -1079,6 +1298,8 @@ export default function Settings() {
                             setEditingUser(null);
                             setShowUserModal(true);
                           }}
+                          aria-label="Add first user"
+                          title="Add first user"
                           className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
                         >
                           <UserPlus className="mr-2 h-4 w-4" />
@@ -1239,6 +1460,8 @@ export default function Settings() {
                 <input
                   type="text"
                   required
+                  aria-label="First name"
+                  title="First name"
                   value={formData.first_name}
                   onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
@@ -1251,6 +1474,8 @@ export default function Settings() {
                 <input
                   type="text"
                   required
+                  aria-label="Last name"
+                  title="Last name"
                   value={formData.last_name}
                   onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
@@ -1263,6 +1488,8 @@ export default function Settings() {
                 <input
                   type="email"
                   required
+                  aria-label="Email"
+                  title="Email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
@@ -1282,8 +1509,10 @@ export default function Settings() {
                 </label>
                 <select
                   required
+                  aria-label="Role"
+                  title="Role"
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as RoleOption })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
                 >
                   <option value="Admin">Admin</option>
@@ -1298,6 +1527,8 @@ export default function Settings() {
                 </label>
                 <input
                   type="tel"
+                  aria-label="Phone number"
+                  title="Phone number"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
@@ -1309,6 +1540,8 @@ export default function Settings() {
                 </label>
                 <input
                   type="text"
+                  aria-label="Bar number"
+                  title="Bar number"
                   value={formData.bar_number}
                   onChange={(e) => setFormData({ ...formData, bar_number: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
@@ -1330,6 +1563,8 @@ export default function Settings() {
                     <button
                       type="button"
                       onClick={() => removePracticeArea(area)}
+                      aria-label={`Remove ${area}`}
+                      title={`Remove ${area}`}
                       className="ml-2 text-blue-600 hover:text-blue-800"
                     >
                       ×
@@ -1344,6 +1579,8 @@ export default function Settings() {
                     e.target.value = '';
                   }
                 }}
+                aria-label="Add practice area"
+                title="Add practice area"
                 className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all duration-200"
               >
                 <option value="">Add practice area...</option>
@@ -1360,6 +1597,8 @@ export default function Settings() {
               <div className="flex items-center">
                 <input
                   type="checkbox"
+                  aria-label="Active user"
+                  title="Active user"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
