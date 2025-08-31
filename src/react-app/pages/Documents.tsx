@@ -204,6 +204,8 @@ export default function Documents() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
+                title="Filter by document status"
+                aria-label="Filter documents by status"
               >
                 <option value="all" className="bg-slate-800 text-white">All Status</option>
                 <option value="draft" className="bg-slate-800 text-white">Draft</option>
@@ -216,6 +218,8 @@ export default function Documents() {
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
+                title="Filter by template category"
+                aria-label="Filter templates by category"
               >
                 <option value="all" className="bg-slate-800 text-white">All Categories</option>
                 {categories.map(category => (
@@ -377,6 +381,8 @@ export default function Documents() {
                         <button 
                           onClick={() => alert('Edit template functionality would be implemented here')}
                           className="p-2 text-blue-300 hover:text-blue-100 rounded transition-colors"
+                          title="Edit template"
+                          aria-label="Edit template"
                         >
                           <Edit className="w-4 h-4" />
                         </button>

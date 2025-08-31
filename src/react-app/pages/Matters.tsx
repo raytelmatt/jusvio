@@ -223,6 +223,8 @@ export default function Matters() {
                     <button 
                       onClick={() => alert('Matter actions menu would be implemented here')}
                       className="p-1.5 text-gray-400 hover:text-gray-600"
+                      title="Matter actions menu"
+                      aria-label="Open matter actions menu"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </button>

@@ -200,6 +200,8 @@ export default function UploadDocument() {
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as 'Draft' | 'Final' })}
                 className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200"
+                title="Document status"
+                aria-label="Select document status"
               >
                 <option value="Draft" className="bg-slate-800 text-white">Draft</option>
                 <option value="Final" className="bg-slate-800 text-white">Final</option>
