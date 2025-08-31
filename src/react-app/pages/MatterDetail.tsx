@@ -330,8 +330,17 @@ export default function MatterDetail() {
   };
 
   const saveCriminalData = async () => {
+    if (!id) {
+      alert('Error: Matter ID is missing');
+      console.error('Cannot save: Matter ID is undefined');
+      return;
+    }
+
+    console.log('Attempting to save criminal data:', criminalData);
+    console.log('Matter ID:', id);
+
     try {
-      await databases.updateDocument(
+      const result = await databases.updateDocument(
         DATABASE_ID,
         COLLECTIONS.matters,
         String(id),
@@ -339,9 +348,12 @@ export default function MatterDetail() {
           criminal_data: JSON.stringify(criminalData || {}),
         }
       );
+      console.log('Save successful:', result);
       setIsEditing(false);
+      alert('Changes saved successfully!');
     } catch (error) {
       console.error('Error updating criminal case data:', error);
+      alert(`Save failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
