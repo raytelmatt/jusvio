@@ -23,31 +23,7 @@ import DocumentPreview from '../components/DocumentPreview';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
 import { useAuth } from '@/react-app/auth/AuthProvider';
 import { resolveDownloadUrl, resolveViewUrl } from '@/react-app/lib/storage-url';
-
-interface Document {
-  id: number;
-  matter_id: number;
-  template_id?: number;
-  title: string;
-  version: number;
-  created_by: string;
-  status: 'Draft' | 'Final';
-  file_url?: string;
-  created_at: string;
-  updated_at: string;
-  matter_title?: string;
-  client_name?: string;
-}
-
-interface DocumentVersion {
-  id: number;
-  document_id: number;
-  version: number;
-  created_by: string;
-  created_at: string;
-  changes_summary?: string;
-  file_url?: string;
-}
+import { Document, DocumentVersion, DocumentSchema, DocumentVersionSchema, AppwriteDocument } from '@/shared/types';
 
 export default function DocumentDetail() {
   const { id } = useParams();
@@ -67,17 +43,17 @@ export default function DocumentDetail() {
   useEffect(() => {
     fetchDocument();
     fetchVersions();
-  }, [id]);
+  }, [id]); // fetchDocument and fetchVersions are stable functions defined in component
 
   const fetchDocument = async () => {
     try {
-      const data = await databases.getDocument(DATABASE_ID, COLLECTIONS.documents, String(id));
-      const normalized = {
-        ...(data as any),
-        id: (data as any).id ?? (data as any).$id,
-        created_at: (data as any).created_at ?? (data as any).$createdAt,
-        updated_at: (data as any).updated_at ?? (data as any).$updatedAt,
-      } as unknown as Document;
+      const data = await databases.getDocument(DATABASE_ID, COLLECTIONS.documents, String(id)) as AppwriteDocument;
+      const normalized = DocumentSchema.parse({
+        ...data,
+        id: data.id ?? data.$id,
+        created_at: data.created_at ?? data.$createdAt,
+        updated_at: data.updated_at ?? data.$updatedAt,
+      });
       setDocument(normalized);
       setEditData({ title: normalized.title, status: normalized.status });
     } catch (error) {
@@ -90,8 +66,14 @@ export default function DocumentDetail() {
   const fetchVersions = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.documentVersions, []);
-      const rows = (list.documents || []) as unknown as DocumentVersion[];
-      const filtered = rows.filter(v => String((v as any).document_id) === String(id));
+      const rows = (list.documents || []).map((doc: AppwriteDocument) => 
+        DocumentVersionSchema.parse({
+          ...doc,
+          id: doc.id ?? doc.$id,
+          created_at: doc.created_at ?? doc.$createdAt,
+        })
+      );
+      const filtered = rows.filter(v => String(v.document_id) === String(id));
       setVersions(filtered.sort((a, b) => (b.version - a.version)));
     } catch (error) {
       console.error('Error fetching versions:', error);
@@ -100,8 +82,14 @@ export default function DocumentDetail() {
 
   const saveChanges = async () => {
     try {
-      const updated = await databases.updateDocument(DATABASE_ID, COLLECTIONS.documents, String(id), editData as any);
-      setDocument({ ...(updated as any) } as any);
+      const updated = await databases.updateDocument(DATABASE_ID, COLLECTIONS.documents, String(id), editData) as AppwriteDocument;
+      const normalized = DocumentSchema.parse({
+        ...updated,
+        id: updated.id ?? updated.$id,
+        created_at: updated.created_at ?? updated.$createdAt,
+        updated_at: updated.updated_at ?? updated.$updatedAt,
+      });
+      setDocument(normalized);
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating document:', error);
@@ -113,14 +101,19 @@ export default function DocumentDetail() {
     
     try {
       const nextVersion = (versions[0]?.version ?? (document?.version ?? 1)) + 1;
-      const newVersion = await databases.createDocument(DATABASE_ID, COLLECTIONS.documentVersions, 'unique()', {
+      const newVersionDoc = await databases.createDocument(DATABASE_ID, COLLECTIONS.documentVersions, 'unique()', {
         document_id: String(id),
         version: nextVersion,
         created_by: user?.$id ?? 'system',
         created_at: new Date().toISOString(),
         changes_summary: 'Manual version creation',
-      } as any);
-      setVersions([newVersion as any, ...versions]);
+      }) as AppwriteDocument;
+      const newVersion = DocumentVersionSchema.parse({
+        ...newVersionDoc,
+        id: newVersionDoc.id ?? newVersionDoc.$id,
+        created_at: newVersionDoc.created_at ?? newVersionDoc.$createdAt,
+      });
+      setVersions([newVersion, ...versions]);
       if (document) setDocument({ ...document, version: nextVersion });
     } catch (error) {
       console.error('Error creating version:', error);
@@ -132,15 +125,15 @@ export default function DocumentDetail() {
     
     try {
       const created = await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
-        matter_id: (document as any).matter_id?.toString?.() ?? String((document as any).matter_id),
-        template_id: (document as any).template_id?.toString?.() ?? null,
+        matter_id: String(document.matter_id),
+        template_id: document.template_id ? String(document.template_id) : null,
         title: `${document.title} (Copy)`,
-        status: 'Draft',
+        status: 'Draft' as const,
         version: 1,
         file_url: document.file_url || null,
         created_by: user?.$id ?? 'system',
-      } as any);
-      const newId = (created as any).id ?? (created as any).$id;
+      }) as AppwriteDocument;
+      const newId = created.id ?? created.$id;
       navigate(`/documents/${newId}`);
     } catch (error) {
       console.error('Error duplicating document:', error);
@@ -167,7 +160,7 @@ export default function DocumentDetail() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       alert('Share link copied to clipboard!');
-    } catch (error) {
+    } catch {
       prompt('Copy this link to share the document:', shareUrl);
     }
   };
@@ -247,6 +240,8 @@ export default function DocumentDetail() {
                 value={editData.title}
                 onChange={(e) => setEditData({ ...editData, title: e.target.value })}
                 className="text-2xl font-bold text-gray-900 border-b border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent"
+                aria-label="Edit document title"
+                placeholder="Enter document title"
               />
             ) : (
               <h1 className="text-2xl font-bold text-gray-900">{document.title}</h1>
@@ -256,8 +251,10 @@ export default function DocumentDetail() {
               {isEditing ? (
                 <select
                   value={editData.status}
-                  onChange={(e) => setEditData({ ...editData, status: e.target.value as any })}
+                  onChange={(e) => setEditData({ ...editData, status: e.target.value as 'Draft' | 'Final' })}
                   className="text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  aria-label="Document status"
+                  title="Select document status"
                 >
                   <option value="Draft">Draft</option>
                   <option value="Final">Final</option>
@@ -527,10 +524,12 @@ export default function DocumentDetail() {
                           {version.file_url && (
                             <button
                               onClick={() => {
-                                const url = resolveViewUrl(version.file_url) || resolveDownloadUrl(version.file_url);
+                                const url = resolveViewUrl(version.file_url || undefined) || resolveDownloadUrl(version.file_url || undefined);
                                 if (url) window.open(url, '_blank');
                               }}
                               className="p-1 text-gray-400 hover:text-gray-600"
+                              title="View version file"
+                              aria-label="View version file"
                             >
                               <Eye className="h-4 w-4" />
                             </button>
@@ -585,11 +584,20 @@ export default function DocumentDetail() {
       </div>
 
       {/* Document Preview Modal */}
-      <DocumentPreview
-        isOpen={showPreview}
-        onClose={closePreview}
-        document={document}
-      />
+      {document && (
+        <DocumentPreview
+          isOpen={showPreview}
+          onClose={closePreview}
+          document={{
+            id: document.id.toString(),
+            title: document.title,
+            file_url: document.file_url || undefined,
+            status: document.status,
+            created_at: document.created_at,
+            version: document.version
+          }}
+        />
+      )}
     </div>
   );
 }

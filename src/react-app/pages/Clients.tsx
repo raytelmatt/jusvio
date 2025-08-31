@@ -6,10 +6,26 @@ import ClientActionsMenu from '../components/ClientActionsMenu';
 import ClientFilterModal, { type ClientFilters } from '../components/ClientFilterModal';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
 
+interface ClientBalance {
+  id: number;
+  client_id: string;
+  client_number?: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  balance: number;
+  current_balance?: number;
+  total_paid?: number;
+  total_invoiced?: number;
+  unbilled_amount?: number;
+  last_payment_date?: string;
+  outstanding_invoices: number;
+}
+
 export default function Clients() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
-  const [clientBalances, setClientBalances] = useState<any[]>([]);
+  const [clientBalances, setClientBalances] = useState<ClientBalance[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -413,7 +429,7 @@ export default function Clients() {
                         >
                           <Eye className="h-4 w-4" />
                         </Link>
-                        <ClientActionsMenu client={client} onUpdate={fetchClients} />
+                        <ClientActionsMenu client={client as unknown as Client} onUpdate={fetchClients} />
                       </div>
                     </td>
                   </tr>

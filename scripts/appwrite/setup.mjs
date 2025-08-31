@@ -216,6 +216,7 @@ async function ensureClients() {
   pushIfMissing(have.has('date_of_birth'), () => databases.createDatetimeAttribute(DATABASE_ID, 'clients', 'date_of_birth', false));
   pushIfMissing(have.has('ssn_last4'), () => databases.createStringAttribute(DATABASE_ID, 'clients', 'ssn_last4', 4, false, undefined, false, false));
   pushIfMissing(have.has('email'), () => databases.createEmailAttribute(DATABASE_ID, 'clients', 'email', false));
+  pushIfMissing(have.has('phones'), () => databases.createStringAttribute(DATABASE_ID, 'clients', 'phones', 2048, false));
   // Reduce large string sizes to keep under collection limits
   pushIfMissing(have.has('address'), () => databases.createStringAttribute(DATABASE_ID, 'clients', 'address', 2048, false));
   pushIfMissing(have.has('emergency_contact'), () => databases.createStringAttribute(DATABASE_ID, 'clients', 'emergency_contact', 2048, false));
@@ -227,12 +228,39 @@ async function ensureClients() {
   pushIfMissing(have.has('home_phone'), () => databases.createStringAttribute(DATABASE_ID, 'clients', 'home_phone', 32, false));
   pushIfMissing(have.has('phone'), () => databases.createStringAttribute(DATABASE_ID, 'clients', 'phone', 32, false));
   const keys = [
-    'first_name', 'last_name', 'date_of_birth', 'ssn_last4', 'email', 'address', 'emergency_contact',
+    'first_name', 'last_name', 'date_of_birth', 'ssn_last4', 'email', 'phones', 'address', 'emergency_contact',
     'preferred_contact_method', 'notifications_opt_in', 'portal_enabled', 'mobile_phone', 'home_phone', 'phone'
   ];
   await Promise.all(ops);
   await waitForAttributes('clients', keys);
   await ensureIndex('clients', 'idx_clients_email', IndexType.Unique, ['email']);
+}
+
+async function ensureUserProfiles() {
+  await ensureCollection('user_profiles', 'User Profiles');
+  const list = await databases.listAttributes(DATABASE_ID, 'user_profiles');
+  const have = new Set(list.attributes.map((a) => a.key));
+  const ops = [];
+  const pushIfMissing = (exists, fn) => { if (!exists) ops.push(fn()); };
+
+  // Allow creating a profile before the Appwrite account exists (invite by email)
+  pushIfMissing(have.has('user_id'), () => databases.createStringAttribute(DATABASE_ID, 'user_profiles', 'user_id', 64, false));
+  pushIfMissing(have.has('email'), () => databases.createEmailAttribute(DATABASE_ID, 'user_profiles', 'email', true));
+  pushIfMissing(have.has('first_name'), () => databases.createStringAttribute(DATABASE_ID, 'user_profiles', 'first_name', 128, false));
+  pushIfMissing(have.has('last_name'), () => databases.createStringAttribute(DATABASE_ID, 'user_profiles', 'last_name', 128, false));
+  pushIfMissing(have.has('role'), () => databases.createEnumAttribute(DATABASE_ID, 'user_profiles', 'role', ['Admin','Attorney','Staff','Client'], true));
+  pushIfMissing(have.has('bar_number'), () => databases.createStringAttribute(DATABASE_ID, 'user_profiles', 'bar_number', 64, false));
+  pushIfMissing(have.has('practice_areas'), () => databases.createStringAttribute(DATABASE_ID, 'user_profiles', 'practice_areas', 4096, false));
+  pushIfMissing(have.has('phone'), () => databases.createStringAttribute(DATABASE_ID, 'user_profiles', 'phone', 32, false));
+  pushIfMissing(have.has('is_active'), () => databases.createBooleanAttribute(DATABASE_ID, 'user_profiles', 'is_active', false, true));
+  pushIfMissing(have.has('preferences'), () => databases.createStringAttribute(DATABASE_ID, 'user_profiles', 'preferences', 8192, false));
+
+  const keys = ['user_id','email','first_name','last_name','role','bar_number','practice_areas','phone','is_active','preferences'];
+  await Promise.all(ops);
+  await waitForAttributes('user_profiles', keys);
+  await ensureIndex('user_profiles', 'idx_user_profiles_email', IndexType.Unique, ['email']);
+  await ensureIndex('user_profiles', 'idx_user_profiles_user_id', IndexType.Key, ['user_id']);
+  await ensureIndex('user_profiles', 'idx_user_profiles_is_active', IndexType.Key, ['is_active']);
 }
 
 async function ensureMatters() {
@@ -500,6 +528,7 @@ async function main() {
   await ensureNotifications();
   await ensureDocumentsTemplates();
   await ensureCourts();
+  await ensureUserProfiles();
   await ensureTimeEntries();
   await ensureTasks();
 

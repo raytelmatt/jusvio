@@ -214,6 +214,8 @@ export default function GenerateDocument() {
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.matter_id ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  aria-label="Select matter"
+                  title="Select a matter for this document"
                 >
                   <option value="">Select a matter...</option>
                   {matters.map((matter) => (
@@ -253,6 +255,8 @@ export default function GenerateDocument() {
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.template_id ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  aria-label="Select document template"
+                  title="Select a document template"
                 >
                   <option value="">Select a template...</option>
                   {templates.map((template) => (
@@ -277,6 +281,8 @@ export default function GenerateDocument() {
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.title ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  placeholder="Enter document title"
+                  aria-label="Document title"
                 />
                 {errors.title && (
                   <p className="mt-1 text-sm text-red-600">{errors.title}</p>

@@ -75,7 +75,7 @@ export default function UploadDocument() {
     try {
       // Upload to Appwrite Storage and create document
       const created = await storage.createFile(BUCKETS.documents, 'unique()', selectedFile!);
-      const fileId = (created as any).$id;
+      const fileId = created.$id;
       await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
         matter_id: formData.matter_id.toString(),
         title: formData.title,
@@ -85,7 +85,7 @@ export default function UploadDocument() {
         created_by: user?.$id ?? 'system',
       });
       navigate('/documents');
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setLoading(false);
@@ -125,6 +125,8 @@ export default function UploadDocument() {
                 className={`w-full px-3 py-2 border rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200 ${
                   errors.matter_id ? 'border-red-400/50' : 'border-white/20'
                 }`}
+                aria-label="Select matter for document upload"
+                title="Choose which matter this document belongs to"
               >
                 <option value="" className="bg-slate-800 text-white">Select a matter...</option>
                 {matters.map((matter) => (

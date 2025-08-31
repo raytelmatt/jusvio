@@ -11,6 +11,7 @@ import {
   Trash2
 } from 'lucide-react';
 import type { Client } from '@/shared/types';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
 
 interface ClientActionsMenuProps {
   client: Client;
@@ -24,22 +25,14 @@ export default function ClientActionsMenu({ client, onUpdate }: ClientActionsMen
   const togglePortalAccess = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/clients/${client.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...client,
-          portal_enabled: !client.portal_enabled,
-        }),
-      });
-
-      if (response.ok) {
-        onUpdate();
-        setIsOpen(false);
-      }
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.clients,
+        String(client.id),
+        { portal_enabled: !client.portal_enabled },
+      );
+      onUpdate();
+      setIsOpen(false);
     } catch (error) {
       console.error('Error updating client:', error);
     } finally {
@@ -71,14 +64,12 @@ export default function ClientActionsMenu({ client, onUpdate }: ClientActionsMen
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/clients/${client.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        onUpdate();
-      }
+      await databases.deleteDocument(
+        DATABASE_ID,
+        COLLECTIONS.clients,
+        String(client.id)
+      );
+      onUpdate();
     } catch (error) {
       console.error('Error deleting client:', error);
     } finally {
@@ -92,6 +83,8 @@ export default function ClientActionsMenu({ client, onUpdate }: ClientActionsMen
         onClick={() => setIsOpen(!isOpen)}
         className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
         disabled={loading}
+        aria-label="Client actions"
+        title="Client actions"
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>

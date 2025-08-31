@@ -178,6 +178,8 @@ export default function DashboardLayout() {
                 <button 
                   onClick={() => setNotificationPanelOpen(!notificationPanelOpen)}
                   className="relative p-3 text-blue-200 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200"
+                  aria-label="Open notifications panel"
+                  title="View notifications"
                 >
                   <Bell className="h-5 w-5" />
                   {unreadNotificationCount > 0 && (

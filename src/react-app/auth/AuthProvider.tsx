@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 function getEnv(name: string, fallback?: string): string {
   // Vite exposes env as import.meta.env.VITE_*
   const key = `VITE_${name}` as keyof ImportMetaEnv;
-  const val = (import.meta as any).env?.[key];
+  const val = import.meta.env?.[key];
   return (val as string) || fallback || "";
 }
 
@@ -52,7 +52,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const jwt = await account.createJWT();
         setClientJWT(jwt.jwt || null);
-      } catch {}
+      } catch {
+        // Ignore JWT creation errors
+      }
       setUser(current);
     } catch {
       setUser(null);

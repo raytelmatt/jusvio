@@ -55,6 +55,10 @@ export const MatterSchema = z.object({
   rate_card_id: z.number().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
+  // Client info (populated from joins)
+  client_first_name: z.string().optional(),
+  client_last_name: z.string().optional(),
+  client_email: z.string().optional(),
 });
 
 export type Matter = z.infer<typeof MatterSchema>;
@@ -96,6 +100,39 @@ export const HearingSchema = z.object({
 });
 
 export type Hearing = z.infer<typeof HearingSchema>;
+
+// Invoice Schema
+export const InvoiceSchema = z.object({
+  id: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? val : val.toString()),
+  matter_id: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
+  invoice_number: z.string(),
+  description: z.string().optional(),
+  amount: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseFloat(val) : val),
+  total: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseFloat(val) : val),
+  status: z.enum(['Draft', 'Sent', 'Paid', 'Overdue']),
+  due_date: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  created_by: z.string(),
+});
+
+export type Invoice = z.infer<typeof InvoiceSchema>;
+
+// Payment Schema
+export const PaymentSchema = z.object({
+  id: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? val : val.toString()),
+  matter_id: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
+  invoice_id: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? val : val.toString()).optional(),
+  amount: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseFloat(val) : val),
+  method: z.enum(['Cash', 'Check', 'Credit Card', 'Bank Transfer', 'Other']),
+  reference: z.string().optional(),
+  received_date: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  created_by: z.string(),
+});
+
+export type Payment = z.infer<typeof PaymentSchema>;
 
 // Deadline Schema
 export const DeadlineSchema = z.object({
@@ -151,3 +188,102 @@ export const DashboardStatsSchema = z.object({
 });
 
 export type DashboardStats = z.infer<typeof DashboardStatsSchema>;
+
+// Document Schema
+export const DocumentSchema = z.object({
+  id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? val : String(val)),
+  $id: z.string().optional(),
+  matter_id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
+  template_id: z.union([z.number(), z.string()]).nullable().optional().transform(val => val ? (typeof val === 'string' ? parseInt(val) : val) : null),
+  title: z.string(),
+  version: z.number(),
+  created_by: z.string(),
+  status: z.enum(['Draft', 'Final']),
+  file_url: z.string().nullable().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  $createdAt: z.string().optional(),
+  $updatedAt: z.string().optional(),
+  matter_title: z.string().optional(),
+  client_name: z.string().optional(),
+});
+
+export type Document = z.infer<typeof DocumentSchema>;
+
+// Document Version Schema
+export const DocumentVersionSchema = z.object({
+  id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? val : String(val)),
+  $id: z.string().optional(),
+  document_id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
+  version: z.number(),
+  created_by: z.string(),
+  created_at: z.string(),
+  $createdAt: z.string().optional(),
+  changes_summary: z.string().nullable().optional(),
+  file_url: z.string().nullable().optional(),
+});
+
+export type DocumentVersion = z.infer<typeof DocumentVersionSchema>;
+
+// Time Entry Schema
+export const TimeEntrySchema = z.object({
+  id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? val : String(val)),
+  $id: z.string().optional(),
+  matter_id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
+  description: z.string(),
+  hours: z.number(),
+  rate: z.number(),
+  entry_date: z.string(),
+  created_by: z.string(),
+  created_at: z.string(),
+  $createdAt: z.string().optional(),
+});
+
+export type TimeEntry = z.infer<typeof TimeEntrySchema>;
+
+// Communication Schema
+export const CommunicationSchema = z.object({
+  id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? val : String(val)),
+  $id: z.string().optional(),
+  matter_id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
+  type: z.string(),
+  direction: z.string(),
+  subject: z.string().optional(),
+  body: z.string(),
+  created_at: z.string(),
+  $createdAt: z.string().optional(),
+  // Additional email properties
+  channel: z.string().optional(),
+  from_address: z.string().optional(),
+  to_address: z.string().optional(),
+  sent_at: z.string().optional(),
+});
+
+export type Communication = z.infer<typeof CommunicationSchema>;
+
+// Task Schema
+export const TaskSchema = z.object({
+  id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? val : String(val)),
+  $id: z.string().optional(),
+  matter_id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
+  title: z.string(),
+  description: z.string().optional(),
+  due_at: z.string().optional(),
+  priority: z.enum(['Low', 'Medium', 'High']),
+  status: z.enum(['Open', 'InProgress', 'Completed']),
+  assignee_ids: z.array(z.string()).optional(),
+  created_at: z.string(),
+  $createdAt: z.string().optional(),
+  // Computed field for UI
+  days_until_due: z.number().optional(),
+});
+
+export type Task = z.infer<typeof TaskSchema>;
+
+// Appwrite Document Response Type
+export interface AppwriteDocument {
+  $id: string;
+  $createdAt: string;
+  $updatedAt: string;
+  [key: string]: unknown;
+}

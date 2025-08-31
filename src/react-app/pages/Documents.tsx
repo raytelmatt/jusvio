@@ -18,8 +18,8 @@ import {
 import DocumentPreview from '../components/DocumentPreview';
 
 interface Document {
-  id: number;
-  matter_id: number;
+  id: string;
+  matter_id: string;
   template_id?: number;
   title: string;
   version: number;
@@ -91,11 +91,11 @@ export default function Documents() {
     }
   };
 
-  const deleteDocument = async (id: number) => {
+  const deleteDocument = async (id: string) => {
     if (!confirm('Are you sure you want to delete this document?')) return;
     
     try {
-      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.documents, String(id));
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.documents, id);
       setDocuments(documents.filter(doc => doc.id !== id));
     } catch (error) {
       console.error('Error deleting document:', error);

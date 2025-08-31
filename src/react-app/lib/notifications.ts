@@ -16,6 +16,17 @@ export interface AppwriteNotification {
   related_matter_id?: string;
 }
 
+interface NotificationDocument extends Models.Document {
+  title: string;
+  message: string;
+  type: NotificationType;
+  is_read: boolean;
+  priority: NotificationPriority;
+  action_url?: string;
+  related_matter_id?: string;
+  user_id: string;
+}
+
 let cachedUserId: string | null = null;
 
 async function ensureUserId(): Promise<string> {
@@ -25,17 +36,17 @@ async function ensureUserId(): Promise<string> {
   return cachedUserId;
 }
 
-function mapDoc(doc: Models.Document): AppwriteNotification {
+function mapDoc(doc: NotificationDocument): AppwriteNotification {
   return {
     id: doc.$id,
-    title: (doc as any).title ?? '',
-    message: (doc as any).message ?? '',
-    type: (doc as any).type ?? 'system',
-    is_read: Boolean((doc as any).is_read),
-    priority: (doc as any).priority ?? 'low',
-    action_url: (doc as any).action_url ?? undefined,
+    title: doc.title ?? '',
+    message: doc.message ?? '',
+    type: doc.type ?? 'system',
+    is_read: Boolean(doc.is_read),
+    priority: doc.priority ?? 'low',
+    action_url: doc.action_url ?? undefined,
     created_at: doc.$createdAt,
-    related_matter_id: (doc as any).related_matter_id ?? undefined,
+    related_matter_id: doc.related_matter_id ?? undefined,
   };
 }
 
@@ -58,7 +69,7 @@ export async function fetchNotifications(filter: 'all' | 'unread' = 'all'): Prom
     ]),
   ]);
 
-  const notifications = (listRes.documents || []).map(mapDoc);
+  const notifications = (listRes.documents || []).map(doc => mapDoc(doc as NotificationDocument));
   const unreadCount = unreadRes.total ?? (unreadRes.documents?.length ?? 0);
   return { notifications, unreadCount };
 }

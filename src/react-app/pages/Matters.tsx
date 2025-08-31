@@ -116,6 +116,8 @@ export default function Matters() {
               }
             }}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Filter by practice area"
+            title="Filter matters by practice area"
           >
             <option value="">All Practice Areas</option>
             <option value="Criminal">Criminal Defense</option>
@@ -124,6 +126,8 @@ export default function Matters() {
           </select>
           <select
             value={statusFilter || ''}
+            aria-label="Filter by status"
+            title="Filter matters by status"
             onChange={(e) => {
               if (e.target.value) {
                 setSearchParams(prev => ({

@@ -6,9 +6,9 @@ interface DocumentPreviewProps {
   isOpen: boolean;
   onClose: () => void;
   document: {
-    id: number;
+    id: string;
     title: string;
-    file_url?: string;
+    file_url?: string | null;
     status: string;
     created_at: string;
     version: number;
@@ -61,12 +61,12 @@ export default function DocumentPreview({ isOpen, onClose, document }: DocumentP
     }
   };
 
-  const viewUrl = resolveViewUrl(document.file_url);
+  const viewUrl = resolveViewUrl(document.file_url || undefined);
   const fileType = getFileType(viewUrl);
 
   const handleDownload = () => {
     if (viewUrl) {
-      const dl = resolveDownloadUrl(document.file_url);
+      const dl = resolveDownloadUrl(document.file_url || undefined);
       window.open(dl || viewUrl, '_blank');
     }
   };
@@ -95,7 +95,7 @@ export default function DocumentPreview({ isOpen, onClose, document }: DocumentP
     }
 
     switch (fileType) {
-      case 'pdf':
+      case 'pdf': {
         // Use the file URL directly for PDF rendering
         const pdfUrl = viewUrl!;
         
@@ -122,8 +122,9 @@ export default function DocumentPreview({ isOpen, onClose, document }: DocumentP
             )}
           </div>
         );
+      }
 
-      case 'image':
+      case 'image': {
         return (
           <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg overflow-hidden">
             <img
@@ -147,8 +148,9 @@ export default function DocumentPreview({ isOpen, onClose, document }: DocumentP
             )}
           </div>
         );
+      }
 
-      case 'text':
+      case 'text': {
         return (
           <div className="h-full bg-white rounded-lg border border-gray-200 overflow-auto">
             <iframe
@@ -169,10 +171,11 @@ export default function DocumentPreview({ isOpen, onClose, document }: DocumentP
             )}
           </div>
         );
+      }
 
       case 'word':
       case 'excel':
-      case 'powerpoint':
+      case 'powerpoint': {
         return (
           <div className="flex flex-col items-center justify-center h-96 text-gray-500">
             <FileText className="h-12 w-12 mb-4" />
@@ -191,6 +194,7 @@ export default function DocumentPreview({ isOpen, onClose, document }: DocumentP
             </button>
           </div>
         );
+      }
 
       default:
         return (
