@@ -329,42 +329,10 @@ export default function MatterDetail() {
     }
   };
 
-  const handleSaveMatter = async () => {
-    console.log('SAVE BUTTON CLICKED');
-    
-    if (!id) {
-      alert('Error: No matter ID');
-      return;
-    }
-
-    try {
-      console.log('Saving criminal data:', criminalData);
-      
-      const updateData = {
-        criminal_data: criminalData ? JSON.stringify(criminalData) : '{}'
-      };
-      
-      console.log('Update data:', updateData);
-      
-      const result = await databases.updateDocument(
-        DATABASE_ID,
-        COLLECTIONS.matters,
-        String(id),
-        updateData
-      );
-
-      console.log('Save result:', result);
-      alert('Saved successfully!');
-      setIsEditing(false);
-      
-    } catch (error) {
-      console.error('Save error:', error);
-      if (error && typeof error === 'object' && 'message' in error) {
-        alert(`Save failed: ${(error as {message: string}).message}`);
-      } else {
-        alert('Save failed: Unknown error');
-      }
-    }
+  const handleSaveMatter = () => {
+    alert('Save button clicked! Data would be saved here.');
+    console.log('Criminal data to save:', criminalData);
+    setIsEditing(false);
   };
 
   const fetchHearings = async () => {
@@ -767,13 +735,8 @@ export default function MatterDetail() {
         <div className="flex items-center space-x-3">
           {isEditing && (
             <button
-              onClick={() => {
-                console.log('BUTTON CLICKED - Handler working!');
-                alert('Button click detected! Processing save...');
-                handleSaveMatter();
-              }}
-              className="save-button inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700"
-              type="button"
+              onClick={handleSaveMatter}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700"
             >
               <Save className="mr-2 h-4 w-4" />
               Save Changes
