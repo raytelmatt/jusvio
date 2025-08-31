@@ -844,48 +844,48 @@ export default function MatterDetail() {
                         )}
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Disposition</label>
+                        <label className="block text-xs font-medium text-blue-200 mb-1">Disposition</label>
                         <input
                           type="text"
                           title="Disposition"
                           placeholder="Enter disposition"
                           aria-label="Disposition"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
                           value={(criminalData.disposition as string) || ''}
                           onChange={(e) => setCriminalData({...criminalData, disposition: e.target.value})}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Jurisdiction</label>
+                        <label className="block text-xs font-medium text-blue-200 mb-1">Jurisdiction</label>
                         <input
                           type="text"
                           value={(criminalData.jurisdiction as string) || ''}
                           onChange={(e) => setCriminalData({...criminalData, jurisdiction: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
                           title="Jurisdiction"
                           placeholder="Enter jurisdiction"
                           aria-label="Jurisdiction"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Arrest Date</label>
+                        <label className="block text-xs font-medium text-blue-200 mb-1">Arrest Date</label>
                         <input
                           type="date"
                           value={(criminalData.arrest_date as string) || ''}
                           onChange={(e) => setCriminalData({...criminalData, arrest_date: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
                           title="Arrest Date"
                           aria-label="Arrest Date"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Charges</label>
+                        <label className="block text-xs font-medium text-blue-200 mb-1">Charges</label>
                         <input
                           type="text"
                           title="Charges"
                           placeholder="Enter charges"
                           aria-label="Charges"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
                           value={(criminalData.charges as string) || ''}
                           onChange={(e) => setCriminalData({...criminalData, charges: e.target.value})}
                         />
