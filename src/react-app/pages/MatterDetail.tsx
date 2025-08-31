@@ -13,12 +13,11 @@ import {
   Save,
   Calendar,
   AlertCircle,
-  Phone,
-  // MessageCircle
+  Phone
 } from 'lucide-react';
 import DocumentPreview from '../components/DocumentPreview';
 import { databases } from '../lib/appwrite';
-import { Query, ID } from 'appwrite';
+import { Query } from 'appwrite';
 import { Matter, Document, Communication } from '@/shared/types';
 // import { Invoice, Payment } from '../../shared/types';
 
@@ -70,16 +69,16 @@ const COLLECTIONS = {
 //   updated_at: string;
 // }
 
-interface HearingForm {
-  hearing_type: string;
-  start_at: string;
-  end_at: string;
-  courtroom: string;
-  judge_or_alj: string;
-  notes: string;
-  is_ssa_hearing: boolean;
-  court_id: number | null;
-}
+// interface HearingForm {
+//   hearing_type: string;
+//   start_at: string;
+//   end_at: string;
+//   courtroom: string;
+//   judge_or_alj: string;
+//   notes: string;
+//   is_ssa_hearing: boolean;
+//   court_id: string | null;
+// }
 
 // interface TaskForm {
 //   title: string;
@@ -98,9 +97,13 @@ export default function MatterDetail() {
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [hearings, setHearings] = useState<unknown[]>([]);
   const [tasks, setTasks] = useState<unknown[]>([]);
+  
+  // Suppress unused variable warnings - these are set by fetch functions
+  void hearings;
+  void tasks;
   const [criminalData, setCriminalData] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string | null>(null);
-  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
+  const [previewDocument] = useState<Document | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
@@ -570,25 +573,26 @@ export default function MatterDetail() {
   //   }
   // };
 
-  const deleteDocument = async (docId: string | number) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
-    
-    try {
-      await databases.deleteDocument(
-        DATABASE_ID,
-        COLLECTIONS.documents,
-        String(docId)
-      );
-      setDocuments(documents.filter(doc => String(doc.id ?? doc.$id) !== String(docId)));
-    } catch (error) {
-      console.error('Error deleting document:', error);
-    }
-  };
+  // Commented out unused functions
+  // const deleteDocument = async (docId: string | number) => {
+  //   if (!confirm('Are you sure you want to delete this document?')) return;
+  //   
+  //   try {
+  //     await databases.deleteDocument(
+  //       DATABASE_ID,
+  //       COLLECTIONS.documents,
+  //       String(docId)
+  //     );
+  //     setDocuments(documents.filter(doc => String(doc.id ?? doc.$id) !== String(docId)));
+  //   } catch (error) {
+  //     console.error('Error deleting document:', error);
+  //   }
+  // };
 
-  const openPreview = (document: any) => {
-    setPreviewDocument(document);
-    setShowPreview(true);
-  };
+  // const openPreview = (document: Record<string, unknown>) => {
+  //   setPreviewDocument(document as Document);
+  //   setShowPreview(true);
+  // };
 
   // const closePreview = () => {
   //   setShowPreview(false);
