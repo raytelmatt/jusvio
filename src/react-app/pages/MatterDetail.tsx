@@ -267,7 +267,7 @@ export default function MatterDetail() {
         });
       });
 
-      (deadlineList.documents || []).forEach((deadline: any) => {
+      (deadlineList.documents || []).forEach((deadline: Record<string, unknown>) => {
         events.push({
           id: `deadline-${deadline.id ?? deadline.$id}`,
           type: 'deadline',
@@ -351,7 +351,7 @@ export default function MatterDetail() {
         COLLECTIONS.hearings,
         [Query.equal('matter_id', String(id))]
       );
-      const rows = (list.documents || []).map((d: any) => ({
+      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
         ...d,
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
@@ -460,7 +460,6 @@ export default function MatterDetail() {
 
   const fetchDocuments = async () => {
     if (!id) return;
-    
     try {
       const list = await databases.listDocuments(
         DATABASE_ID,
