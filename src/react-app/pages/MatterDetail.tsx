@@ -100,21 +100,22 @@ export default function MatterDetail() {
   const [tasks, setTasks] = useState<unknown[]>([]);
   const [criminalData, setCriminalData] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string | null>(null);
-  const [previewDocument] = useState<Document | null>(null);
+  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
   const [invoices, setInvoices] = useState<unknown[]>([]);
-  const [hearingForm, setHearingForm] = useState<HearingForm>({
-    hearing_type: '',
-    start_at: '',
-    end_at: '',
-    courtroom: '',
-    judge_or_alj: '',
-    notes: '',
-    is_ssa_hearing: false,
-    court_id: null
-  });
+  // Commenting out unused form state
+  // const [hearingForm] = useState<HearingForm>({
+  //   hearing_type: '',
+  //   start_at: '',
+  //   end_at: '',
+  //   courtroom: '',
+  //   judge_or_alj: '',
+  //   notes: '',
+  //   is_ssa_hearing: false,
+  //   court_id: null
+  // });
 
   useEffect(() => {
     if (id) {
@@ -155,7 +156,7 @@ export default function MatterDetail() {
         'matters',
         id,
       );
-      const matter = res.documents?.[0];
+      const matter = res;
       const invoicesData = await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.invoices,
@@ -165,13 +166,13 @@ export default function MatterDetail() {
         ...inv,
         amount: (inv.amount as number) || 0,
       }));
-      const matterData: Record<string, unknown> = {
+      const matterData = {
         ...matter,
         id: matter.$id,
       } as unknown as Matter;
-      setCriminalData(matter.criminal_data || {});
+      setCriminalData((matter as Record<string, unknown>).criminal_data as Record<string, unknown> || {});
       setMatter(matterData);
-      setInvoices(invoicesWithDetails);
+      setInvoices(invoicesWithDetails || []);
       setError(null);
     } catch (error) {
       console.error('Error fetching matter:', error);
@@ -184,33 +185,32 @@ export default function MatterDetail() {
   const fetchTimelineEvents = async () => {
     if (!id) return;
     try {
-      const [timeList, hearingList, deadlineList, commList, docList] = await Promise.all([
+      const [timeList, invoiceList, hearingList, deadlineList, communicationList, docList] = await Promise.all([
         databases.listDocuments(DATABASE_ID, COLLECTIONS.timeEntries, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] })),
+        databases.listDocuments(DATABASE_ID, COLLECTIONS.invoices, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] })),
         databases.listDocuments(DATABASE_ID, COLLECTIONS.hearings, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] })),
         databases.listDocuments(DATABASE_ID, COLLECTIONS.deadlines, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] })),
         databases.listDocuments(DATABASE_ID, COLLECTIONS.communications, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] })),
         databases.listDocuments(DATABASE_ID, COLLECTIONS.documents, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] })),
       ]);
 
-      const events: any[] = [];
+      const events: Record<string, unknown>[] = [];
 
       if (matter) {
         events.push({
-          id: `matter-${String(matter.id ?? (matter as any).$id)}`,
+          id: `matter-${String(matter.id ?? (matter as Record<string, unknown>).$id)}`,
           type: 'matter_created',
           title: 'Matter Opened',
           description: `${matter.title} was opened`,
-          date: (matter as any).opened_at || (matter as any).created_at,
+          date: (matter as Record<string, unknown>).opened_at || (matter as Record<string, unknown>).created_at,
           icon: FileText,
           color: 'blue',
         });
       }
 
-      const timeEntries: unknown[] = [];
-      const invoicesData: unknown[] = [];
-      setInvoices(invoicesData);
+      // Remove unused variables to clean up lints
 
-      (timeList.documents || []).forEach((entry: any) => {
+      (timeList.documents || []).forEach((entry: Record<string, unknown>) => {
         const hours = Number(entry.hours || 0);
         const rate = Number(entry.rate || 0);
         events.push({
@@ -225,7 +225,20 @@ export default function MatterDetail() {
         });
       });
 
-      (docList.documents || []).forEach((doc: any) => {
+      (invoiceList.documents || []).forEach((invoice: Record<string, unknown>) => {
+        events.push({
+          id: `invoice-${invoice.id ?? invoice.$id}`,
+          type: 'invoice',
+          title: 'Invoice Created',
+          description: invoice.title,
+          date: invoice.created_at ?? invoice.$createdAt,
+          icon: FileText,
+          color: 'purple',
+          meta: `Version ${invoice.version} • ${invoice.status}`,
+        });
+      });
+
+      (docList.documents || []).forEach((doc: Record<string, unknown>) => {
         events.push({
           id: `doc-${doc.id ?? doc.$id}`,
           type: 'document',
@@ -238,7 +251,7 @@ export default function MatterDetail() {
         });
       });
 
-      (hearingList.documents || []).forEach((hearing: any) => {
+      (hearingList.documents || []).forEach((hearing: Record<string, unknown>) => {
         events.push({
           id: `hearing-${hearing.id ?? hearing.$id}`,
           type: 'hearing',
@@ -264,19 +277,19 @@ export default function MatterDetail() {
         });
       });
 
-      (commList.documents || []).forEach((comm: any) => {
+      (communicationList.documents || []).forEach((comm: Record<string, unknown>) => {
         events.push({
           id: `comm-${comm.id ?? comm.$id}`,
           type: 'communication',
           title: `${comm.channel} ${comm.direction}`,
-          description: comm.body?.substring(0, 100) + (comm.body?.length > 100 ? '...' : ''),
+          description: (comm.body as string)?.substring(0, 100) + ((comm.body as string)?.length > 100 ? '...' : ''),
           date: comm.sent_at || comm.created_at || comm.$createdAt,
           icon: comm.channel === 'Phone' ? Phone : Mail,
           color: comm.direction === 'Inbound' ? 'blue' : 'indigo',
         });
       });
 
-      events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      events.sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
       // setTimelineEvents(events);
     } catch (error) {
       console.error('Error fetching timeline events:', error);
@@ -347,97 +360,100 @@ export default function MatterDetail() {
     }
   };
 
-  const createHearing = async () => {
-    if (!id) return;
-    try {
-      const payload: Record<string, unknown> = {
-        ...hearingForm,
-        matter_id: String(id),
-        start_at: hearingForm.start_at ? new Date(hearingForm.start_at).toISOString() : null,
-        end_at: hearingForm.end_at ? new Date(hearingForm.end_at).toISOString() : null,
-        is_ssa_hearing: hearingForm.is_ssa_hearing || matter?.practice_area === 'SSD',
-      };
-      const created = await databases.createDocument(
-        DATABASE_ID,
-        COLLECTIONS.hearings,
-        ID.unique(),
-        payload
-      );
-      await fetchHearings();
-      setHearingForm({
-        hearing_type: '',
-        start_at: '',
-        end_at: '',
-        courtroom: '',
-        judge_or_alj: '',
-        notes: '',
-        is_ssa_hearing: false,
-        court_id: null,
-      });
-      if ((created as Record<string, unknown>).start_at && id) {
-        await createHearingDeadline(created);
-      }
-    } catch (error) {
-      console.error('Error creating hearing:', error);
-    }
-  };
+  // const createHearing = async () => {
+  //   if (!id) return;
+  //   try {
+  //     const payload: Record<string, unknown> = {
+  //       ...hearingForm,
+  //       matter_id: String(id),
+  //       start_at: hearingForm.start_at ? new Date(hearingForm.start_at).toISOString() : null,
+  //       end_at: hearingForm.end_at ? new Date(hearingForm.end_at).toISOString() : null,
+  //       is_ssa_hearing: hearingForm.is_ssa_hearing || matter?.practice_area === 'SSD',
+  //     };
+  //     const created = await databases.createDocument(
+  //       DATABASE_ID,
+  //       COLLECTIONS.hearings,
+  //       ID.unique(),
+  //       payload
+  //     );
+  //     await fetchHearings();
+  //     setHearingForm({
+  //       hearing_type: '',
+  //       start_at: '',
+  //       end_at: '',
+  //       courtroom: '',
+  //       judge_or_alj: '',
+  //       notes: '',
+  //       is_ssa_hearing: false,
+  //       court_id: null,
+  //     });
+  //     if ((created as Record<string, unknown>).start_at && id) {
+  //       await createHearingDeadline(created);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating hearing:', error);
+  //   }
+  // };
 
-  const updateHearing = async (hearingId: string, updates: any) => {
-    if (!id) return;
-    try {
-      const payload: Record<string, unknown> = {
-        ...updates,
-        start_at: updates.start_at ? new Date(updates.start_at as string).toISOString() : null,
-        end_at: updates.end_at ? new Date(updates.end_at as string).toISOString() : null,
-      };
-      await databases.updateDocument(
-        DATABASE_ID,
-        COLLECTIONS.hearings,
-        hearingId,
-        payload
-      );
-      await fetchHearings();
-    } catch (error) {
-      console.error('Error updating hearing:', error);
-    }
-  };
+  // const updateHearing = async (hearingId: string, updates: Record<string, unknown>) => {
+  //   if (!id) return;
+  //   try {
+  //     const payload: Record<string, unknown> = {
+  //       ...updates,
+  //       start_at: updates.start_at ? new Date(updates.start_at as string).toISOString() : null,
+  //       end_at: updates.end_at ? new Date(updates.end_at as string).toISOString() : null,
+  //     };
+  //     await databases.updateDocument(
+  //       DATABASE_ID,
+  //       COLLECTIONS.hearings,
+  //       hearingId,
+  //       payload
+  //     );
+  //     await fetchHearings();
+  //   } catch (error) {
+  //     console.error('Error updating hearing:', error);
+  //   }
+  // };
 
-  const deleteHearing = async (hearingId: string) => {
-    try {
-      await databases.deleteDocument(
-        DATABASE_ID,
-        COLLECTIONS.hearings,
-        hearingId
-      );
-      fetchHearings();
-    } catch (error) {
-      console.error('Error deleting hearing:', error);
-    }
-  };
+  // const deleteHearing = async (hearingId: string) => {
+  //   try {
+  //     await databases.deleteDocument(
+  //       DATABASE_ID,
+  //       COLLECTIONS.hearings,
+  //       hearingId
+  //     );
+  //     fetchHearings();
+  //   } catch (error) {
+  //     console.error('Error deleting hearing:', error);
+  //   }
+  // };
 
-  const createHearingDeadline = async (hearing: Record<string, unknown>) => {
-    if (!id) return;
-    try {
-      const hearingDate = new Date(hearing.start_at as string);
-      const deadlineDate = new Date(hearingDate);
-      deadlineDate.setDate(deadlineDate.getDate() - 7);
-      await databases.createDocument(
-        DATABASE_ID,
-        COLLECTIONS.deadlines,
-        ID.unique(),
-        {
-          matter_id: String(id),
-          title: `Prepare for ${hearing.hearing_type || 'Court Appearance'}`,
-          source: 'CourtOrder',
-          due_at: deadlineDate.toISOString(),
-          trigger_event_id: String(hearing.id ?? hearing.$id),
-          status: 'Open',
-        }
-      );
-    } catch (error) {
-      console.error('Error creating hearing deadline:', error);
-    }
-  };
+  // const createHearingDeadline = async (hearing: Record<string, unknown>) => {
+  //   if (!id) return;
+  //   try {
+  //     const hearingDate = new Date(hearing.start_at as string);
+  //     const deadlineDate = new Date(hearingDate);
+  //     deadlineDate.setDate(deadlineDate.getDate() - 7);
+  //     await databases.createDocument(
+  //       DATABASE_ID,
+  //       COLLECTIONS.deadlines,
+  //       ID.unique(),
+  //       {
+  //         matter_id: String(id),
+  //         title: `Prepare for ${hearing.hearing_type || 'Court Appearance'}`,
+  //         source: 'CourtOrder',
+  //         due_at: deadlineDate.toISOString(),
+  //         description: `Prepare documents and materials for ${hearing.hearing_type} scheduled on ${hearingDate.toLocaleDateString()}`,
+  //         status: 'Pending',
+  //         priority: 'High'
+  //       }
+  //     );
+  //   } catch (error) {
+  //     console.error('Error creating hearing deadline:', error);
+  //   }
+  // };
+
+  // Duplicate function removed
 
   const fetchDocuments = async () => {
     if (!id) return;
@@ -500,59 +516,59 @@ export default function MatterDetail() {
     }
   };
 
-  const createTask = async () => {
-    if (!id) return;
-    try {
-      const payload: Record<string, unknown> = {
-        matter_id: String(id),
-        title: 'New Task',
-        description: '',
-        status: 'pending',
-        priority: 'medium',
-        due_date: new Date().toISOString().split('T')[0],
-        assigned_to: ''
-      };
-      
-      await databases.createDocument(
-        DATABASE_ID,
-        COLLECTIONS.tasks,
-        ID.unique(),
-        payload
-      );
-      
-      fetchTasks();
-    } catch (error) {
-      console.error('Error creating task:', error);
-    }
-  };
+  // const createTask = async () => {
+  //   if (!id) return;
+  //   try {
+  //     const payload: Record<string, unknown> = {
+  //       matter_id: String(id),
+  //       title: 'New Task',
+  //       description: '',
+  //       status: 'pending',
+  //       priority: 'medium',
+  //       due_date: new Date().toISOString().split('T')[0],
+  //       assigned_to: ''
+  //     };
+  //     
+  //     await databases.createDocument(
+  //       DATABASE_ID,
+  //       COLLECTIONS.tasks,
+  //       ID.unique(),
+  //       payload
+  //     );
+  //     
+  //     fetchTasks();
+  //   } catch (error) {
+  //     console.error('Error creating task:', error);
+  //   }
+  // };
 
-  const updateTask = async (taskId: number, updates: Record<string, unknown>) => {
-    try {
-      await databases.updateDocument(
-        DATABASE_ID,
-        COLLECTIONS.tasks,
-        taskId.toString(),
-        updates
-      );
-      fetchTasks();
-    } catch (error) {
-      console.error('Error updating task:', error);
-    }
-  };
+  // const updateTask = async (taskId: number, updates: Record<string, unknown>) => {
+  //   try {
+  //     await databases.updateDocument(
+  //       DATABASE_ID,
+  //       COLLECTIONS.tasks,
+  //       taskId.toString(),
+  //       updates
+  //     );
+  //     fetchTasks();
+  //   } catch (error) {
+  //     console.error('Error updating task:', error);
+  //   }
+  // };
 
-  const deleteTask = async (taskId: number) => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
-    try {
-      await databases.deleteDocument(
-        DATABASE_ID,
-        COLLECTIONS.tasks,
-        String(taskId)
-      );
-      await fetchTasks();
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    }
-  };
+  // const deleteTask = async (taskId: number) => {
+  //   if (!confirm('Are you sure you want to delete this task?')) return;
+  //   try {
+  //     await databases.deleteDocument(
+  //       DATABASE_ID,
+  //       COLLECTIONS.tasks,
+  //       String(taskId)
+  //     );
+  //     await fetchTasks();
+  //   } catch (error) {
+  //     console.error('Error deleting task:', error);
+  //   }
+  // };
 
   const deleteDocument = async (docId: string | number) => {
     if (!confirm('Are you sure you want to delete this document?')) return;
@@ -569,10 +585,10 @@ export default function MatterDetail() {
     }
   };
 
-  // const openPreview = (document: any) => {
-  //   setPreviewDocument(document);
-  //   setShowPreview(true);
-  // };
+  const openPreview = (document: any) => {
+    setPreviewDocument(document);
+    setShowPreview(true);
+  };
 
   // const closePreview = () => {
   //   setShowPreview(false);
