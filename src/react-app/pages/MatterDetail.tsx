@@ -329,31 +329,41 @@ export default function MatterDetail() {
     }
   };
 
-  const saveCriminalData = async () => {
+  const handleSaveMatter = async () => {
+    console.log('SAVE BUTTON CLICKED');
+    
     if (!id) {
-      alert('Error: Matter ID is missing');
-      console.error('Cannot save: Matter ID is undefined');
+      alert('Error: No matter ID');
       return;
     }
 
-    console.log('Attempting to save criminal data:', criminalData);
-    console.log('Matter ID:', id);
-
     try {
+      console.log('Saving criminal data:', criminalData);
+      
+      const updateData = {
+        criminal_data: criminalData ? JSON.stringify(criminalData) : '{}'
+      };
+      
+      console.log('Update data:', updateData);
+      
       const result = await databases.updateDocument(
         DATABASE_ID,
         COLLECTIONS.matters,
         String(id),
-        {
-          criminal_data: JSON.stringify(criminalData || {}),
-        }
+        updateData
       );
-      console.log('Save successful:', result);
+
+      console.log('Save result:', result);
+      alert('Saved successfully!');
       setIsEditing(false);
-      alert('Changes saved successfully!');
+      
     } catch (error) {
-      console.error('Error updating criminal case data:', error);
-      alert(`Save failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Save error:', error);
+      if (error && typeof error === 'object' && 'message' in error) {
+        alert(`Save failed: ${(error as {message: string}).message}`);
+      } else {
+        alert('Save failed: Unknown error');
+      }
     }
   };
 
@@ -757,8 +767,13 @@ export default function MatterDetail() {
         <div className="flex items-center space-x-3">
           {isEditing && (
             <button
-              onClick={saveCriminalData}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700"
+              onClick={() => {
+                console.log('BUTTON CLICKED - Handler working!');
+                alert('Button click detected! Processing save...');
+                handleSaveMatter();
+              }}
+              className="save-button inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700"
+              type="button"
             >
               <Save className="mr-2 h-4 w-4" />
               Save Changes
