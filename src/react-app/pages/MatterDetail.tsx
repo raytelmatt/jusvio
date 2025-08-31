@@ -124,6 +124,7 @@ export default function MatterDetail() {
     if (id) {
       fetchMatter();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
@@ -142,6 +143,7 @@ export default function MatterDetail() {
     } else if (activeTab === 'settings') {
       fetchHearings();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, id, matter]);
 
   const fetchMatter = async () => {
@@ -466,6 +468,7 @@ export default function MatterDetail() {
         COLLECTIONS.documents,
         [Query.equal('matter_id', String(id))]
       );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows = (list.documents || []).map((d: any) => ({
         ...d,
         id: d.id ?? d.$id,
@@ -486,6 +489,7 @@ export default function MatterDetail() {
         COLLECTIONS.communications,
         [Query.equal('matter_id', String(id))]
       );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows = (list.documents || []).map((d: any) => ({
         ...d,
         id: d.id ?? d.$id,
@@ -506,6 +510,7 @@ export default function MatterDetail() {
         COLLECTIONS.tasks,
         [Query.equal('matter_id', String(id))]
       );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows = (list.documents || []).map((d: any) => ({
         ...d,
         id: d.id ?? d.$id,
@@ -910,6 +915,7 @@ export default function MatterDetail() {
                     <p>No documents found for this matter.</p>
                   </div>
                 ) : (
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   documents.map((doc: any) => (
                     <div key={doc.id} className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
                       <div className="flex items-center space-x-3">
@@ -937,6 +943,7 @@ export default function MatterDetail() {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {communications.map((comm: any) => (
                     <div key={comm.id} className="p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
                       <div className="flex items-start justify-between">
@@ -964,6 +971,7 @@ export default function MatterDetail() {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {invoices.map((invoice: any) => (
                     <div key={invoice.id} className="p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
                       <div className="flex items-center justify-between">

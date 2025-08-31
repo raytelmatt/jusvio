@@ -14,8 +14,9 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting - Relaxed for build */
-    "strict": false,
+    /* Linting - Enhanced for better type safety */
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
