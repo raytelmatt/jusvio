@@ -999,6 +999,7 @@ export default function MatterDetail() {
         <DocumentPreview
           isOpen={showPreview}
           onClose={() => setShowPreview(false)}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           document={previewDocument as any}
         />
       )}
