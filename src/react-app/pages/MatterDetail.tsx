@@ -164,7 +164,20 @@ export default function MatterDetail() {
         total: Number(inv.total ?? inv.amount ?? 0),
       }));
       // Parse practice-area structured data stored as JSON string in 'case_data'
-      const rawCaseData = (matter.case_data as string | undefined) ?? '';
+      // Prefer case_data on matters; fallback to matters_meta if needed
+      let rawCaseData = (matter.case_data as string | undefined) ?? '';
+      if (!rawCaseData) {
+        try {
+          const meta = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.mattersMeta,
+            [Query.equal('matter_id', id)]
+          );
+          rawCaseData = (meta.documents?.[0]?.case_data as string | undefined) ?? '';
+        } catch {
+          // ignore fallback errors
+        }
+      }
       let parsedCaseData: Record<string, unknown> = {};
       if (typeof rawCaseData === 'string' && rawCaseData.trim().length > 0) {
         try {
@@ -633,14 +646,46 @@ export default function MatterDetail() {
       setIsSaving(true);
       setSaveError(null);
       setSaveSuccess(false);
-      await databases.updateDocument(
-        DATABASE_ID,
-        COLLECTIONS.matters,
-        id,
-        {
-          case_data: JSON.stringify(criminalData || {}),
+      // Try saving to matters; if rejected due to attribute limits, save to matters_meta
+      let savedToMatters = true;
+      try {
+        await databases.updateDocument(
+          DATABASE_ID,
+          COLLECTIONS.matters,
+          id,
+          {
+            case_data: JSON.stringify(criminalData || {}),
+          }
+        );
+      } catch (err) {
+        savedToMatters = false;
+        const message = (err && typeof err === 'object' && 'message' in err) ? String((err as Error).message) : '';
+        const attrLimit = message.toLowerCase().includes('attribute') || message.toLowerCase().includes('case_data');
+        if (!attrLimit) throw err;
+      }
+      if (!savedToMatters) {
+        const existing = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTIONS.mattersMeta,
+          [Query.equal('matter_id', id)]
+        );
+        const payload = { matter_id: id, case_data: JSON.stringify(criminalData || {}) } as Record<string, unknown>;
+        if (existing.documents && existing.documents.length > 0) {
+          await databases.updateDocument(
+            DATABASE_ID,
+            COLLECTIONS.mattersMeta,
+            existing.documents[0].$id,
+            payload
+          );
+        } else {
+          await databases.createDocument(
+            DATABASE_ID,
+            COLLECTIONS.mattersMeta,
+            'unique()',
+            payload
+          );
         }
-      );
+      }
       setIsEditing(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2500);

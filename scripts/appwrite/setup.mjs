@@ -287,13 +287,53 @@ async function ensureMatters() {
   const keys = [
     'matter_number','title','practice_area','status','client_id','assigned_attorney_ids','opened_at','closed_at','description','fee_model','flat_rate_amount','case_data'
   ];
-  await Promise.all(ops);
-  await waitForAttributes('matters', keys);
+  let skipCaseData = false;
+  try {
+    await Promise.all(ops);
+  } catch (err) {
+    const msg = (err && typeof err === 'object' && 'message' in err) ? String(err.message) : String(err);
+    if (msg.toLowerCase().includes('maximum number') || msg.toLowerCase().includes('maximum size')) {
+      console.warn("[setup] matters attribute limit reached; skipping 'case_data' on 'matters'.");
+      skipCaseData = true;
+    } else {
+      throw err;
+    }
+  }
+  const keysToWait = skipCaseData ? keys.filter((k) => k !== 'case_data') : keys;
+  await waitForAttributes('matters', keysToWait);
   await ensureIndex('matters', 'idx_matters_matter_number', IndexType.Unique, ['matter_number']);
   await ensureIndex('matters', 'idx_matters_client', IndexType.Key, ['client_id']);
   // Indexes for dashboard queries
   await ensureIndex('matters', 'idx_matters_practice_area', IndexType.Key, ['practice_area']);
   await ensureIndex('matters', 'idx_matters_status', IndexType.Key, ['status']);
+}
+
+async function ensureMattersMeta() {
+  // Create a lightweight meta collection to store large/flexible fields like case_data when the main 'matters' collection hits attribute limits
+  try {
+    await databases.getCollection(DATABASE_ID, 'matters_meta');
+    console.log("Collection 'matters_meta' exists");
+  } catch {
+    console.log("Creating collection 'matters_meta' with user permissions...");
+    const defaultPerms = [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.users()),
+    ];
+    await databases.createCollection(DATABASE_ID, 'matters_meta', 'Matters Meta', defaultPerms, true, true);
+  }
+
+  const list = await databases.listAttributes(DATABASE_ID, 'matters_meta');
+  const have = new Set(list.attributes.map((a) => a.key));
+  const ops = [];
+  const pushIfMissing = (exists, fn) => { if (!exists) ops.push(fn()); };
+
+  pushIfMissing(have.has('matter_id'), () => databases.createRelationshipAttribute(DATABASE_ID, 'matters_meta', 'matters', RelationshipType.ManyToOne, true, 'matter_id', undefined, RelationMutate.Cascade));
+  pushIfMissing(have.has('case_data'), () => databases.createStringAttribute(DATABASE_ID, 'matters_meta', 'case_data', 8192, false));
+  await Promise.all(ops);
+  await waitForAttributes('matters_meta', ['matter_id','case_data']);
+  await ensureIndex('matters_meta', 'idx_matters_meta_matter_unique', IndexType.Unique, ['matter_id']);
 }
 
 async function ensureDocuments() {
@@ -531,6 +571,7 @@ async function main() {
   await ensureUserProfiles();
   await ensureTimeEntries();
   await ensureTasks();
+  await ensureMattersMeta();
 
   console.log('Appwrite setup complete.');
 }

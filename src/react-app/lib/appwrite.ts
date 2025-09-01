@@ -14,6 +14,7 @@ export const COLLECTIONS = {
   userProfiles: 'user_profiles',
   clients: 'clients',
   matters: 'matters',
+  mattersMeta: 'matters_meta',
   hearings: 'hearings',
   documents: 'documents',
   documentTemplates: 'document_templates',
