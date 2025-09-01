@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router';
+import { useParams, Link, useNavigate } from 'react-router';
 import { 
   ArrowLeft, 
   Edit, 
@@ -77,6 +77,7 @@ type TimelineEventDisplay = {
 
 export default function MatterDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [matter, setMatter] = useState<Matter | null>(null);
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -732,9 +733,15 @@ export default function MatterDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link to="/matters" className="p-2 hover:bg-white/10 rounded-lg transition-colors text-blue-200 hover:text-white">
+          <button
+            type="button"
+            onClick={() => navigate('/matters')}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-blue-200 hover:text-white"
+            aria-label="Back to matters"
+            title="Back to matters"
+          >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <div>
             <h1 className="text-2xl font-bold text-white">{matter.title}</h1>
             <div className="flex items-center space-x-3 mt-1">
@@ -1036,6 +1043,25 @@ export default function MatterDetail() {
               )}
             </div>
           )}
+
+          {/* Bottom action bar */}
+          <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => navigate('/matters')}
+              className="inline-flex items-center px-4 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 hover:bg-white/20 backdrop-blur-sm"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Matters
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white ${isSaving ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+            >
+              {isSaving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
         </div>
       </div>
 
