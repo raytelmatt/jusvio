@@ -535,7 +535,9 @@ async function main() {
   console.log('Appwrite setup complete.');
 }
 
-main().catch((err) => {
-  console.error('Setup failed:', err?.message || err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Setup failed:', err?.message || err);
+    process.exit(1);
+  });

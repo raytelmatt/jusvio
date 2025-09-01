@@ -7,6 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -46,7 +47,13 @@ jobs:
             FILE="code.tar.gz"
           fi
           ls -lh "$FILE" || { echo "Archive missing"; exit 1; }
-          curl -fsS -X POST "$APPWRITE_ENDPOINT/sites/$APPWRITE_SITE_ID/deployments" \
+          curl -fsS \
+            --connect-timeout 30 \
+            --max-time 300 \
+            --retry 5 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            -X POST "$APPWRITE_ENDPOINT/sites/$APPWRITE_SITE_ID/deployments" \
             -H "X-Appwrite-Project: $APPWRITE_PROJECT_ID" \
             -H "X-Appwrite-Key: $APPWRITE_API_KEY" \
             -F "code=@${FILE}" \

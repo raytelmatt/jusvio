@@ -10,39 +10,25 @@ import {
   CheckSquare,
   User,
   Mail,
-  Save,
   Calendar,
   AlertCircle,
   Phone
 } from 'lucide-react';
 import DocumentPreview from '../components/DocumentPreview';
-import { databases } from '../lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
 import { Query } from 'appwrite';
 import { Matter, Document, Communication } from '@/shared/types';
 // import { Invoice, Payment } from '../../shared/types';
 
-const DATABASE_ID = 'jusivo';
-const COLLECTIONS = {
-  timeEntries: 'time_entries',
-  invoices: 'invoices', 
-  payments: 'payments',
-  matters: 'matters',
-  hearings: 'hearings',
-  tasks: 'tasks',
-  documents: 'documents',
-  communications: 'communications',
-  deadlines: 'deadlines'
+type TimelineEventDisplay = {
+  id: string;
+  title: string;
+  date?: string;
+  description?: string;
+  icon?: unknown;
+  color?: string;
+  meta?: string;
 };
-
-// interface TimelineEventDisplay {
-//   id?: string;
-//   type: 'document' | 'communication' | 'hearing' | 'payment' | 'invoice';
-//   title: string;
-//   date: string;
-//   description?: string;
-//   status?: string;
-//   amount?: number;
-// }
 
 // interface BillingStats {
 //   totalHours: number;
@@ -97,13 +83,14 @@ export default function MatterDetail() {
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [hearings, setHearings] = useState<unknown[]>([]);
   const [tasks, setTasks] = useState<unknown[]>([]);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEventDisplay[]>([]);
   
   // Suppress unused variable warnings - these are set by fetch functions
   void hearings;
   void tasks;
   const [criminalData, setCriminalData] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string | null>(null);
-  const [previewDocument] = useState<Document | null>(null);
+  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
@@ -155,13 +142,12 @@ export default function MatterDetail() {
 
     setLoading(true);
     try {
-      console.log('Fetching matter with ID:', id);
       const res = await databases.getDocument(
-        'jusivo',
-        'matters',
+        DATABASE_ID,
+        COLLECTIONS.matters,
         id,
       );
-      const matter = res;
+      const matter = res as unknown as Record<string, unknown>;
       const invoicesData = await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.invoices,
@@ -169,14 +155,22 @@ export default function MatterDetail() {
       );
       const invoicesWithDetails = invoicesData.documents?.map((inv: Record<string, unknown>) => ({
         ...inv,
-        amount: (inv.amount as number) || 0,
+        // Ensure numeric fields for UI formatting
+        amount: Number(inv.amount ?? 0),
+        total: Number(inv.total ?? inv.amount ?? 0),
       }));
-      const matterData = {
-        ...matter,
-        id: matter.$id,
-      } as unknown as Matter;
-      setCriminalData((matter as Record<string, unknown>).criminal_data as Record<string, unknown> || {});
-      setMatter(matterData);
+      // Parse practice-area structured data stored as JSON string in 'case_data'
+      const rawCaseData = (matter.case_data as string | undefined) ?? '';
+      let parsedCaseData: Record<string, unknown> = {};
+      if (typeof rawCaseData === 'string' && rawCaseData.trim().length > 0) {
+        try {
+          parsedCaseData = JSON.parse(rawCaseData) as Record<string, unknown>;
+        } catch {
+          parsedCaseData = {};
+        }
+      }
+      setCriminalData(parsedCaseData);
+      setMatter(matter as unknown as Matter);
       setInvoices(invoicesWithDetails || []);
       setError(null);
     } catch (error) {
@@ -199,15 +193,14 @@ export default function MatterDetail() {
         databases.listDocuments(DATABASE_ID, COLLECTIONS.documents, [Query.equal('matter_id', String(id))]).catch(() => ({ documents: [] })),
       ]);
 
-      const events: Record<string, unknown>[] = [];
+      const events: TimelineEventDisplay[] = [];
 
       if (matter) {
         events.push({
-          id: `matter-${String(matter.id ?? (matter as Record<string, unknown>).$id)}`,
-          type: 'matter_created',
+          id: `matter-${String((matter as Record<string, unknown>).id ?? (matter as Record<string, unknown>).$id)}`,
           title: 'Matter Opened',
-          description: `${matter.title} was opened`,
-          date: (matter as Record<string, unknown>).opened_at || (matter as Record<string, unknown>).created_at,
+          description: `${(matter as Record<string, unknown>).title as string} was opened`,
+          date: String((matter as Record<string, unknown>).opened_at || (matter as Record<string, unknown>).created_at || ''),
           icon: FileText,
           color: 'blue',
         });
@@ -219,11 +212,10 @@ export default function MatterDetail() {
         const hours = Number(entry.hours || 0);
         const rate = Number(entry.rate || 0);
         events.push({
-          id: `time-${entry.id ?? entry.$id}`,
-          type: 'time_entry',
+          id: `time-${String((entry as Record<string, unknown>).id ?? (entry as Record<string, unknown>).$id)}`,
           title: 'Time Entry',
-          description: entry.description,
-          date: entry.entry_date,
+          description: String(entry.description ?? ''),
+          date: String(entry.entry_date ?? (entry as Record<string, unknown>).$createdAt ?? ''),
           icon: Clock,
           color: 'green',
           meta: `${hours}h @ $${rate}/hr = $${(hours * rate).toFixed(2)}`,
@@ -232,70 +224,65 @@ export default function MatterDetail() {
 
       (invoiceList.documents || []).forEach((invoice: Record<string, unknown>) => {
         events.push({
-          id: `invoice-${invoice.id ?? invoice.$id}`,
-          type: 'invoice',
+          id: `invoice-${String((invoice as Record<string, unknown>).id ?? (invoice as Record<string, unknown>).$id)}`,
           title: 'Invoice Created',
-          description: invoice.title,
-          date: invoice.created_at ?? invoice.$createdAt,
+          description: String((invoice as Record<string, unknown>).title ?? ''),
+          date: String((invoice as Record<string, unknown>).created_at ?? (invoice as Record<string, unknown>).$createdAt ?? ''),
           icon: FileText,
           color: 'purple',
-          meta: `Version ${invoice.version} • ${invoice.status}`,
+          meta: `Version ${String((invoice as Record<string, unknown>).version ?? '')} • ${String((invoice as Record<string, unknown>).status ?? '')}`,
         });
       });
 
       (docList.documents || []).forEach((doc: Record<string, unknown>) => {
         events.push({
-          id: `doc-${doc.id ?? doc.$id}`,
-          type: 'document',
+          id: `doc-${String((doc as Record<string, unknown>).id ?? (doc as Record<string, unknown>).$id)}`,
           title: 'Document Created',
-          description: doc.title,
-          date: doc.created_at ?? doc.$createdAt,
+          description: String((doc as Record<string, unknown>).title ?? ''),
+          date: String((doc as Record<string, unknown>).created_at ?? (doc as Record<string, unknown>).$createdAt ?? ''),
           icon: FileText,
           color: 'purple',
-          meta: `Version ${doc.version} • ${doc.status}`,
+          meta: `Version ${String((doc as Record<string, unknown>).version ?? '')} • ${String((doc as Record<string, unknown>).status ?? '')}`,
         });
       });
 
       (hearingList.documents || []).forEach((hearing: Record<string, unknown>) => {
         events.push({
-          id: `hearing-${hearing.id ?? hearing.$id}`,
-          type: 'hearing',
-          title: hearing.hearing_type || 'Hearing',
-          description: `${hearing.courtroom ? `Courtroom ${hearing.courtroom}` : ''} ${hearing.judge_or_alj ? `- ${hearing.judge_or_alj}` : ''}`.trim(),
-          date: hearing.start_at,
+          id: `hearing-${String((hearing as Record<string, unknown>).id ?? (hearing as Record<string, unknown>).$id)}`,
+          title: String((hearing as Record<string, unknown>).hearing_type || 'Hearing'),
+          description: `${(hearing as Record<string, unknown>).courtroom ? `Courtroom ${(hearing as Record<string, unknown>).courtroom}` : ''} ${(hearing as Record<string, unknown>).judge_or_alj ? `- ${(hearing as Record<string, unknown>).judge_or_alj}` : ''}`.trim(),
+          date: String((hearing as Record<string, unknown>).start_at ?? ''),
           icon: Calendar,
           color: 'red',
-          meta: hearing.court_name,
+          meta: String((hearing as Record<string, unknown>).court_name ?? ''),
         });
       });
 
       (deadlineList.documents || []).forEach((deadline: Record<string, unknown>) => {
         events.push({
-          id: `deadline-${deadline.id ?? deadline.$id}`,
-          type: 'deadline',
-          title: deadline.title,
-          description: `${deadline.source} deadline`,
-          date: deadline.due_at,
+          id: `deadline-${String((deadline as Record<string, unknown>).id ?? (deadline as Record<string, unknown>).$id)}`,
+          title: String((deadline as Record<string, unknown>).title ?? 'Deadline'),
+          description: `${String((deadline as Record<string, unknown>).source ?? '')} deadline`,
+          date: String((deadline as Record<string, unknown>).due_at ?? ''),
           icon: AlertCircle,
-          color: deadline.status === 'Completed' ? 'green' : 'orange',
-          meta: deadline.status,
+          color: (deadline as Record<string, unknown>).status === 'Completed' ? 'green' : 'orange',
+          meta: String((deadline as Record<string, unknown>).status ?? ''),
         });
       });
 
       (communicationList.documents || []).forEach((comm: Record<string, unknown>) => {
         events.push({
-          id: `comm-${comm.id ?? comm.$id}`,
-          type: 'communication',
-          title: `${comm.channel} ${comm.direction}`,
-          description: (comm.body as string)?.substring(0, 100) + ((comm.body as string)?.length > 100 ? '...' : ''),
-          date: comm.sent_at || comm.created_at || comm.$createdAt,
-          icon: comm.channel === 'Phone' ? Phone : Mail,
-          color: comm.direction === 'Inbound' ? 'blue' : 'indigo',
+          id: `comm-${String((comm as Record<string, unknown>).id ?? (comm as Record<string, unknown>).$id)}`,
+          title: `${String((comm as Record<string, unknown>).channel ?? '')} ${String((comm as Record<string, unknown>).direction ?? '')}`.trim(),
+          description: String((comm as Record<string, unknown>).body ?? '').substring(0, 100) + (String((comm as Record<string, unknown>).body ?? '').length > 100 ? '...' : ''),
+          date: String((comm as Record<string, unknown>).sent_at || (comm as Record<string, unknown>).created_at || (comm as Record<string, unknown>).$createdAt || ''),
+          icon: (comm as Record<string, unknown>).channel === 'Phone' ? Phone : Mail,
+          color: (comm as Record<string, unknown>).direction === 'Inbound' ? 'blue' : 'indigo',
         });
       });
 
       events.sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
-      // setTimelineEvents(events);
+      setTimelineEvents(events);
     } catch (error) {
       console.error('Error fetching timeline events:', error);
     }
@@ -323,17 +310,11 @@ export default function MatterDetail() {
       ]);
 
       // Future: Process billing data
-      console.log('Billing data fetched successfully');
     } catch (error) {
       console.error('Error fetching billing data:', error);
     }
   };
 
-  const handleSaveMatter = () => {
-    alert('Save button clicked! Data would be saved here.');
-    console.log('Criminal data to save:', criminalData);
-    setIsEditing(false);
-  };
 
   const fetchHearings = async () => {
     if (!id) return;
@@ -485,6 +466,9 @@ export default function MatterDetail() {
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
         updated_at: d.updated_at ?? d.$updatedAt,
+        // Normalize for UI safety
+        subject: d.subject || `${d.channel} ${d.direction}`,
+        body: d.body,
       }));
       setCommunications(rows);
     } catch (error) {
@@ -637,6 +621,26 @@ export default function MatterDetail() {
     { id: 'settings', name: 'Court Settings', icon: Calendar },
   ];
 
+  const handleSave = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!id) return;
+    try {
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.matters,
+        id,
+        {
+          case_data: JSON.stringify(criminalData || {}),
+        }
+      );
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Error saving matter changes:', err);
+      setError('Failed to save changes');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -733,15 +737,12 @@ export default function MatterDetail() {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          {isEditing && (
-            <button
-              onClick={handleSaveMatter}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save Changes
-            </button>
-          )}
+          <button
+            onClick={handleSave}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700"
+          >
+            Save Changes
+          </button>
           <button
             onClick={() => setIsEditing(!isEditing)}
             className="inline-flex items-center px-4 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 hover:bg-white/20 backdrop-blur-sm"
@@ -907,7 +908,7 @@ export default function MatterDetail() {
                 ) : (
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   documents.map((doc: any) => (
-                    <div key={doc.id} className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
+                    <div key={doc.id} className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg cursor-pointer" onClick={() => { setPreviewDocument(doc); setShowPreview(true); }}>
                       <div className="flex items-center space-x-3">
                         <FileText className="h-5 w-5 text-blue-300" />
                         <div>
@@ -939,11 +940,40 @@ export default function MatterDetail() {
                       <div className="flex items-start justify-between">
                         <div>
                           <h5 className="font-medium text-white">{comm.subject}</h5>
-                          <p className="text-sm text-blue-200 mt-1">{comm.content}</p>
+                          <p className="text-sm text-blue-200 mt-1">{comm.body}</p>
                         </div>
                         <span className="text-xs text-blue-300">
                           {new Date(comm.created_at).toLocaleDateString()}
                         </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'timeline' && (
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-white">Timeline</h4>
+              {timelineEvents.length === 0 ? (
+                <div className="text-center py-8 text-blue-200">
+                  <p>No timeline events yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {timelineEvents.map((ev, idx) => (
+                    <div key={String((ev.id as string) ?? idx)} className="p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-white">{String(ev.title ?? '')}</p>
+                          {ev.description && (
+                            <p className="text-xs text-blue-200 mt-1">{String(ev.description)}</p>
+                          )}
+                        </div>
+                        {ev.date && (
+                          <span className="text-xs text-blue-300">{new Date(String(ev.date)).toLocaleDateString()}</span>
+                        )}
                       </div>
                     </div>
                   ))}

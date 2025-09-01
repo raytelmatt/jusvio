@@ -147,7 +147,9 @@ async function main() {
   console.log('Seeding complete.');
 }
 
-main().catch((err) => {
-  console.error('Seeding failed:', err?.message || err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Seeding failed:', err?.message || err);
+    process.exit(1);
+  });

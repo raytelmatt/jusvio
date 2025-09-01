@@ -156,7 +156,9 @@ async function main() {
   console.log('  Template:', templateDoc.$id, templateDoc.name);
 }
 
-main().catch((err) => {
-  console.error('Seed failed:', err?.message || err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Seed failed:', err?.message || err);
+    process.exit(1);
+  });
