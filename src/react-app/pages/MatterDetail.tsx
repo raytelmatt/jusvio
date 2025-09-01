@@ -90,6 +90,9 @@ export default function MatterDetail() {
   void tasks;
   const [criminalData, setCriminalData] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -626,6 +629,9 @@ export default function MatterDetail() {
     e.stopPropagation();
     if (!id) return;
     try {
+      setIsSaving(true);
+      setSaveError(null);
+      setSaveSuccess(false);
       await databases.updateDocument(
         DATABASE_ID,
         COLLECTIONS.matters,
@@ -635,9 +641,19 @@ export default function MatterDetail() {
         }
       );
       setIsEditing(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
     } catch (err) {
-      console.error('Error saving matter changes:', err);
-      setError('Failed to save changes');
+      const message = (err && typeof err === 'object' && 'message' in err) ? String((err as Error).message) : 'Failed to save changes';
+      if (message.toLowerCase().includes('permission') || message.toLowerCase().includes('unauthorized')) {
+        setSaveError('You do not have permission to update this matter. Ask an admin to grant update access or create a new matter yourself.');
+      } else if (message.toLowerCase().includes('attribute') || message.toLowerCase().includes('case_data')) {
+        setSaveError('The matter is missing the "case_data" field in Appwrite. Run the setup script or add this attribute in the console.');
+      } else {
+        setSaveError(message);
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -737,11 +753,15 @@ export default function MatterDetail() {
           </div>
         </div>
         <div className="flex items-center space-x-3">
+          {saveSuccess && (
+            <span className="text-xs text-green-300">Saved</span>
+          )}
           <button
             onClick={handleSave}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700"
+            disabled={isSaving}
+            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white ${isSaving ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
           >
-            Save Changes
+            {isSaving ? 'Saving…' : 'Save Changes'}
           </button>
           <button
             onClick={() => setIsEditing(!isEditing)}
@@ -804,6 +824,11 @@ export default function MatterDetail() {
         </div>
 
         <div className="p-6">
+          {saveError && (
+            <div className="mb-4 p-3 rounded border border-red-400 text-red-200 bg-red-900/20">
+              {saveError}
+            </div>
+          )}
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {matter.description && (

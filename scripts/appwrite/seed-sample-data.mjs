@@ -111,6 +111,15 @@ async function main() {
 
   if (!matterDoc) {
     console.log('Creating matter...');
+    // Grant broad read/update/delete to authenticated users for demo; tighten as needed
+    const permissions = [];
+    try {
+      const { Permission, Role } = require('node-appwrite');
+      permissions.push(Permission.read(Role.users()));
+      permissions.push(Permission.update(Role.users()));
+      permissions.push(Permission.delete(Role.users()));
+    } catch {}
+
     matterDoc = await databases.createDocument(DATABASE_ID, COL.matters, ID.unique(), {
       matter_number: TEST.matterNumber,
       title: 'Test Matter',
@@ -120,7 +129,7 @@ async function main() {
       fee_model: 'FlatRate',     // enum: FlatRate | Progressive
       flat_rate_amount: 0,
       description: 'Seeded for sample scenarios',
-    });
+    }, permissions);
   } else {
     console.log('Matter already exists:', matterDoc.$id);
   }

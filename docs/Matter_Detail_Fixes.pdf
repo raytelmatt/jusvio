@@ -1,0 +1,485 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 612. 792.]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 4667
+>>
+stream
+0.200025 w
+0 G
+BT
+/F2 20 Tf
+23. TL
+0 g
+56. 736. Td
+(Matter Detail Page — What Was Fixed and Why) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0 g
+56. 710. Td
+(Generated: 9/1/2025, 12:50:30 PM) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+56. 692. Td
+(Summary) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 672. Td
+(This document explains the issues identified on the Matter Detail page, what was broken, and why) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 658. Td
+(each fix was made. It is written for a non-technical audience.) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+56. 638. Td
+(What was broken and why it was fixed) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 618. Td
+(• Save button didn’t save: Clicking “Save Changes” only showed a pop-up and did not store edits. Now) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 604. Td
+(it saves your updates \(like case number or jurisdiction\) to Appwrite so changes persist.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 590. Td
+(• Case details not loading: The page looked for “criminal_data” but your data lives under “case_data”) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 576. Td
+(as a JSON string. It now reads and safely parses “case_data” so fields show correctly.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 562. Td
+(• Messages showed the wrong fields: The page used “content” while your records store message text) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 548. Td
+(in “body”, so messages could appear blank. It now shows the real message body and a reasonable) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 534. Td
+(subject.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 520. Td
+(• Billing totals unreliable: Some amounts arrived as text, which could break formatting or display. Totals) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 506. Td
+(are now converted to numbers first so currency formatting is correct.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 492. Td
+(• Timeline not visible: Events were collected but never displayed. The Timeline tab now shows) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 478. Td
+(documents, invoices, time entries, hearings, deadlines, and communications in date order.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 464. Td
+(• Document preview disabled: Clicking a document didn’t open a preview. You can now click a) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 450. Td
+(document to see its details.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 436. Td
+(• Inconsistent backend settings: Mixed hard-coded database names with shared settings, causing) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 422. Td
+(environment fragility. All calls now use the shared Appwrite configuration.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 408. Td
+(• Developer leftovers: Debug pop-ups and logs triggered on Save. These were removed for a clean,) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 394. Td
+(professional experience.) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+56. 374. Td
+(What changed under the hood) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 354. Td
+(• Implemented real saving: The Save button writes case updates into the matter record’s “case_data”) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 340. Td
+(field.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 326. Td
+(• Consistent data loading: The page parses “case_data” and fills the form fields predictably.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 312. Td
+(• Robust numbers: Invoice amounts/total are coerced to numbers before formatting.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 298. Td
+(• Accurate communications: Uses the “body” field and a sensible subject fallback.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 284. Td
+(• Enabled preview: Document items are clickable and open a preview modal.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 270. Td
+(• Live Timeline: Timeline events are stored in page state and rendered newest first.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 256. Td
+(• Unified settings: Every database call now goes through the same shared constants.) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0 g
+56. 236. Td
+(How the update was rolled out) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 216. Td
+(• Built the site for production and adjusted the build so test files do not block deployment.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 202. Td
+(• Committed and pushed the changes to the main branch.) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0 g
+56. 188. Td
+(• An automated workflow deployed the updated site to Appwrite Sites.) Tj
+ET
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R ]
+/Count 1
+>>
+endobj
+5 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+6 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+7 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+8 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+9 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+10 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+11 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+12 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+13 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+14 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+15 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+16 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+17 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+18 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 5 0 R
+/F2 6 0 R
+/F3 7 0 R
+/F4 8 0 R
+/F5 9 0 R
+/F6 10 0 R
+/F7 11 0 R
+/F8 12 0 R
+/F9 13 0 R
+/F10 14 0 R
+/F11 15 0 R
+/F12 16 0 R
+/F13 17 0 R
+/F14 18 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+19 0 obj
+<<
+/Producer (jsPDF 3.0.1)
+/CreationDate (D:20250901125030-05'00')
+>>
+endobj
+20 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 21
+0000000000 65535 f 
+0000004839 00000 n 
+0000006656 00000 n 
+0000000015 00000 n 
+0000000120 00000 n 
+0000004896 00000 n 
+0000005021 00000 n 
+0000005151 00000 n 
+0000005284 00000 n 
+0000005421 00000 n 
+0000005544 00000 n 
+0000005673 00000 n 
+0000005805 00000 n 
+0000005941 00000 n 
+0000006069 00000 n 
+0000006196 00000 n 
+0000006325 00000 n 
+0000006458 00000 n 
+0000006560 00000 n 
+0000006904 00000 n 
+0000006990 00000 n 
+trailer
+<<
+/Size 21
+/Root 20 0 R
+/Info 19 0 R
+/ID [ <A885F9E1EEF0BCA4ABFB0D4B6A579D78> <A885F9E1EEF0BCA4ABFB0D4B6A579D78> ]
+>>
+startxref
+7094
+%%EOF
