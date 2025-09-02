@@ -37,11 +37,11 @@ jobs:
       - name: Deploy to Appwrite Sites
         env:
           APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
-          APPWRITE_SITE_ID: ${{ secrets.APPWRITE_SITE_ID }}
         run: |
           set -x
           APPWRITE_ENDPOINT="https://nyc.cloud.appwrite.io/v1"
           APPWRITE_PROJECT_ID="6897443a0034c54b3fd8"
+          APPWRITE_SITE_ID="689776cb0024f4ccb0ed"
           FILE="code.zip"
           if [ ! -s "$FILE" ]; then
             FILE="code.tar.gz"
