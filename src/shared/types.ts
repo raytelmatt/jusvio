@@ -268,10 +268,9 @@ export const TaskSchema = z.object({
   matter_id: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
   title: z.string(),
   description: z.string().optional(),
-  due_at: z.string().optional(),
-  priority: z.enum(['Low', 'Medium', 'High']),
   status: z.enum(['Open', 'InProgress', 'Completed']),
-  assignee_ids: z.array(z.string()).optional(),
+  due_at: z.string().optional(),
+  assigned_to_user_ids: z.string().optional(),
   created_at: z.string(),
   $createdAt: z.string().optional(),
   // Computed field for UI

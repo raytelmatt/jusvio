@@ -87,10 +87,10 @@ async function ensureTasks() {
   pushIfMissing(have.has('title'), () => databases.createStringAttribute(DATABASE_ID, 'tasks', 'title', 512, true));
   pushIfMissing(have.has('description'), () => databases.createStringAttribute(DATABASE_ID, 'tasks', 'description', 4096, false));
   pushIfMissing(have.has('due_at'), () => databases.createDatetimeAttribute(DATABASE_ID, 'tasks', 'due_at', false));
-  pushIfMissing(have.has('priority'), () => databases.createEnumAttribute(DATABASE_ID, 'tasks', 'priority', ['Low','Medium','High'], true));
-  pushIfMissing(have.has('assignee_ids'), () => databases.createStringAttribute(DATABASE_ID, 'tasks', 'assignee_ids', 64, false, undefined, true));
+
+  pushIfMissing(have.has('assigned_to_user_ids'), () => databases.createStringAttribute(DATABASE_ID, 'tasks', 'assigned_to_user_ids', 64, false, undefined, true));
   pushIfMissing(have.has('status'), () => databases.createEnumAttribute(DATABASE_ID, 'tasks', 'status', ['Open','InProgress','Completed'], true));
-  const keys = ['matter_id','title','description','due_at','priority','assignee_ids','status'];
+  const keys = ['matter_id','title','description','due_at','assigned_to_user_ids','status'];
   await Promise.all(ops);
   await waitForAttributes('tasks', keys);
   await ensureIndex('tasks', 'idx_tasks_matter', IndexType.Key, ['matter_id']);

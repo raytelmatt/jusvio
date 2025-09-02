@@ -108,8 +108,8 @@ export default function MatterDetail() {
   const [editingTask, setEditingTask] = useState<Record<string, unknown> | null>(null);
   const [taskForm, setTaskForm] = useState({
     title: '',
+    description: '',
     due_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
-    priority: 'Medium' as 'Low' | 'Medium' | 'High',
     status: 'Open' as 'Open' | 'InProgress' | 'Completed',
   });
   // Commenting out unused form state
@@ -551,8 +551,8 @@ export default function MatterDetail() {
       const payload: Record<string, unknown> = {
         matter_id: String(id),
         title: taskForm.title,
+        description: taskForm.description || null,
         status: taskForm.status,
-        priority: taskForm.priority,
         due_at: taskForm.due_at || null
       };
       
@@ -625,8 +625,8 @@ export default function MatterDetail() {
   const resetTaskForm = () => {
     setTaskForm({
       title: '',
+      description: '',
       due_at: '',
-      priority: 'Medium',
       status: 'Open'
     });
     setEditingTask(null);
@@ -637,8 +637,8 @@ export default function MatterDetail() {
       setEditingTask(task);
       setTaskForm({
         title: task.title,
+        description: task.description || '',
         due_at: task.due_at || '',
-        priority: task.priority,
         status: task.status
       });
     } else {
@@ -664,14 +664,7 @@ export default function MatterDetail() {
     await updateTask(taskId, { status: newStatus });
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'High': return 'text-red-400 bg-red-900/20 border-red-500/30';
-      case 'Medium': return 'text-yellow-400 bg-yellow-900/20 border-yellow-500/30';
-      case 'Low': return 'text-green-400 bg-green-900/20 border-green-500/30';
-      default: return 'text-blue-400 bg-blue-900/20 border-blue-500/30';
-    }
-  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -1329,9 +1322,7 @@ export default function MatterDetail() {
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
                               {task.status}
                             </span>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                              {task.priority}
-                            </span>
+
                             {task.due_at && (
                               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${isOverdue(task.due_at) ? 'bg-red-100/20 text-red-300' : 'bg-green-100/20 text-green-300'}`}>
                                 {isOverdue(task.due_at) ? 'Overdue' : 'Due'}
@@ -1736,7 +1727,16 @@ export default function MatterDetail() {
                   />
                 </div>
 
-
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Description</label>
+                  <textarea
+                    value={taskForm.description}
+                    onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    placeholder="Task description (optional)"
+                  />
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-blue-200 mb-1">Due Date (optional)</label>
@@ -1750,20 +1750,7 @@ export default function MatterDetail() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-1">Priority</label>
-                  <select
-                    id="task_priority"
-                    value={taskForm.priority}
-                    onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as 'Low' | 'Medium' | 'High' })}
-                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                    aria-label="Task Priority"
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                </div>
+
 
                 <div>
                   <label className="block text-sm font-medium text-blue-200 mb-1">Status</label>
@@ -1779,8 +1766,6 @@ export default function MatterDetail() {
                     <option value="Completed">Completed</option>
                   </select>
                 </div>
-
-
 
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
