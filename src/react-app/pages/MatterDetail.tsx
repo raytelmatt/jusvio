@@ -98,7 +98,17 @@ export default function MatterDetail() {
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
-  const [invoices, setInvoices] = useState<unknown[]>([]);
+  const [invoices, setInvoices] = useState<Record<string, unknown>[]>([]);
+  const [timeEntries, setTimeEntries] = useState<Record<string, unknown>[]>([]);
+  const [payments, setPayments] = useState<Record<string, unknown>[]>([]);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<unknown>(null);
+  const [invoiceForm, setInvoiceForm] = useState({
+    description: '',
+    line_items: [] as Array<{ description: string; quantity: number; rate: number; amount: number }>,
+    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+  });
   // Commenting out unused form state
   // const [hearingForm] = useState<HearingForm>({
   //   hearing_type: '',
@@ -308,7 +318,7 @@ export default function MatterDetail() {
   const fetchBillingData = async () => {
     if (!id) return;
     try {
-      const [, , ] = await Promise.all([
+      const [timeEntriesData, invoicesData, paymentsData] = await Promise.all([
         databases.listDocuments(
           DATABASE_ID,
           COLLECTIONS.timeEntries,
@@ -322,11 +332,27 @@ export default function MatterDetail() {
         databases.listDocuments(
           DATABASE_ID,
           COLLECTIONS.payments,
-          [Query.equal('matter_id', id!)]
+          []  // Payments don't have matter_id directly, they're linked to invoices
         ),
       ]);
 
-      // Future: Process billing data
+      // Process invoices with proper numeric fields
+      const processedInvoices = invoicesData.documents?.map((inv: Record<string, unknown>) => ({
+        ...inv,
+        amount: Number(inv.amount ?? inv.total ?? 0),
+        total: Number(inv.total ?? inv.amount ?? 0),
+        subtotal: Number(inv.subtotal ?? inv.total ?? inv.amount ?? 0),
+      })) || [];
+
+      // Filter payments for this matter's invoices
+      const invoiceIds = processedInvoices.map((inv: Record<string, unknown>) => inv.$id || inv.id);
+      const relevantPayments = paymentsData.documents?.filter((payment: Record<string, unknown>) => 
+        invoiceIds.includes(payment.invoice_id)
+      ) || [];
+
+      setTimeEntries(timeEntriesData.documents || []);
+      setInvoices(processedInvoices);
+      setPayments(relevantPayments);
     } catch (error) {
       console.error('Error fetching billing data:', error);
     }
@@ -638,6 +664,119 @@ export default function MatterDetail() {
     { id: 'settings', name: 'Court Settings', icon: Calendar },
   ];
 
+  const generateInvoice = async () => {
+    if (!id || !matter) return;
+    
+    try {
+      // Calculate totals from time entries or line items
+      let subtotal = 0;
+      let lineItems: unknown[] = [];
+      
+      if (invoiceForm.line_items.length > 0) {
+        // Use custom line items
+        lineItems = invoiceForm.line_items;
+        subtotal = invoiceForm.line_items.reduce((sum, item) => sum + item.amount, 0);
+      } else if (timeEntries.length > 0) {
+        // Generate from unbilled time entries
+        lineItems = timeEntries.map((entry) => ({
+          description: entry.description || 'Legal Services',
+          quantity: Number(entry.hours || 0),
+          rate: Number(entry.rate || 150), // Default rate if not set
+          amount: Number(entry.hours || 0) * Number(entry.rate || 150),
+        }));
+        subtotal = (lineItems as Record<string, unknown>[]).reduce((sum: number, item) => sum + Number(item.amount || 0), 0);
+      }
+      
+      const invoiceNumber = `INV-${matter.matter_number}-${Date.now().toString().slice(-6)}`;
+      
+      const newInvoice = {
+        matter_id: id,
+        invoice_number: invoiceNumber,
+        issue_date: new Date().toISOString(),
+        due_date: invoiceForm.due_date,
+        line_items: JSON.stringify(lineItems),
+        subtotal: subtotal,
+        taxes: 0,
+        discounts: 0,
+        total: subtotal,
+        status: 'Draft',
+      };
+      
+      const createdInvoice = await databases.createDocument(
+        DATABASE_ID,
+        COLLECTIONS.invoices,
+        'unique()',
+        newInvoice
+      );
+      
+      // Refresh billing data
+      await fetchBillingData();
+      setShowInvoiceModal(false);
+      setInvoiceForm({
+        description: '',
+        line_items: [],
+        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      });
+      
+      // Show success message
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      
+      return createdInvoice;
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      setSaveError('Failed to generate invoice. Please try again.');
+    }
+  };
+
+  const recordPayment = async (invoiceId: string, amount: number, method: string, reference?: string) => {
+    try {
+      const payment = {
+        invoice_id: invoiceId,
+        payment_method: method,
+        amount: amount,
+        received_at: new Date().toISOString(),
+        reference: reference || '',
+      };
+      
+      await databases.createDocument(
+        DATABASE_ID,
+        COLLECTIONS.payments,
+        'unique()',
+        payment
+      );
+      
+      // Update invoice status to Paid if fully paid
+      const invoice = invoices.find((inv) => (inv.$id || inv.id) === invoiceId);
+      if (invoice) {
+        const totalPaid = payments
+          .filter((p) => p.invoice_id === invoiceId)
+          .reduce((sum: number, p) => sum + Number(p.amount || 0), 0) + amount;
+        
+        if (totalPaid >= Number(invoice.total || 0)) {
+          await databases.updateDocument(
+            DATABASE_ID,
+            COLLECTIONS.invoices,
+            invoiceId,
+            { status: 'Paid' }
+          );
+        }
+      }
+      
+      // Refresh billing data
+      await fetchBillingData();
+      setShowPaymentModal(false);
+      setSelectedInvoice(null);
+      
+      // Show success message
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      setSaveError('Failed to record payment. Please try again.');
+    }
+  };
+
   const handleSave = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -790,9 +929,9 @@ export default function MatterDetail() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-white">{matter.title}</h1>
+            <h1 className="text-2xl font-bold text-white">{String(matter.title || '')}</h1>
             <div className="flex items-center space-x-3 mt-1">
-              <span className="text-sm text-blue-200">Matter #{matter.matter_number}</span>
+              <span className="text-sm text-blue-200">Matter #{String(matter.matter_number || '')}</span>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 practiceAreaColors[matter.practice_area as keyof typeof practiceAreaColors]
               }`}>
@@ -835,13 +974,13 @@ export default function MatterDetail() {
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-white">
-              {matter.client_first_name} {matter.client_last_name}
+              {String(matter.client_first_name || '')} {String(matter.client_last_name || '')}
             </h3>
             <div className="flex items-center space-x-4 text-sm text-blue-200">
               {matter.client_email && (
                 <div className="flex items-center">
                   <Mail className="mr-1 h-3 w-3" />
-                  {matter.client_email}
+                  {String(matter.client_email)}
                 </div>
               )}
               <span>Opened: {new Date(matter.opened_at || matter.created_at).toLocaleDateString()}</span>
@@ -888,7 +1027,7 @@ export default function MatterDetail() {
               {matter.description && (
                 <div>
                   <h4 className="text-sm font-medium text-white mb-2">Matter Description</h4>
-                  <p className="text-sm text-blue-200">{matter.description}</p>
+                  <p className="text-sm text-blue-200">{String(matter.description)}</p>
                 </div>
               )}
 
@@ -1062,32 +1201,162 @@ export default function MatterDetail() {
           )}
 
           {activeTab === 'billing' && (
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-white">Billing & Invoices</h4>
-              {invoices.length === 0 ? (
-                <div className="text-center py-8 text-blue-200">
-                  <p>No invoices found for this matter.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  {invoices.map((invoice: any) => (
-                    <div key={invoice.id} className="p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h5 className="font-medium text-white">Invoice #{invoice.invoice_number}</h5>
-                          <p className="text-sm text-blue-200">
-                            Due: {new Date(invoice.due_date).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-white">${invoice.total.toFixed(2)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            <div className="space-y-6">
+              {/* Header with Generate Invoice button */}
+              <div className="flex items-center justify-between">
+                <h4 className="text-lg font-semibold text-white">Billing & Invoices</h4>
+                <button
+                  onClick={() => setShowInvoiceModal(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Generate Invoice
+                </button>
+              </div>
+
+              {/* Time Entries Section */}
+              {timeEntries.length > 0 && (
+                <div>
+                  <h5 className="text-md font-medium text-white mb-3">Time Entries</h5>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-white/10">
+                      <thead>
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Date</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Description</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-blue-200 uppercase tracking-wider">Hours</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-blue-200 uppercase tracking-wider">Rate</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-blue-200 uppercase tracking-wider">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/10">
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        {timeEntries.map((entry: any) => (
+                          <tr key={entry.$id || entry.id}>
+                            <td className="px-3 py-2 text-sm text-white">
+                              {new Date(entry.entry_date || entry.$createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-blue-200">{entry.description || 'Legal Services'}</td>
+                            <td className="px-3 py-2 text-sm text-white text-right">{Number(entry.hours || 0).toFixed(2)}</td>
+                            <td className="px-3 py-2 text-sm text-white text-right">${Number(entry.rate || 150).toFixed(2)}</td>
+                            <td className="px-3 py-2 text-sm text-white text-right">
+                              ${(Number(entry.hours || 0) * Number(entry.rate || 150)).toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan={4} className="px-3 py-2 text-sm font-medium text-white text-right">Total Unbilled:</td>
+                          <td className="px-3 py-2 text-sm font-medium text-white text-right">
+                            ${timeEntries.reduce((sum: number, e) => 
+                              sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0).toFixed(2)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
                 </div>
               )}
+
+              {/* Invoices Section */}
+              <div>
+                <h5 className="text-md font-medium text-white mb-3">Invoices</h5>
+                {invoices.length === 0 ? (
+                  <div className="text-center py-8 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
+                    <DollarSign className="mx-auto h-12 w-12 text-blue-300 mb-3" />
+                    <p className="text-blue-200">No invoices generated yet.</p>
+                    <p className="text-sm text-blue-300 mt-1">Click "Generate Invoice" to create your first invoice.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {invoices.map((invoice: any) => {
+                      const invoicePayments = payments.filter((p) => 
+                        p.invoice_id === (invoice.$id || invoice.id)
+                      );
+                      const totalPaid = invoicePayments.reduce((sum: number, p) => 
+                        sum + Number(p.amount || 0), 0
+                      );
+                      const balance = Number(invoice.total || 0) - totalPaid;
+                      
+                      return (
+                        <div key={invoice.$id || invoice.id} className="p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3">
+                                <h5 className="font-medium text-white">Invoice #{invoice.invoice_number}</h5>
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                  invoice.status === 'Paid' ? 'bg-green-100/20 text-green-300' :
+                                  invoice.status === 'Overdue' ? 'bg-red-100/20 text-red-300' :
+                                  invoice.status === 'Sent' ? 'bg-blue-100/20 text-blue-300' :
+                                  'bg-gray-100/20 text-gray-300'
+                                }`}>
+                                  {invoice.status}
+                                </span>
+                              </div>
+                              <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <span className="text-blue-200">Issue Date:</span>
+                                  <span className="ml-2 text-white">{new Date(invoice.issue_date || invoice.$createdAt).toLocaleDateString()}</span>
+                                </div>
+                                <div>
+                                  <span className="text-blue-200">Due Date:</span>
+                                  <span className="ml-2 text-white">{new Date(invoice.due_date).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right ml-4">
+                              <p className="text-sm text-blue-200">Total</p>
+                              <p className="text-lg font-semibold text-white">${Number(invoice.total || 0).toFixed(2)}</p>
+                              {totalPaid > 0 && (
+                                <>
+                                  <p className="text-sm text-green-300">Paid: ${totalPaid.toFixed(2)}</p>
+                                  <p className="text-sm font-medium text-yellow-300">Balance: ${balance.toFixed(2)}</p>
+                                </>
+                              )}
+                              {invoice.status !== 'Paid' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedInvoice(invoice);
+                                    setShowPaymentModal(true);
+                                  }}
+                                  className="mt-2 inline-flex items-center px-3 py-1 border border-white/20 text-xs font-medium rounded text-blue-100 bg-white/10 hover:bg-white/20"
+                                >
+                                  Record Payment
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Summary Statistics */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4">
+                  <p className="text-sm text-blue-200">Total Billed</p>
+                  <p className="text-2xl font-semibold text-white">
+                    ${invoices.reduce((sum: number, inv) => sum + Number(inv.total || 0), 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4">
+                  <p className="text-sm text-green-300">Total Paid</p>
+                  <p className="text-2xl font-semibold text-white">
+                    ${payments.reduce((sum: number, p) => sum + Number(p.amount || 0), 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4">
+                  <p className="text-sm text-yellow-300">Outstanding</p>
+                  <p className="text-2xl font-semibold text-white">
+                    ${(invoices.reduce((sum: number, inv) => sum + Number(inv.total || 0), 0) - 
+                       payments.reduce((sum: number, p) => sum + Number(p.amount || 0), 0)).toFixed(2)}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1120,6 +1389,153 @@ export default function MatterDetail() {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           document={previewDocument as any}
         />
+      )}
+
+      {/* Invoice Generation Modal */}
+      {showInvoiceModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowInvoiceModal(false)} />
+            <div className="relative bg-gray-900 rounded-xl shadow-xl border border-white/10 p-6 max-w-2xl w-full">
+              <h3 className="text-lg font-semibold text-white mb-4">Generate Invoice</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={invoiceForm.due_date}
+                    onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Description</label>
+                  <textarea
+                    value={invoiceForm.description}
+                    onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    placeholder="Invoice description (optional)"
+                  />
+                </div>
+
+                {timeEntries.length > 0 && (
+                  <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4">
+                    <p className="text-sm text-blue-200">
+                      This invoice will include {timeEntries.length} unbilled time entries totaling{' '}
+                      ${timeEntries.reduce((sum: number, e) => 
+                        sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0).toFixed(2)}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    onClick={() => setShowInvoiceModal(false)}
+                    className="px-4 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 hover:bg-white/20"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={generateInvoice}
+                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Generate Invoice
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Recording Modal */}
+      {showPaymentModal && selectedInvoice && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowPaymentModal(false)} />
+            <div className="relative bg-gray-900 rounded-xl shadow-xl border border-white/10 p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold text-white mb-4">Record Payment</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-blue-200">Invoice #{String((selectedInvoice as Record<string, unknown>).invoice_number || '')}</p>
+                  <p className="text-lg font-semibold text-white">
+                    Total: ${Number((selectedInvoice as Record<string, unknown>).total || 0).toFixed(2)}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Payment Amount</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    defaultValue={Number((selectedInvoice as Record<string, unknown>).total || 0)}
+                    id="payment-amount"
+                    title="Payment Amount"
+                    aria-label="Payment Amount"
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Payment Method</label>
+                  <select
+                    id="payment-method"
+                    title="Payment Method"
+                    aria-label="Payment Method"
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                  >
+                    <option value="Card">Credit Card</option>
+                    <option value="ACH">Bank Transfer (ACH)</option>
+                    <option value="Check">Check</option>
+                    <option value="Cash">Cash</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Reference Number (optional)</label>
+                  <input
+                    type="text"
+                    id="payment-reference"
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    placeholder="Check number, transaction ID, etc."
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    onClick={() => {
+                      setShowPaymentModal(false);
+                      setSelectedInvoice(null);
+                    }}
+                    className="px-4 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 hover:bg-white/20"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      const amount = parseFloat((document.getElementById('payment-amount') as HTMLInputElement).value);
+                      const method = (document.getElementById('payment-method') as HTMLSelectElement).value;
+                      const reference = (document.getElementById('payment-reference') as HTMLInputElement).value;
+                      recordPayment(
+                        (selectedInvoice as Record<string, unknown>).$id as string || (selectedInvoice as Record<string, unknown>).id as string,
+                        amount,
+                        method,
+                        reference
+                      );
+                    }}
+                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700"
+                  >
+                    Record Payment
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
