@@ -103,7 +103,7 @@ export default function MatterDetail() {
   const [payments, setPayments] = useState<Record<string, unknown>[]>([]);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<unknown>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<Record<string, unknown> | null>(null);
   const [invoiceForm, setInvoiceForm] = useState({
     description: '',
     line_items: [] as Array<{ description: string; quantity: number; rate: number; amount: number }>,
@@ -1461,9 +1461,9 @@ export default function MatterDetail() {
               
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-blue-200">Invoice #{String((selectedInvoice as Record<string, unknown>).invoice_number || '')}</p>
+                  <p className="text-sm text-blue-200">Invoice #{String(selectedInvoice?.invoice_number || '')}</p>
                   <p className="text-lg font-semibold text-white">
-                    Total: ${Number((selectedInvoice as Record<string, unknown>).total || 0).toFixed(2)}
+                    Total: ${Number(selectedInvoice?.total || 0).toFixed(2)}
                   </p>
                 </div>
 
@@ -1472,7 +1472,7 @@ export default function MatterDetail() {
                   <input
                     type="number"
                     step="0.01"
-                    defaultValue={Number((selectedInvoice as Record<string, unknown>).total || 0)}
+                    defaultValue={Number(selectedInvoice?.total || 0)}
                     id="payment-amount"
                     title="Payment Amount"
                     aria-label="Payment Amount"
@@ -1521,7 +1521,7 @@ export default function MatterDetail() {
                       const method = (document.getElementById('payment-method') as HTMLSelectElement).value;
                       const reference = (document.getElementById('payment-reference') as HTMLInputElement).value;
                       recordPayment(
-                        (selectedInvoice as Record<string, unknown>).$id as string || (selectedInvoice as Record<string, unknown>).id as string,
+                        selectedInvoice?.$id as string || selectedInvoice?.id as string,
                         amount,
                         method,
                         reference
