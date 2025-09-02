@@ -108,6 +108,7 @@ export default function MatterDetail() {
     description: '',
     line_items: [] as Array<{ description: string; quantity: number; rate: number; amount: number }>,
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+    default_rate: 150,
   });
   // Commenting out unused form state
   // const [hearingForm] = useState<HearingForm>({
@@ -716,6 +717,7 @@ export default function MatterDetail() {
         description: '',
         line_items: [],
         due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        default_rate: 150,
       });
       
       // Show success message
@@ -1396,40 +1398,198 @@ export default function MatterDetail() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowInvoiceModal(false)} />
-            <div className="relative bg-gray-900 rounded-xl shadow-xl border border-white/10 p-6 max-w-2xl w-full">
+            <div className="relative bg-gray-900 rounded-xl shadow-xl border border-white/10 p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold text-white mb-4">Generate Invoice</h3>
               
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-1">Due Date</label>
-                  <input
-                    type="date"
-                    value={invoiceForm.due_date}
-                    onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                  />
+              <div className="space-y-6">
+                {/* Basic Invoice Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-blue-200 mb-1">Due Date</label>
+                    <input
+                      type="date"
+                      value={invoiceForm.due_date}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
+                      className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                      title="Invoice due date"
+                      aria-label="Invoice due date"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-blue-200 mb-1">Default Hourly Rate</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={invoiceForm.default_rate || 150}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, default_rate: Number(e.target.value) })}
+                      className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                      placeholder="150.00"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Invoice Description</label>
                   <textarea
                     value={invoiceForm.description}
                     onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
-                    rows={3}
+                    rows={2}
                     className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                    placeholder="Invoice description (optional)"
+                    placeholder="Brief description of services (optional)"
                   />
                 </div>
 
+                {/* Time Entries Section */}
                 {timeEntries.length > 0 && (
                   <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4">
-                    <p className="text-sm text-blue-200">
-                      This invoice will include {timeEntries.length} unbilled time entries totaling{' '}
-                      ${timeEntries.reduce((sum: number, e) => 
-                        sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0).toFixed(2)}
-                    </p>
+                    <h4 className="text-md font-medium text-blue-200 mb-3">Unbilled Time Entries</h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {timeEntries.map((entry: Record<string, unknown>, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-blue-800/20 rounded">
+                          <div className="flex-1">
+                            <p className="text-sm text-white">{String(entry.description || 'No description')}</p>
+                            <p className="text-xs text-blue-300">
+                              {String(entry.entry_date || 'No date')} - {Number(entry.hours || 0).toFixed(2)} hours @ ${Number(entry.rate || 150).toFixed(2)}/hr
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-white">
+                              ${(Number(entry.hours || 0) * Number(entry.rate || 150)).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-blue-500/20">
+                      <p className="text-sm text-blue-200">
+                        Total from time entries: <span className="font-medium text-white">
+                          ${timeEntries.reduce((sum: number, e) => 
+                            sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0).toFixed(2)}
+                        </span>
+                      </p>
+                    </div>
                   </div>
                 )}
+
+                {/* Custom Line Items */}
+                <div className="bg-gray-800/20 border border-gray-500/20 rounded-lg p-4">
+                  <h4 className="text-md font-medium text-gray-200 mb-3">Custom Line Items</h4>
+                  <div className="space-y-3">
+                    {invoiceForm.line_items.map((item, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-5">
+                          <input
+                            type="text"
+                            value={item.description}
+                            onChange={(e) => {
+                              const newItems = [...invoiceForm.line_items];
+                              newItems[index].description = e.target.value;
+                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
+                            }}
+                            placeholder="Service description"
+                            className="w-full px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-white focus:ring-1 focus:ring-blue-500/40"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const newItems = [...invoiceForm.line_items];
+                              newItems[index].quantity = Number(e.target.value);
+                              newItems[index].amount = Number(e.target.value) * item.rate;
+                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
+                            }}
+                            placeholder="Qty"
+                            className="w-full px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-white focus:ring-1 focus:ring-blue-500/40"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={item.rate}
+                            onChange={(e) => {
+                              const newItems = [...invoiceForm.line_items];
+                              newItems[index].rate = Number(e.target.value);
+                              newItems[index].amount = item.quantity * Number(e.target.value);
+                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
+                            }}
+                            placeholder="Rate"
+                            className="w-full px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-white focus:ring-1 focus:ring-blue-500/40"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={item.amount}
+                            onChange={(e) => {
+                              const newItems = [...invoiceForm.line_items];
+                              newItems[index].amount = Number(e.target.value);
+                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
+                            }}
+                            placeholder="Amount"
+                            className="w-full px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-white focus:ring-1 focus:ring-blue-500/40"
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <button
+                            onClick={() => {
+                              const newItems = invoiceForm.line_items.filter((_, i) => i !== index);
+                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
+                            }}
+                            className="text-red-400 hover:text-red-300 text-sm"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => {
+                        const newItems = [...invoiceForm.line_items, { description: '', quantity: 1, rate: invoiceForm.default_rate || 150, amount: invoiceForm.default_rate || 150 }];
+                        setInvoiceForm({ ...invoiceForm, line_items: newItems });
+                      }}
+                      className="text-blue-400 hover:text-blue-300 text-sm flex items-center"
+                    >
+                      + Add Line Item
+                    </button>
+                  </div>
+                </div>
+
+                {/* Invoice Summary */}
+                <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-4">
+                  <h4 className="text-md font-medium text-green-200 mb-3">Invoice Summary</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-green-200">Time Entries:</span>
+                      <span className="text-white">
+                        ${timeEntries.reduce((sum: number, e) => 
+                          sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-green-200">Custom Items:</span>
+                      <span className="text-white">
+                        ${invoiceForm.line_items.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-green-500/20">
+                      <span className="text-green-200 font-medium">Total Amount:</span>
+                      <span className="text-white font-bold text-lg">
+                        ${(timeEntries.reduce((sum: number, e) => 
+                          sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0) + 
+                          invoiceForm.line_items.reduce((sum, item) => sum + item.amount, 0)).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
