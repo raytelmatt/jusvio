@@ -15,7 +15,8 @@ import {
   Phone,
   Trash2,
   Play,
-  CheckCircle
+  CheckCircle,
+  Plus
 } from 'lucide-react';
 import DocumentPreview from '../components/DocumentPreview';
 import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
@@ -99,9 +100,73 @@ export default function MatterDetail() {
   const [invoiceForm, setInvoiceForm] = useState({
     description: '',
     line_items: [] as Array<{ description: string; quantity: number; rate: number; amount: number }>,
+    issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
     default_rate: 150,
+    tax_rate: 0,
+    discount_rate: 0,
   });
+
+  const [invoiceLineItems, setInvoiceLineItems] = useState<Array<{ id: string; description: string; quantity: number; rate: number; amount: number }>>([]);
+
+  // Invoice line item management functions
+  const addTimeEntryToInvoice = (timeEntry: Record<string, unknown>) => {
+    const newLineItem = {
+      id: `time-${timeEntry.id}`,
+      description: `${new Date(timeEntry.entry_date as string).toLocaleDateString()} - ${timeEntry.description}`,
+      quantity: Number(timeEntry.hours || 0),
+      rate: Number(timeEntry.rate || 150),
+      amount: Number(timeEntry.hours || 0) * Number(timeEntry.rate || 150),
+    };
+    setInvoiceLineItems([...invoiceLineItems, newLineItem]);
+  };
+
+  const addCustomLineItem = () => {
+    const newLineItem = {
+      id: `custom-${Date.now()}`,
+      description: '',
+      quantity: 1,
+      rate: invoiceForm.default_rate,
+      amount: invoiceForm.default_rate,
+    };
+    setInvoiceLineItems([...invoiceLineItems, newLineItem]);
+  };
+
+  const updateInvoiceLineItem = (id: string, field: keyof typeof invoiceLineItems[0], value: string | number) => {
+    setInvoiceLineItems(invoiceLineItems.map(item => {
+      if (item.id === id) {
+        const updated = { ...item, [field]: value };
+        if (field === 'quantity' || field === 'rate') {
+          updated.amount = updated.quantity * updated.rate;
+        }
+        return updated;
+      }
+      return item;
+    }));
+  };
+
+  const removeInvoiceLineItem = (id: string) => {
+    setInvoiceLineItems(invoiceLineItems.filter(item => item.id !== id));
+  };
+
+  const calculateInvoiceSubtotal = () => {
+    return invoiceLineItems.reduce((sum, item) => sum + item.amount, 0);
+  };
+
+  const calculateInvoiceTax = () => {
+    return calculateInvoiceSubtotal() * (invoiceForm.tax_rate / 100);
+  };
+
+  const calculateInvoiceDiscount = () => {
+    return calculateInvoiceSubtotal() * (invoiceForm.discount_rate / 100);
+  };
+
+  const calculateInvoiceTotal = () => {
+    const subtotal = calculateInvoiceSubtotal();
+    const tax = calculateInvoiceTax();
+    const discount = calculateInvoiceDiscount();
+    return subtotal + tax - discount;
+  };
 
   // Task management state
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -801,9 +866,13 @@ export default function MatterDetail() {
       setInvoiceForm({
         description: '',
         line_items: [],
+        issue_date: new Date().toISOString().split('T')[0],
         due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         default_rate: 150,
+        tax_rate: 0,
+        discount_rate: 0,
       });
+      setInvoiceLineItems([]);
       
       // Show success message
       setSaveSuccess(true);
@@ -1561,40 +1630,194 @@ export default function MatterDetail() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowInvoiceModal(false)} />
-            <div className="relative bg-gray-900 rounded-xl shadow-xl border border-white/10 p-6 max-w-2xl w-full">
+            <div className="relative bg-gray-900 rounded-xl shadow-xl border border-white/10 p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold text-white mb-4">Generate Invoice</h3>
               
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-1">Due Date</label>
-                  <input
-                    id="invoice_due_date"
-                    type="date"
-                    value={invoiceForm.due_date}
-                    onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                    aria-label="Invoice Due Date"
-                  />
+              <div className="space-y-6">
+                {/* Invoice Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-blue-200 mb-1">Issue Date</label>
+                    <input
+                      id="invoice_issue_date"
+                      type="date"
+                      value={invoiceForm.issue_date}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, issue_date: e.target.value })}
+                      className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                      aria-label="Invoice Issue Date"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-blue-200 mb-1">Due Date</label>
+                    <input
+                      id="invoice_due_date"
+                      type="date"
+                      value={invoiceForm.due_date}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
+                      className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                      aria-label="Invoice Due Date"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-1">Description</label>
-                  <textarea
-                    value={invoiceForm.description}
-                    onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                    placeholder="Invoice description (optional)"
-                  />
-                </div>
-
+                {/* Available Time Entries */}
                 {timeEntries.length > 0 && (
                   <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4">
-                    <p className="text-sm text-blue-200">
-                      This invoice will include {timeEntries.length} unbilled time entries totaling{' '}
-                      ${timeEntries.reduce((sum: number, e) => 
-                        sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0).toFixed(2)}
-                    </p>
+                    <h4 className="text-sm font-medium text-blue-200 mb-3">Available Time Entries</h4>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {timeEntries.map((entry) => (
+                        <div key={String(entry.id || entry.$id || Date.now())} className="flex items-center justify-between p-2 border border-blue-500/20 rounded">
+                          <div className="flex-1">
+                            <p className="text-sm text-blue-200">{String(entry.description || '')}</p>
+                            <p className="text-xs text-blue-300">
+                              {new Date(String(entry.entry_date || '')).toLocaleDateString()} • {Number(entry.hours || 0)}h @ ${Number(entry.rate || 0)}/hr
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <span className="text-sm text-blue-200">${(Number(entry.hours || 0) * Number(entry.rate || 150)).toFixed(2)}</span>
+                            <button
+                              type="button"
+                              onClick={() => addTimeEntryToInvoice(entry)}
+                              className="text-blue-300 hover:text-blue-100 text-xs font-medium px-2 py-1 border border-blue-500/30 rounded hover:bg-blue-500/20"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Line Items */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-medium text-blue-200">Line Items</h4>
+                    <button
+                      type="button"
+                      onClick={addCustomLineItem}
+                      className="inline-flex items-center px-3 py-2 border border-blue-500/30 text-sm font-medium rounded-lg text-blue-200 bg-blue-500/20 hover:bg-blue-500/30"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Custom Item
+                    </button>
+                  </div>
+
+                  {invoiceLineItems.length > 0 ? (
+                    <div className="space-y-3">
+                      {invoiceLineItems.map((item) => (
+                        <div key={item.id} className="grid grid-cols-12 gap-3 items-center p-3 border border-white/20 rounded-lg">
+                          <div className="col-span-5">
+                            <input
+                              type="text"
+                              value={item.description}
+                              onChange={(e) => updateInvoiceLineItem(item.id, 'description', e.target.value)}
+                              placeholder="Description"
+                              className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40 text-sm"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <input
+                              type="number"
+                              step="0.25"
+                              value={item.quantity}
+                              onChange={(e) => updateInvoiceLineItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                              placeholder="Qty"
+                              className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40 text-sm"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.rate}
+                              onChange={(e) => updateInvoiceLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                              placeholder="Rate"
+                              className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40 text-sm"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-sm font-medium text-white">${item.amount.toFixed(2)}</p>
+                          </div>
+                          <div className="col-span-1">
+                            <button
+                              type="button"
+                              onClick={() => removeInvoiceLineItem(item.id)}
+                              className="text-red-400 hover:text-red-300"
+                              title="Remove this line item"
+                              aria-label="Remove line item"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-blue-300">
+                      <p>No line items added yet.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tax and Discount */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-blue-200 mb-1">Tax Rate (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={invoiceForm.tax_rate}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, tax_rate: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-blue-200 mb-1">Discount Rate (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={invoiceForm.discount_rate}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, discount_rate: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                {/* Invoice Totals */}
+                {invoiceLineItems.length > 0 && (
+                  <div className="bg-white/5 border border-white/20 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-blue-200 mb-3">Invoice Totals</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-blue-300">Subtotal:</span>
+                        <span className="text-white">${calculateInvoiceSubtotal().toFixed(2)}</span>
+                      </div>
+                      {invoiceForm.tax_rate > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-blue-300">Tax ({invoiceForm.tax_rate}%):</span>
+                          <span className="text-white">${calculateInvoiceTax().toFixed(2)}</span>
+                        </div>
+                      )}
+                      {invoiceForm.discount_rate > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-blue-300">Discount ({invoiceForm.discount_rate}%):</span>
+                          <span className="text-white">-${calculateInvoiceDiscount().toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-lg font-bold border-t border-white/20 pt-2">
+                        <span className="text-white">Total:</span>
+                        <span className="text-white">${calculateInvoiceTotal().toFixed(2)}</span>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -1607,7 +1830,8 @@ export default function MatterDetail() {
                   </button>
                   <button
                     onClick={generateInvoice}
-                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                    disabled={invoiceLineItems.length === 0}
+                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Generate Invoice
                   </button>
