@@ -36,7 +36,12 @@ interface Invoice {
   invoice_number: string;
   issue_date: string;
   due_date: string;
-  line_items: any[];
+  line_items: Array<{
+    description: string;
+    quantity: number;
+    rate: number;
+    amount: number;
+  }>;
   subtotal: number;
   taxes: number;
   discounts: number;

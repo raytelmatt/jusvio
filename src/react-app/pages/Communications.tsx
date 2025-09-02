@@ -23,16 +23,15 @@ import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
 interface Communication {
   id: number;
   matter_id: number;
-  channel: 'SMS' | 'Email' | 'Phone' | 'Portal';
-  direction: 'Inbound' | 'Outbound';
-  to_address?: string;
-  from_address?: string;
+  type: string;
+  direction: string;
+  subject?: string;
   body?: string;
   sent_at: string;
   created_at: string;
   matter_title?: string;
   client_name?: string;
-  meta?: any;
+  meta?: Record<string, unknown>;
 }
 
 interface Matter {
@@ -63,8 +62,8 @@ export default function Communications() {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.communications, []);
       setCommunications((list.documents || []) as unknown as Communication[]);
-    } catch (error) {
-      console.error('Error fetching communications:', error);
+    } catch {
+      console.error('Error fetching communications');
     } finally {
       setLoading(false);
     }
@@ -504,8 +503,8 @@ function NewCommunicationForm({
         matter_id: parseInt(formData.matter_id),
         sent_at: new Date().toISOString(),
       });
-      onSave(created as any);
-    } catch (error) {
+      onSave(created as Communication);
+    } catch {
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setLoading(false);
@@ -544,7 +543,7 @@ function NewCommunicationForm({
           </label>
           <select
             value={formData.channel}
-            onChange={(e) => setFormData({ ...formData, channel: e.target.value as any })}
+            onChange={(e) => setFormData({ ...formData, channel: e.target.value as 'SMS' | 'Email' | 'Phone' | 'Portal' })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="Email">Email</option>
@@ -565,7 +564,7 @@ function NewCommunicationForm({
               type="radio"
               value="Inbound"
               checked={formData.direction === 'Inbound'}
-              onChange={(e) => setFormData({ ...formData, direction: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, direction: e.target.value as 'Inbound' | 'Outbound' })}
               className="mr-2"
             />
             Inbound (Received)
@@ -575,7 +574,7 @@ function NewCommunicationForm({
               type="radio"
               value="Outbound"
               checked={formData.direction === 'Outbound'}
-              onChange={(e) => setFormData({ ...formData, direction: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, direction: e.target.value as 'Inbound' | 'Outbound' })}
               className="mr-2"
             />
             Outbound (Sent)

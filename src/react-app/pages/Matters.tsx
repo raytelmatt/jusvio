@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Plus, Search, MoreHorizontal, FolderOpen } from 'lucide-react';
 import { databases, DATABASE_ID } from '@/react-app/lib/appwrite';
+import { Matter } from '@/shared/types';
 
 const PRACTICE_AREA_COLORS = {
   Criminal: 'bg-red-100 text-red-800',
@@ -17,7 +18,7 @@ const STATUS_COLORS = {
 };
 
 export default function Matters() {
-  const [matters, setMatters] = useState<any[]>([]);
+  const [matters, setMatters] = useState<Matter[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();

@@ -18,7 +18,7 @@ export function resolveViewUrl(url?: string): string | undefined {
   if (!isStorageUri(url)) return url;
   const { bucketId, fileId } = parseStorageUri(url);
   const built = storage.getFileView(bucketId, fileId);
-  return typeof built === 'string' ? built : (built as any).toString?.() ?? String(built);
+  return typeof built === 'string' ? built : (built as { toString?: () => string }).toString?.() ?? String(built);
 }
 
 export function resolveDownloadUrl(url?: string): string | undefined {
@@ -26,7 +26,7 @@ export function resolveDownloadUrl(url?: string): string | undefined {
   if (!isStorageUri(url)) return url;
   const { bucketId, fileId } = parseStorageUri(url);
   const built = storage.getFileDownload(bucketId, fileId);
-  return typeof built === 'string' ? built : (built as any).toString?.() ?? String(built);
+  return typeof built === 'string' ? built : (built as { toString?: () => string }).toString?.() ?? String(built);
 }
 
 

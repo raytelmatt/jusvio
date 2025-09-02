@@ -12,12 +12,15 @@ import {
   Mail,
   Calendar,
   AlertCircle,
-  Phone
+  Phone,
+  Trash2,
+  Play,
+  CheckCircle
 } from 'lucide-react';
 import DocumentPreview from '../components/DocumentPreview';
 import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
 import { Query } from 'appwrite';
-import { Matter, Document, Communication } from '@/shared/types';
+import { Matter, Document, Communication, Task } from '@/shared/types';
 // import { Invoice, Payment } from '../../shared/types';
 
 type TimelineEventDisplay = {
@@ -83,7 +86,7 @@ export default function MatterDetail() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [hearings, setHearings] = useState<unknown[]>([]);
-  const [tasks, setTasks] = useState<unknown[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [timelineEvents, setTimelineEvents] = useState<TimelineEventDisplay[]>([]);
   
   // Suppress unused variable warnings - these are set by fetch functions
@@ -110,6 +113,18 @@ export default function MatterDetail() {
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
     default_rate: 150,
   });
+
+  // Task management state
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Record<string, unknown> | null>(null);
+  const [taskForm, setTaskForm] = useState({
+    title: '',
+    description: '',
+    due_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
+    priority: 'Medium' as 'Low' | 'Medium' | 'High',
+    status: 'Open' as 'Open' | 'InProgress' | 'Completed',
+    assignee_ids: [] as string[],
+  });
   // Commenting out unused form state
   // const [hearingForm] = useState<HearingForm>({
   //   hearing_type: '',
@@ -121,6 +136,8 @@ export default function MatterDetail() {
   //   is_ssa_hearing: false,
   //   court_id: null
   // });
+
+  const [isTaskLoading, setIsTaskLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -528,72 +545,166 @@ export default function MatterDetail() {
         COLLECTIONS.tasks,
         [Query.equal('matter_id', String(id))]
       );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rows = (list.documents || []).map((d: any) => ({
+      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
         ...d,
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
         updated_at: d.updated_at ?? d.$updatedAt,
-      }));
+      })) as unknown as Task[];
       setTasks(rows);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     }
   };
 
-  // const createTask = async () => {
-  //   if (!id) return;
-  //   try {
-  //     const payload: Record<string, unknown> = {
-  //       matter_id: String(id),
-  //       title: 'New Task',
-  //       description: '',
-  //       status: 'pending',
-  //       priority: 'medium',
-  //       due_date: new Date().toISOString().split('T')[0],
-  //       assigned_to: ''
-  //     };
-  //     
-  //     await databases.createDocument(
-  //       DATABASE_ID,
-  //       COLLECTIONS.tasks,
-  //       ID.unique(),
-  //       payload
-  //     );
-  //     
-  //     fetchTasks();
-  //   } catch (error) {
-  //     console.error('Error creating task:', error);
-  //   }
-  // };
+  const createTask = async () => {
+    if (!id) return;
+    try {
+      setIsTaskLoading(true);
+      const payload: Record<string, unknown> = {
+        matter_id: String(id),
+        title: taskForm.title,
+        description: taskForm.description,
+        status: taskForm.status,
+        priority: taskForm.priority,
+        due_at: taskForm.due_at || null,
+        assignee_ids: taskForm.assignee_ids
+      };
+      
+      await databases.createDocument(
+        DATABASE_ID,
+        COLLECTIONS.tasks,
+        'unique()',
+        payload
+      );
+      
+      await fetchTasks();
+      setShowTaskModal(false);
+      resetTaskForm();
+      
+      // Show success message
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error creating task:', error);
+      setSaveError('Failed to create task. Please try again.');
+    } finally {
+      setIsTaskLoading(false);
+    }
+  };
 
-  // const updateTask = async (taskId: number, updates: Record<string, unknown>) => {
-  //   try {
-  //     await databases.updateDocument(
-  //       DATABASE_ID,
-  //       COLLECTIONS.tasks,
-  //       taskId.toString(),
-  //       updates
-  //     );
-  //     fetchTasks();
-  //   } catch (error) {
-  //     console.error('Error updating task:', error);
-  //   }
-  // };
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    try {
+      setIsTaskLoading(true);
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.tasks,
+        taskId,
+        updates
+      );
+      await fetchTasks();
+      
+      // Show success message
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error updating task:', error);
+      setSaveError('Failed to update task. Please try again.');
+    } finally {
+      setIsTaskLoading(false);
+    }
+  };
 
-  // const deleteTask = async (taskId: number) => {
-  //   if (!confirm('Are you sure you want to delete this task?')) return;
-  //   try {
-  //     await databases.deleteDocument(
-  //       DATABASE_ID,
-  //       COLLECTIONS.tasks,
-  //       String(taskId)
-  //     );
-  //     await fetchTasks();
-  //   } catch (error) {
-  //     console.error('Error deleting task:', error);
-  //   }
-  // };
+  const deleteTask = async (taskId: string) => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    try {
+      setIsTaskLoading(true);
+      await databases.deleteDocument(
+        DATABASE_ID,
+        COLLECTIONS.tasks,
+        taskId
+      );
+      await fetchTasks();
+      
+      // Show success message
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      setSaveError('Failed to delete task. Please try again.');
+    } finally {
+      setIsTaskLoading(false);
+    }
+  };
+
+  const resetTaskForm = () => {
+    setTaskForm({
+      title: '',
+      description: '',
+      due_at: '',
+      priority: 'Medium',
+      status: 'Open',
+      assignee_ids: []
+    });
+    setEditingTask(null);
+  };
+
+  const openTaskModal = (task?: Task) => {
+    if (task) {
+      setEditingTask(task);
+      setTaskForm({
+        title: task.title,
+        description: task.description || '',
+        due_at: task.due_at || '',
+        priority: task.priority,
+        status: task.status,
+        assignee_ids: task.assignee_ids || []
+      });
+    } else {
+      resetTaskForm();
+    }
+    setShowTaskModal(true);
+  };
+
+  const handleTaskSubmit = async () => {
+    if (!taskForm.title.trim()) {
+      setSaveError('Task title is required');
+      return;
+    }
+
+    if (editingTask) {
+      await updateTask(editingTask.id as string, taskForm);
+    } else {
+      await createTask();
+    }
+  };
+
+  const changeTaskStatus = async (taskId: string, newStatus: 'Open' | 'InProgress' | 'Completed') => {
+    await updateTask(taskId, { status: newStatus });
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'High': return 'text-red-400 bg-red-900/20 border-red-500/30';
+      case 'Medium': return 'text-yellow-400 bg-yellow-900/20 border-yellow-500/30';
+      case 'Low': return 'text-green-400 bg-green-900/20 border-green-500/30';
+      default: return 'text-blue-400 bg-blue-900/20 border-blue-500/30';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Open': return 'text-gray-400 bg-gray-900/20 border-gray-500/30';
+      case 'InProgress': return 'text-blue-400 bg-blue-900/20 border-blue-500/30';
+      case 'Completed': return 'text-green-400 bg-green-900/20 border-green-500/30';
+      default: return 'text-blue-400 bg-blue-900/20 border-blue-500/30';
+    }
+  };
+
+  const isOverdue = (dueDate: string) => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date();
+  };
 
   // Commented out unused functions
   // const deleteDocument = async (docId: string | number) => {
@@ -1202,6 +1313,86 @@ export default function MatterDetail() {
             </div>
           )}
 
+          {activeTab === 'tasks' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-lg font-semibold text-white">Tasks</h4>
+                <button
+                  onClick={() => openTaskModal()}
+                  className="inline-flex items-center px-3 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 hover:bg-white/20 backdrop-blur-sm"
+                >
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                  Add New Task
+                </button>
+              </div>
+
+              {isTaskLoading ? (
+                <div className="text-center py-8 text-blue-200">
+                  <p>Loading tasks...</p>
+                </div>
+              ) : tasks.length === 0 ? (
+                <div className="text-center py-8 text-blue-200">
+                  <p>No tasks found for this matter. Add a new one!</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {tasks.map((task) => (
+                    <div key={task.id} className="p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h5 className="font-medium text-white">{task.title}</h5>
+                          {task.description && (
+                            <p className="text-sm text-blue-200 mt-1">{task.description}</p>
+                          )}
+                          <div className="flex items-center space-x-2 mt-2">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                              {task.status}
+                            </span>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                              {task.priority}
+                            </span>
+                            {task.due_at && (
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${isOverdue(task.due_at) ? 'bg-red-100/20 text-red-300' : 'bg-green-100/20 text-green-300'}`}>
+                                {isOverdue(task.due_at) ? 'Overdue' : 'Due'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => openTaskModal(task)}
+                            className="p-2 hover:bg-white/10 rounded-lg text-blue-200 hover:text-white"
+                            title="Edit Task"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => changeTaskStatus(task.id as string, task.status === 'Open' ? 'InProgress' : 'Completed')}
+                            className="p-2 hover:bg-white/10 rounded-lg text-green-200 hover:text-green-300"
+                            title={task.status === 'Open' ? 'Mark as In Progress' : 'Mark as Completed'}
+                          >
+                            {task.status === 'Open' ? (
+                              <Play className="h-4 w-4" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => deleteTask(task.id as string)}
+                            className="p-2 hover:bg-white/10 rounded-lg text-red-200 hover:text-red-300"
+                            title="Delete Task"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'billing' && (
             <div className="space-y-6">
               {/* Header with Generate Invoice button */}
@@ -1398,198 +1589,40 @@ export default function MatterDetail() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowInvoiceModal(false)} />
-            <div className="relative bg-gray-900 rounded-xl shadow-xl border border-white/10 p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="relative bg-gray-900 rounded-xl shadow-xl border border-white/10 p-6 max-w-2xl w-full">
               <h3 className="text-lg font-semibold text-white mb-4">Generate Invoice</h3>
               
-              <div className="space-y-6">
-                {/* Basic Invoice Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-1">Due Date</label>
-                    <input
-                      type="date"
-                      value={invoiceForm.due_date}
-                      onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
-                      className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                      title="Invoice due date"
-                      aria-label="Invoice due date"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-1">Default Hourly Rate</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={invoiceForm.default_rate || 150}
-                      onChange={(e) => setInvoiceForm({ ...invoiceForm, default_rate: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                      placeholder="150.00"
-                    />
-                  </div>
-                </div>
-
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-1">Invoice Description</label>
-                  <textarea
-                    value={invoiceForm.description}
-                    onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
-                    rows={2}
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={invoiceForm.due_date}
+                    onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
                     className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                    placeholder="Brief description of services (optional)"
                   />
                 </div>
 
-                {/* Time Entries Section */}
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Description</label>
+                  <textarea
+                    value={invoiceForm.description}
+                    onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    placeholder="Invoice description (optional)"
+                  />
+                </div>
+
                 {timeEntries.length > 0 && (
                   <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4">
-                    <h4 className="text-md font-medium text-blue-200 mb-3">Unbilled Time Entries</h4>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {timeEntries.map((entry: Record<string, unknown>, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-blue-800/20 rounded">
-                          <div className="flex-1">
-                            <p className="text-sm text-white">{String(entry.description || 'No description')}</p>
-                            <p className="text-xs text-blue-300">
-                              {String(entry.entry_date || 'No date')} - {Number(entry.hours || 0).toFixed(2)} hours @ ${Number(entry.rate || 150).toFixed(2)}/hr
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-medium text-white">
-                              ${(Number(entry.hours || 0) * Number(entry.rate || 150)).toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-blue-500/20">
-                      <p className="text-sm text-blue-200">
-                        Total from time entries: <span className="font-medium text-white">
-                          ${timeEntries.reduce((sum: number, e) => 
-                            sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0).toFixed(2)}
-                        </span>
-                      </p>
-                    </div>
+                    <p className="text-sm text-blue-200">
+                      This invoice will include {timeEntries.length} unbilled time entries totaling{' '}
+                      ${timeEntries.reduce((sum: number, e) => 
+                        sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0).toFixed(2)}
+                    </p>
                   </div>
                 )}
-
-                {/* Custom Line Items */}
-                <div className="bg-gray-800/20 border border-gray-500/20 rounded-lg p-4">
-                  <h4 className="text-md font-medium text-gray-200 mb-3">Custom Line Items</h4>
-                  <div className="space-y-3">
-                    {invoiceForm.line_items.map((item, index) => (
-                      <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-5">
-                          <input
-                            type="text"
-                            value={item.description}
-                            onChange={(e) => {
-                              const newItems = [...invoiceForm.line_items];
-                              newItems[index].description = e.target.value;
-                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
-                            }}
-                            placeholder="Service description"
-                            className="w-full px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-white focus:ring-1 focus:ring-blue-500/40"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={item.quantity}
-                            onChange={(e) => {
-                              const newItems = [...invoiceForm.line_items];
-                              newItems[index].quantity = Number(e.target.value);
-                              newItems[index].amount = Number(e.target.value) * item.rate;
-                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
-                            }}
-                            placeholder="Qty"
-                            className="w-full px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-white focus:ring-1 focus:ring-blue-500/40"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={item.rate}
-                            onChange={(e) => {
-                              const newItems = [...invoiceForm.line_items];
-                              newItems[index].rate = Number(e.target.value);
-                              newItems[index].amount = item.quantity * Number(e.target.value);
-                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
-                            }}
-                            placeholder="Rate"
-                            className="w-full px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-white focus:ring-1 focus:ring-blue-500/40"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={item.amount}
-                            onChange={(e) => {
-                              const newItems = [...invoiceForm.line_items];
-                              newItems[index].amount = Number(e.target.value);
-                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
-                            }}
-                            placeholder="Amount"
-                            className="w-full px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-white focus:ring-1 focus:ring-blue-500/40"
-                          />
-                        </div>
-                        <div className="col-span-1">
-                          <button
-                            onClick={() => {
-                              const newItems = invoiceForm.line_items.filter((_, i) => i !== index);
-                              setInvoiceForm({ ...invoiceForm, line_items: newItems });
-                            }}
-                            className="text-red-400 hover:text-red-300 text-sm"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => {
-                        const newItems = [...invoiceForm.line_items, { description: '', quantity: 1, rate: invoiceForm.default_rate || 150, amount: invoiceForm.default_rate || 150 }];
-                        setInvoiceForm({ ...invoiceForm, line_items: newItems });
-                      }}
-                      className="text-blue-400 hover:text-blue-300 text-sm flex items-center"
-                    >
-                      + Add Line Item
-                    </button>
-                  </div>
-                </div>
-
-                {/* Invoice Summary */}
-                <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-4">
-                  <h4 className="text-md font-medium text-green-200 mb-3">Invoice Summary</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-green-200">Time Entries:</span>
-                      <span className="text-white">
-                        ${timeEntries.reduce((sum: number, e) => 
-                          sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-green-200">Custom Items:</span>
-                      <span className="text-white">
-                        ${invoiceForm.line_items.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between pt-2 border-t border-green-500/20">
-                      <span className="text-green-200 font-medium">Total Amount:</span>
-                      <span className="text-white font-bold text-lg">
-                        ${(timeEntries.reduce((sum: number, e) => 
-                          sum + (Number(e.hours || 0) * Number(e.rate || 150)), 0) + 
-                          invoiceForm.line_items.reduce((sum, item) => sum + item.amount, 0)).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
@@ -1690,6 +1723,112 @@ export default function MatterDetail() {
                     className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700"
                   >
                     Record Payment
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task Management Modal */}
+      {showTaskModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowTaskModal(false)} />
+            <div className="relative bg-gray-900 rounded-xl shadow-xl border border-white/10 p-6 max-w-2xl w-full">
+              <h3 className="text-lg font-semibold text-white mb-4">
+                {editingTask ? 'Edit Task' : 'New Task'}
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={taskForm.title}
+                    onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    placeholder="Task title"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Description (optional)</label>
+                  <textarea
+                    value={taskForm.description}
+                    onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    placeholder="Task description"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Due Date (optional)</label>
+                  <input
+                    type="date"
+                    value={taskForm.due_at}
+                    onChange={(e) => setTaskForm({ ...taskForm, due_at: e.target.value })}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Priority</label>
+                  <select
+                    value={taskForm.priority}
+                    onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as 'Low' | 'Medium' | 'High' })}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Status</label>
+                  <select
+                    value={taskForm.status}
+                    onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value as 'Open' | 'InProgress' | 'Completed' })}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                  >
+                    <option value="Open">Open</option>
+                    <option value="InProgress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Assignees (optional)</label>
+                  <select
+                    multiple
+                    value={taskForm.assignee_ids}
+                    onChange={(e) => setTaskForm({ ...taskForm, assignee_ids: Array.from(e.target.selectedOptions).map(option => option.value) })}
+                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                  >
+                    {/* Assuming users are fetched from a separate collection or passed as props */}
+                    {/* For now, a placeholder for assignee selection */}
+                    <option value="user1">User 1</option>
+                    <option value="user2">User 2</option>
+                    <option value="user3">User 3</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    onClick={() => setShowTaskModal(false)}
+                    className="px-4 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 hover:bg-white/20"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleTaskSubmit}
+                    disabled={isTaskLoading}
+                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isTaskLoading ? 'Saving...' : editingTask ? 'Update Task' : 'Create Task'}
                   </button>
                 </div>
               </div>

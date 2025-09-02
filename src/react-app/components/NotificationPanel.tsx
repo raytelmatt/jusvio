@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { 
   Bell, 
   X, 
@@ -92,12 +92,6 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchNotifications();
-    }
-  }, [isOpen, filter]);
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
         onClose();
@@ -113,7 +107,7 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
     };
   }, [isOpen, onClose]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
       const { notifications, unreadCount } = await fetchAppwriteNotifications(filter);
@@ -124,7 +118,13 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, onUnreadCountChange]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchNotifications();
+    }
+  }, [isOpen, filter, fetchNotifications]);
 
   const markAsRead = async (notificationId: string) => {
     try {

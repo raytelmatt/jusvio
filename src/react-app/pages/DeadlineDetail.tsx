@@ -14,9 +14,35 @@ import {
 } from 'lucide-react';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
 
+interface Deadline {
+  id: string;
+  matter_id: string;
+  title: string;
+  due_at: string;
+  status: string;
+  source: string;
+  matter_title: string;
+  client_name: string;
+  days_until_due: number;
+  communications: Array<{
+    id: string;
+    type: string;
+    direction: string;
+    subject?: string;
+    body?: string;
+    sent_at: string;
+  }>;
+  notes: Array<{
+    id: string;
+    note: string;
+    created_at: string;
+    created_by_email: string;
+  }>;
+}
+
 export default function DeadlineDetail() {
   const { id } = useParams();
-  const [deadline, setDeadline] = useState<any>(null);
+  const [deadline, setDeadline] = useState<Deadline | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newNote, setNewNote] = useState('');
@@ -34,11 +60,11 @@ export default function DeadlineDetail() {
     try {
       const data = await databases.getDocument(DATABASE_ID, COLLECTIONS.deadlines, String(id));
       const notesList = await databases.listDocuments(DATABASE_ID, COLLECTIONS.deadlineNotes, []);
-      const notes = (notesList.documents || []).filter((n: any) => String(n.deadline_id) === String(id));
-      setDeadline({ ...(data as any), notes });
-    } catch (error) {
-      console.error('Error fetching deadline:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load deadline');
+      const notes = (notesList.documents || []).filter((n: Record<string, unknown>) => String(n.deadline_id) === String(id));
+      setDeadline({ ...(data as Record<string, unknown>), notes } as Deadline);
+    } catch {
+      console.error('Error fetching deadline');
+      setError('Failed to load deadline');
     } finally {
       setLoading(false);
     }
@@ -54,11 +80,11 @@ export default function DeadlineDetail() {
         note: newNote.trim(),
         created_by_email: '',
         created_at: new Date().toISOString(),
-      } as any);
+      } as Record<string, unknown>);
       setNewNote('');
       fetchDeadlineDetails();
-    } catch (error) {
-      console.error('Error adding note:', error);
+    } catch {
+      console.error('Error adding note');
     } finally {
       setAddingNote(false);
     }
@@ -70,8 +96,8 @@ export default function DeadlineDetail() {
     try {
       await databases.updateDocument(DATABASE_ID, COLLECTIONS.deadlines, String(id), { status: 'Completed' });
       fetchDeadlineDetails();
-    } catch (error) {
-      console.error('Error completing deadline:', error);
+    } catch {
+      console.error('Error completing deadline');
     }
   };
 

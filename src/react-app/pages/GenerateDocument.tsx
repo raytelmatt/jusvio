@@ -35,7 +35,7 @@ export default function GenerateDocument() {
   const [matters, setMatters] = useState<Matter[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [generatedDocument, setGeneratedDocument] = useState<any>(null);
+  const [generatedDocument, setGeneratedDocument] = useState<{ blob: Blob; filename: string } | null>(null);
   
   const [formData, setFormData] = useState({
     matter_id: '',
@@ -72,12 +72,12 @@ export default function GenerateDocument() {
   const fetchTemplates = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.documentTemplates, []);
-      const rows = (list.documents || []).map((d: any) => ({
+      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
         ...d,
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
         updated_at: d.updated_at ?? d.$updatedAt,
-        variables: Array.isArray(d.variables) ? d.variables : (typeof d.variables === 'string' ? JSON.parse(d.variables || '[]') : []),
+        variables: Array.isArray(d.variables) ? d.variables : (typeof d.variables === 'string' ? JSON.parse(d.variables as string || '[]') : []),
       })) as unknown as DocumentTemplate[];
       setTemplates(rows);
     } catch (error) {
@@ -129,7 +129,7 @@ export default function GenerateDocument() {
         template: selectedTemplate,
         variables: formData.variables,
         title: formData.title || selectedTemplate.name
-      });
+      } as Record<string, unknown>);
 
       if (!generatedDoc.blob || generatedDoc.blob.size === 0) {
         throw new Error('Generated document is empty');
@@ -138,7 +138,7 @@ export default function GenerateDocument() {
       // Upload the generated file to Appwrite Storage
       const file = new File([generatedDoc.blob], generatedDoc.filename, { type: generatedDoc.blob.type || 'application/octet-stream' });
       const created = await storage.createFile(BUCKETS.documents, 'unique()', file);
-      const fileId = (created as any).$id;
+      const fileId = (created as { $id: string }).$id;
 
       // Create document record
       const doc = await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
@@ -151,7 +151,7 @@ export default function GenerateDocument() {
         created_by: user?.$id ?? 'system',
       });
 
-      const normalized = { ...(doc as any), id: (doc as any).id ?? (doc as any).$id };
+      const normalized = { ...(doc as Record<string, unknown>), id: (doc as Record<string, unknown>).id ?? (doc as Record<string, unknown>).$id };
       setGeneratedDocument(normalized);
       // local download for convenience; storage remains private
       downloadDocument(generatedDoc.blob, generatedDoc.filename);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router';
 import { 
   Plus, 
@@ -35,7 +35,7 @@ export default function Calendar() {
     fetchHearings();
   }, [currentDate, selectedPracticeArea]);
 
-  const fetchHearings = async () => {
+  const fetchHearings = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       const year = currentDate.getFullYear();
@@ -61,7 +61,7 @@ export default function Calendar() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentDate, selectedPracticeArea]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();

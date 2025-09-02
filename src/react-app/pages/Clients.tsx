@@ -48,7 +48,7 @@ export default function Clients() {
   const fetchClients = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, []);
-      const rows = (list.documents || []).map((d: any) => ({
+      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
         ...d,
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
@@ -136,18 +136,21 @@ export default function Clients() {
         case 'today':
           matchesDateRange = clientDate.toDateString() === now.toDateString();
           break;
-        case 'week':
+        case 'week': {
           const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           matchesDateRange = clientDate >= weekAgo;
           break;
-        case 'month':
+        }
+        case 'month': {
           const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
           matchesDateRange = clientDate >= monthAgo;
           break;
-        case 'quarter':
+        }
+        case 'quarter': {
           const quarterAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
           matchesDateRange = clientDate >= quarterAgo;
           break;
+        }
       }
     }
     

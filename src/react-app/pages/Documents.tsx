@@ -62,7 +62,7 @@ export default function Documents() {
   const fetchDocuments = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.documents, []);
-      const rows = (list.documents || []).map((d: any) => ({
+      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
         ...d,
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
@@ -79,7 +79,7 @@ export default function Documents() {
   const fetchTemplates = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.documentTemplates, []);
-      const rows = (list.documents || []).map((d: any) => ({
+      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
         ...d,
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
@@ -341,7 +341,7 @@ export default function Documents() {
                   <div className="mt-6">
                     <Link
                       to="/documents/generate"
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Generate Document
@@ -400,7 +400,7 @@ export default function Documents() {
                   <div className="mt-6">
                     <Link
                       to="/documents/templates/new"
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-200"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Create Template

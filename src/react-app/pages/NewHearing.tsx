@@ -87,7 +87,7 @@ export default function NewHearing() {
         const errorData = await response.json();
         setErrors({ submit: errorData.error || 'Failed to schedule hearing' });
       }
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setLoading(false);

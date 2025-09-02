@@ -11,13 +11,62 @@ import {
   User
 } from 'lucide-react';
 
+interface Client {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  client_number: string;
+}
+
+interface Matter {
+  id: string;
+  title: string;
+  matter_number: string;
+  status: string;
+  practice_area: string;
+  opened_at: string;
+  fee_model: string;
+  description: string;
+}
+
+interface Document {
+  id: string;
+  title: string;
+  status: string;
+  created_at: string;
+}
+
+interface Message {
+  id: string;
+  subject: string;
+  body: string;
+  sent_at: string;
+  direction: string;
+}
+
+interface Invoice {
+  id: string;
+  invoice_number: string;
+  total: number;
+  status: string;
+  due_date: string;
+}
+
+interface Hearing {
+  id: string;
+  hearing_type: string;
+  scheduled_at: string;
+  location: string;
+}
+
 interface ClientPortalData {
-  client: any;
-  matters: any[];
-  documents: any[];
-  messages: any[];
-  invoices: any[];
-  upcomingHearings: any[];
+  client: Client;
+  matters: Matter[];
+  documents: Document[];
+  messages: Message[];
+  invoices: Invoice[];
+  upcomingHearings: Hearing[];
 }
 
 export default function ClientPortal() {
@@ -198,14 +247,14 @@ export default function ClientPortal() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Court Dates</h3>
                   {data.upcomingHearings.length > 0 ? (
                     <div className="space-y-3">
-                      {data.upcomingHearings.map((hearing: any) => (
+                      {data.upcomingHearings.map((hearing: Hearing) => (
                         <div key={hearing.id} className="flex items-center p-4 bg-blue-50 rounded-lg">
                           <Calendar className="w-5 h-5 text-blue-600 mr-3" />
                           <div className="flex-1">
                             <p className="font-medium text-gray-900">{hearing.hearing_type}</p>
-                            <p className="text-sm text-gray-600">{hearing.matter_title}</p>
+                            <p className="text-sm text-gray-600">{hearing.hearing_type}</p>
                             <p className="text-sm text-gray-500">
-                              {new Date(hearing.start_at).toLocaleDateString()} at {new Date(hearing.start_at).toLocaleTimeString()}
+                              {new Date(hearing.scheduled_at).toLocaleDateString()} at {new Date(hearing.scheduled_at).toLocaleTimeString()}
                             </p>
                           </div>
                         </div>
@@ -245,7 +294,7 @@ export default function ClientPortal() {
 
             {activeTab === 'matters' && (
               <div className="space-y-4">
-                {data.matters.map((matter: any) => (
+                {data.matters.map((matter: Matter) => (
                   <div key={matter.id} className="border border-gray-200 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-900">{matter.title}</h3>
@@ -264,7 +313,7 @@ export default function ClientPortal() {
                       </div>
                       <div>
                         <p className="text-gray-500">Opened</p>
-                        <p className="font-medium">{new Date(matter.opened_at || matter.created_at).toLocaleDateString()}</p>
+                        <p className="font-medium">{new Date(matter.opened_at || matter.opened_at).toLocaleDateString()}</p>
                       </div>
                       <div>
                         <p className="text-gray-500">Fee Structure</p>
@@ -285,7 +334,7 @@ export default function ClientPortal() {
             {activeTab === 'documents' && (
               <div className="space-y-4">
                 {data.documents.length > 0 ? (
-                  data.documents.map((doc: any) => (
+                  data.documents.map((doc: Document) => (
                     <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                       <div className="flex items-center">
                         <FileText className="w-5 h-5 text-gray-400 mr-3" />
@@ -315,14 +364,14 @@ export default function ClientPortal() {
             {activeTab === 'messages' && (
               <div className="space-y-4">
                 {data.messages.length > 0 ? (
-                  data.messages.map((message: any) => (
+                  data.messages.map((message: Message) => (
                     <div key={message.id} className="p-4 border border-gray-200 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <p className="font-medium text-gray-900">
                           {message.direction === 'Inbound' ? 'You' : 'Your Attorney'}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {new Date(message.created_at).toLocaleDateString()}
+                          {new Date(message.sent_at).toLocaleDateString()}
                         </p>
                       </div>
                       <p className="text-gray-700">{message.body}</p>
@@ -337,7 +386,7 @@ export default function ClientPortal() {
             {activeTab === 'billing' && (
               <div className="space-y-4">
                 {data.invoices.length > 0 ? (
-                  data.invoices.map((invoice: any) => (
+                  data.invoices.map((invoice: Invoice) => (
                     <div key={invoice.id} className="p-4 border border-gray-200 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <div>

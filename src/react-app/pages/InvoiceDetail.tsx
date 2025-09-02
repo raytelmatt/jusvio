@@ -9,7 +9,12 @@ interface Invoice {
   invoice_number: string;
   issue_date: string;
   due_date: string;
-  line_items: any[];
+  line_items: Array<{
+    description: string;
+    quantity: number;
+    rate: number;
+    amount: number;
+  }>;
   subtotal: number;
   taxes: number;
   discounts: number;
@@ -33,15 +38,15 @@ export default function InvoiceDetail() {
     try {
       const data = await databases.getDocument(DATABASE_ID, COLLECTIONS.invoices, String(id));
       const normalized = {
-        ...(data as any),
-        id: (data as any).id ?? (data as any).$id,
+        ...(data as Record<string, unknown>),
+        id: (data as Record<string, unknown>).id ?? (data as Record<string, unknown>).$id,
         line_items: (() => {
-          try { return JSON.parse((data as any).line_items || '[]'); } catch { return []; }
+          try { return JSON.parse((data as Record<string, unknown>).line_items as string || '[]'); } catch { return []; }
         })(),
       } as unknown as Invoice;
       setInvoice(normalized);
-    } catch (error) {
-      console.error('Error fetching invoice:', error);
+    } catch {
+      console.error('Error fetching invoice');
     } finally {
       setLoading(false);
     }
@@ -53,8 +58,8 @@ export default function InvoiceDetail() {
     try {
       await databases.updateDocument(DATABASE_ID, COLLECTIONS.invoices, String(invoice.id), { status: 'Sent' });
       setInvoice({ ...invoice, status: 'Sent' });
-    } catch (error) {
-      console.error('Error sending invoice:', error);
+    } catch {
+      console.error('Error sending invoice');
     }
   };
 

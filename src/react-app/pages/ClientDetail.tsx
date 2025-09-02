@@ -36,7 +36,7 @@ export default function ClientDetail() {
   const navigate = useNavigate();
   const [client, setClient] = useState<Client | null>(null);
   const [matters, setMatters] = useState<Matter[]>([]);
-  const [clientBalance, setClientBalance] = useState<any>(null);
+  const [clientBalance, setClientBalance] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -60,8 +60,8 @@ export default function ClientDetail() {
 
   const fetchClientDetails = async () => {
     try {
-      const doc: any = await databases.getDocument(DATABASE_ID, COLLECTIONS.clients, String(id));
-      const normalized: any = {
+      const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.clients, String(id));
+      const normalized: Record<string, unknown> = {
         ...doc,
         id: doc.id ?? doc.$id,
         created_at: doc.created_at ?? doc.$createdAt,
@@ -81,12 +81,12 @@ export default function ClientDetail() {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, [
         Query.equal('client_id', String(id)),
       ]);
-      const rows = (list.documents || []).map((d: any) => ({
+      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
         ...d,
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
       }));
-      setMatters(rows as any);
+      setMatters(rows as Matter[]);
     } catch (error) {
       console.error('Error fetching client matters:', error);
     }
@@ -100,13 +100,13 @@ export default function ClientDetail() {
   const togglePortalAccess = async () => {
     if (!client) return;
     try {
-      const updated: any = await databases.updateDocument(
+      const updated = await databases.updateDocument(
         DATABASE_ID,
         COLLECTIONS.clients,
         String(id),
         { portal_enabled: !client.portal_enabled }
       );
-      setClient({ ...(updated as any) });
+      setClient({ ...(updated as Client) });
     } catch (error) {
       console.error('Error updating client:', error);
     }
@@ -148,6 +148,8 @@ export default function ClientDetail() {
           <button 
             onClick={() => navigate('/clients')} 
             className="p-2 hover:bg-white/10 rounded-lg transition-colors text-blue-200"
+            aria-label="Back to clients list"
+            title="Back to clients list"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -178,6 +180,8 @@ export default function ClientDetail() {
           <button 
             onClick={() => navigate('/clients')} 
             className="p-2 hover:bg-white/10 rounded-lg transition-colors text-blue-200"
+            aria-label="Back to clients list"
+            title="Back to clients list"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -213,6 +217,8 @@ export default function ClientDetail() {
           <button 
             onClick={() => navigate('/clients')} 
             className="p-2 hover:bg-white/10 rounded-lg transition-colors text-blue-200"
+            aria-label="Back to clients list"
+            title="Back to clients list"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -568,7 +574,7 @@ export default function ClientDetail() {
                     <h3 className="text-lg font-semibold text-gray-900">Balance by Matter</h3>
                   </div>
                   <div className="divide-y divide-gray-200">
-                    {clientBalance.matter_balances.map((matter: any) => (
+                    {clientBalance.matter_balances.map((matter: Record<string, unknown>) => (
                       <div key={matter.matter_id} className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -622,7 +628,7 @@ export default function ClientDetail() {
                     <h3 className="text-lg font-semibold text-gray-900">Recent Invoices</h3>
                   </div>
                   <div className="divide-y divide-gray-200">
-                    {clientBalance.recent_invoices.slice(0, 5).map((invoice: any) => {
+                    {clientBalance.recent_invoices.slice(0, 5).map((invoice: Record<string, unknown>) => {
                       const statusColors = {
                         Draft: 'bg-gray-100 text-gray-800',
                         Sent: 'bg-blue-100 text-blue-800',
@@ -669,7 +675,7 @@ export default function ClientDetail() {
                     <h3 className="text-lg font-semibold text-gray-900">Recent Payments</h3>
                   </div>
                   <div className="divide-y divide-gray-200">
-                    {clientBalance.recent_payments.slice(0, 5).map((payment: any) => (
+                    {clientBalance.recent_payments.slice(0, 5).map((payment: Record<string, unknown>) => (
                       <div key={payment.id} className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">

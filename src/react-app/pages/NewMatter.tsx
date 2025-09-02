@@ -37,7 +37,7 @@ export default function NewMatter() {
   const fetchClients = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, []);
-      const rows = (list.documents || []).map((d: any) => ({
+      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
         ...d,
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
@@ -72,7 +72,7 @@ export default function NewMatter() {
     setLoading(true);
     try {
       const matterNumber = `MT${Date.now().toString().slice(-6)}`;
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         matter_number: matterNumber,
         title: formData.title,
         practice_area: formData.practice_area,
@@ -89,9 +89,9 @@ export default function NewMatter() {
       }
 
       const permissions = user ? [
-        Permission.read(Role.user((user as any).$id)),
-        Permission.update(Role.user((user as any).$id)),
-        Permission.delete(Role.user((user as any).$id)),
+        Permission.read(Role.user((user as { $id: string }).$id)),
+        Permission.update(Role.user((user as { $id: string }).$id)),
+        Permission.delete(Role.user((user as { $id: string }).$id)),
       ] : [];
 
       const created = await databases.createDocument(
@@ -105,7 +105,7 @@ export default function NewMatter() {
       setTimeout(() => navigate(`/matters/${created.$id}`), 0);
     } catch (error) {
       console.error('Error creating matter:', error);
-      const message = (error as any)?.message || 'Error creating matter. Please check required fields and try again.';
+      const message = (error as { message?: string })?.message || 'Error creating matter. Please check required fields and try again.';
       setErrors({ submit: message });
       try { alert(message); } catch {}
     } finally {

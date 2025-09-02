@@ -49,7 +49,7 @@ export default function CreateInvoice() {
 
   useEffect(() => {
     if (formData.matter_id) {
-      fetchTimeEntries(parseInt(formData.matter_id));
+      fetchTimeEntries();
     }
   }, [formData.matter_id]);
 
@@ -62,12 +62,12 @@ export default function CreateInvoice() {
     }
   };
 
-  const fetchTimeEntries = async (_matterId: number) => {
+  const fetchTimeEntries = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.timeEntries, []);
       setTimeEntries((list.documents || []) as unknown as TimeEntry[]);
-    } catch (error) {
-      console.error('Error fetching time entries:', error);
+    } catch {
+      console.error('Error fetching time entries');
     }
   };
 
@@ -93,7 +93,7 @@ export default function CreateInvoice() {
     setLineItems([...lineItems, newLineItem]);
   };
 
-  const updateLineItem = (id: string, field: keyof LineItem, value: any) => {
+  const updateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
     setLineItems(lineItems.map(item => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
@@ -153,7 +153,7 @@ export default function CreateInvoice() {
         status: 'Draft',
       });
       navigate('/billing');
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setLoading(false);
@@ -195,6 +195,7 @@ export default function CreateInvoice() {
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   errors.matter_id ? 'border-red-300' : 'border-gray-300'
                 }`}
+                title="Select a matter for this invoice"
               >
                 <option value="">Select a matter...</option>
                 {matters.map((matter) => (
@@ -219,6 +220,7 @@ export default function CreateInvoice() {
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   errors.issue_date ? 'border-red-300' : 'border-gray-300'
                 }`}
+                title="Select the issue date for this invoice"
               />
               {errors.issue_date && (
                 <p className="mt-1 text-sm text-red-600">{errors.issue_date}</p>
@@ -236,6 +238,7 @@ export default function CreateInvoice() {
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   errors.due_date ? 'border-red-300' : 'border-gray-300'
                 }`}
+                title="Select the due date for this invoice"
               />
               {errors.due_date && (
                 <p className="mt-1 text-sm text-red-600">{errors.due_date}</p>
@@ -344,6 +347,8 @@ export default function CreateInvoice() {
                       type="button"
                       onClick={() => removeLineItem(item.id)}
                       className="text-red-600 hover:text-red-700"
+                      title="Remove this line item"
+                      aria-label="Remove line item"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -379,6 +384,7 @@ export default function CreateInvoice() {
                   value={formData.taxes}
                   onChange={(e) => setFormData({ ...formData, taxes: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  title="Enter the tax rate percentage"
                 />
               </div>
 
@@ -394,6 +400,7 @@ export default function CreateInvoice() {
                   value={formData.discounts}
                   onChange={(e) => setFormData({ ...formData, discounts: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  title="Enter the discount rate percentage"
                 />
               </div>
             </div>

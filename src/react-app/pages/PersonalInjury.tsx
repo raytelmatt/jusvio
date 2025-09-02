@@ -11,12 +11,50 @@ import {
   Building
 } from 'lucide-react';
 
+interface PersonalInjuryCase {
+  incident_date: string;
+  incident_type: string;
+  injuries: string[];
+  providers: Array<{
+    name: string;
+    type: string;
+    address: string;
+    phone: string;
+    specialty: string;
+  }>;
+  policy_limits: string;
+  demand_amount: string;
+  settlement_amount: string;
+  liens: string[];
+  med_bills_total: string;
+  lost_wages_total: string;
+}
+
+interface Matter {
+  id: string;
+  title: string;
+  matter_number: string;
+  client_first_name: string;
+  client_last_name: string;
+}
+
 export default function PersonalInjury() {
   const { id } = useParams();
-  const [matter, setMatter] = useState<any>(null);
+  const [matter, setMatter] = useState<Matter | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<PersonalInjuryCase>({
+    incident_date: '',
+    incident_type: '',
+    injuries: [],
+    providers: [],
+    policy_limits: '',
+    demand_amount: '',
+    settlement_amount: '',
+    liens: [],
+    med_bills_total: '',
+    lost_wages_total: '',
+  });
 
   useEffect(() => {
     fetchData();
@@ -93,7 +131,7 @@ export default function PersonalInjury() {
   const removeInjury = (index: number) => {
     setFormData({
       ...formData,
-      injuries: formData.injuries.filter((_: any, i: number) => i !== index)
+      injuries: formData.injuries.filter((_: string, i: number) => i !== index)
     });
   };
 
@@ -125,7 +163,7 @@ export default function PersonalInjury() {
   const removeProvider = (index: number) => {
     setFormData({
       ...formData,
-      providers: formData.providers.filter((_: any, i: number) => i !== index)
+      providers: formData.providers.filter((_: PersonalInjuryCase['providers'][0], i: number) => i !== index)
     });
   };
 
@@ -414,7 +452,7 @@ export default function PersonalInjury() {
           {formData.providers.length === 0 ? (
             <p className="text-sm text-gray-500">No medical providers documented</p>
           ) : (
-            formData.providers.map((provider: any, index: number) => (
+            formData.providers.map((provider: PersonalInjuryCase['providers'][0], index: number) => (
               <div key={index} className="border border-gray-200 rounded-lg p-4">
                 {isEditing ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

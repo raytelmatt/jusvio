@@ -70,7 +70,7 @@ export default function TimeEntry() {
         description: formData.description,
       });
       navigate('/billing');
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setLoading(false);

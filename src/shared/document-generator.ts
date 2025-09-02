@@ -35,7 +35,7 @@ export async function generateDocumentContent(options: DocumentGenerationOptions
       // Generate PDF using jsPDF with error handling
       try {
         const jsPDFModule = await import('jspdf');
-        const jsPDF = jsPDFModule.jsPDF || (jsPDFModule as any).default;
+        const jsPDF = jsPDFModule.jsPDF || (jsPDFModule as { default?: typeof jsPDFModule.jsPDF }).default;
         
         if (!jsPDF) {
           throw new Error('jsPDF not available');

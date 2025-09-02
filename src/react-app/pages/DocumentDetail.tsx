@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { 
   ArrowLeft, 
@@ -45,7 +45,7 @@ export default function DocumentDetail() {
     fetchVersions();
   }, [id]); // fetchDocument and fetchVersions are stable functions defined in component
 
-  const fetchDocument = async () => {
+  const fetchDocument = useCallback(async () => {
     try {
       const data = await databases.getDocument(DATABASE_ID, COLLECTIONS.documents, String(id)) as AppwriteDocument;
       const normalized = DocumentSchema.parse({
@@ -61,9 +61,9 @@ export default function DocumentDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchVersions = async () => {
+  const fetchVersions = useCallback(async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.documentVersions, []);
       const rows = (list.documents || []).map((doc: AppwriteDocument) => 
@@ -78,7 +78,7 @@ export default function DocumentDetail() {
     } catch (error) {
       console.error('Error fetching versions:', error);
     }
-  };
+  }, [id]);
 
   const saveChanges = async () => {
     try {

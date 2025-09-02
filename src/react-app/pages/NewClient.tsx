@@ -56,7 +56,7 @@ export default function NewClient() {
       setFormData(prev => ({
         ...prev,
         [parent]: {
-          ...(prev[parent as keyof ClientFormData] as any),
+          ...(prev[parent as keyof ClientFormData] as Record<string, unknown>),
           [child]: value
         }
       }));
@@ -87,7 +87,7 @@ export default function NewClient() {
         portal_enabled: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      } as any;
+      } as Record<string, unknown>;
 
       const created = await databases.createDocument(
         DATABASE_ID,

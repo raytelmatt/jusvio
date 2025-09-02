@@ -63,7 +63,7 @@ export default function NewDeadline() {
         status: 'Open',
       });
       navigate('/deadlines');
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setLoading(false);
@@ -156,7 +156,7 @@ export default function NewDeadline() {
               </label>
               <select
                 value={formData.source}
-                onChange={(e) => setFormData({ ...formData, source: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value as string })}
                 className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200"
               >
                 <option value="Manual" className="bg-slate-800 text-white">Manual</option>

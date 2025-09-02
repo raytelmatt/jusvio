@@ -71,7 +71,7 @@ export default function NewTemplate() {
         variables: JSON.stringify(formData.variables),
       });
       navigate('/documents');
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setLoading(false);
