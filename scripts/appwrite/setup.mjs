@@ -44,7 +44,21 @@ function loadEnv() {
       }
 
 async function ensureTimeEntries() {
-  await ensureCollection('time_entries', 'Time Entries');
+  // Create time_entries collection with proper permissions
+  try {
+    await databases.getCollection(DATABASE_ID, 'time_entries');
+    console.log("Collection 'time_entries' exists");
+  } catch {
+    console.log("Creating collection 'time_entries' with user permissions...");
+    const defaultPerms = [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.users()),
+    ];
+    await databases.createCollection(DATABASE_ID, 'time_entries', 'Time Entries', defaultPerms, true, true);
+  }
+  
   const list = await databases.listAttributes(DATABASE_ID, 'time_entries');
   const have = new Set(list.attributes.map((a) => a.key));
   const ops = [];
@@ -424,7 +438,21 @@ async function ensureHearings() {
 }
 
 async function ensureInvoices() {
-  await ensureCollection('invoices', 'Invoices');
+  // Create invoices collection with proper permissions
+  try {
+    await databases.getCollection(DATABASE_ID, 'invoices');
+    console.log("Collection 'invoices' exists");
+  } catch {
+    console.log("Creating collection 'invoices' with user permissions...");
+    const defaultPerms = [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.users()),
+    ];
+    await databases.createCollection(DATABASE_ID, 'invoices', 'Invoices', defaultPerms, true, true);
+  }
+  
   const list = await databases.listAttributes(DATABASE_ID, 'invoices');
   const have = new Set(list.attributes.map((a) => a.key));
   const ops = [];
@@ -450,7 +478,21 @@ async function ensureInvoices() {
 }
 
 async function ensurePayments() {
-  await ensureCollection('payments', 'Payments');
+  // Create payments collection with proper permissions
+  try {
+    await databases.getCollection(DATABASE_ID, 'payments');
+    console.log("Collection 'payments' exists");
+  } catch {
+    console.log("Creating collection 'payments' with user permissions...");
+    const defaultPerms = [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.users()),
+    ];
+    await databases.createCollection(DATABASE_ID, 'payments', 'Payments', defaultPerms, true, true);
+  }
+  
   const list = await databases.listAttributes(DATABASE_ID, 'payments');
   const have = new Set(list.attributes.map((a) => a.key));
   const ops = [];
