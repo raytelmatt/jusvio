@@ -45,18 +45,7 @@ type TimelineEventDisplay = {
 //   unbilledTime: number;
 // }
 
-// interface Task {
-//   id: number;
-//   matter_id: number;
-//   title: string;
-//   description: string;
-//   status: 'Open' | 'InProgress' | 'Completed';
-//   priority: 'Low' | 'Medium' | 'High';
-//   due_at: string | null;
-//   assignee_ids: string[];
-//   created_at: string;
-//   updated_at: string;
-// }
+
 
 // interface HearingForm {
 //   hearing_type: string;
@@ -119,11 +108,9 @@ export default function MatterDetail() {
   const [editingTask, setEditingTask] = useState<Record<string, unknown> | null>(null);
   const [taskForm, setTaskForm] = useState({
     title: '',
-    description: '',
     due_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
     priority: 'Medium' as 'Low' | 'Medium' | 'High',
     status: 'Open' as 'Open' | 'InProgress' | 'Completed',
-    assignee_ids: [] as string[],
   });
   // Commenting out unused form state
   // const [hearingForm] = useState<HearingForm>({
@@ -564,11 +551,9 @@ export default function MatterDetail() {
       const payload: Record<string, unknown> = {
         matter_id: String(id),
         title: taskForm.title,
-        description: taskForm.description,
         status: taskForm.status,
         priority: taskForm.priority,
-        due_at: taskForm.due_at || null,
-        assignee_ids: taskForm.assignee_ids
+        due_at: taskForm.due_at || null
       };
       
       await databases.createDocument(
@@ -640,11 +625,9 @@ export default function MatterDetail() {
   const resetTaskForm = () => {
     setTaskForm({
       title: '',
-      description: '',
       due_at: '',
       priority: 'Medium',
-      status: 'Open',
-      assignee_ids: []
+      status: 'Open'
     });
     setEditingTask(null);
   };
@@ -654,11 +637,9 @@ export default function MatterDetail() {
       setEditingTask(task);
       setTaskForm({
         title: task.title,
-        description: task.description || '',
         due_at: task.due_at || '',
         priority: task.priority,
-        status: task.status,
-        assignee_ids: task.assignee_ids || []
+        status: task.status
       });
     } else {
       resetTaskForm();
@@ -1755,16 +1736,7 @@ export default function MatterDetail() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-1">Description (optional)</label>
-                  <textarea
-                    value={taskForm.description}
-                    onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                    placeholder="Task description"
-                  />
-                </div>
+
 
                 <div>
                   <label className="block text-sm font-medium text-blue-200 mb-1">Due Date (optional)</label>
@@ -1808,23 +1780,7 @@ export default function MatterDetail() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-blue-200 mb-1">Assignees (optional)</label>
-                  <select
-                    id="task_assignees"
-                    multiple
-                    value={taskForm.assignee_ids}
-                    onChange={(e) => setTaskForm({ ...taskForm, assignee_ids: Array.from(e.target.selectedOptions).map(option => option.value) })}
-                    className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
-                    aria-label="Task Assignees"
-                  >
-                    {/* Assuming users are fetched from a separate collection or passed as props */}
-                    {/* For now, a placeholder for assignee selection */}
-                    <option value="user1">User 1</option>
-                    <option value="user2">User 2</option>
-                    <option value="user3">User 3</option>
-                  </select>
-                </div>
+
 
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
