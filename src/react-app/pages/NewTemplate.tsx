@@ -146,11 +146,13 @@ export default function NewTemplate() {
                       Category *
                     </label>
                     <select
+                      id="template_category"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       className={`w-full px-3 py-2 border rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200 ${
                         errors.category ? 'border-red-400/50' : 'border-white/20'
                       }`}
+                      aria-label="Template Category"
                     >
                       {categories.map(category => (
                         <option key={category} value={category} className="bg-slate-800 text-white">{category}</option>
@@ -167,9 +169,11 @@ export default function NewTemplate() {
                     Output Format
                   </label>
                   <select
+                    id="output_type"
                     value={formData.output_type}
                     onChange={(e) => setFormData({ ...formData, output_type: e.target.value as 'docx' | 'pdf' })}
                     className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200"
+                    aria-label="Output Format"
                   >
                     <option value="pdf" className="bg-slate-800 text-white">PDF Document (.pdf)</option>
                     <option value="docx" className="bg-slate-800 text-white">Word Document (.docx)</option>
@@ -255,6 +259,7 @@ export default function NewTemplate() {
                   type="button"
                   onClick={addVariable}
                   className="px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                  aria-label="Add Variable"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
@@ -274,6 +279,7 @@ export default function NewTemplate() {
                       type="button"
                       onClick={() => removeVariable(index)}
                       className="text-red-300 hover:text-red-100 p-1 transition-colors"
+                      aria-label="Remove Variable"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>

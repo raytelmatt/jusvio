@@ -155,9 +155,11 @@ export default function Deadlines() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center space-x-4">
           <select
+            id="status_filter"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Filter by Status"
           >
             <option value="">All Statuses</option>
             <option value="Open">Open</option>
@@ -166,9 +168,11 @@ export default function Deadlines() {
           </select>
           
           <select
+            id="practice_area_filter"
             value={practiceAreaFilter}
             onChange={(e) => setPracticeAreaFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Filter by Practice Area"
           >
             <option value="">All Practice Areas</option>
             <option value="Criminal">Criminal Defense</option>
@@ -177,9 +181,11 @@ export default function Deadlines() {
           </select>
 
           <select
+            id="urgency_filter"
             value={urgencyFilter}
             onChange={(e) => setUrgencyFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Filter by Urgency"
           >
             <option value="">All Timeframes</option>
             <option value="overdue">Overdue</option>

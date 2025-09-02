@@ -32,6 +32,9 @@ interface Communication {
   matter_title?: string;
   client_name?: string;
   meta?: Record<string, unknown>;
+  channel?: string;
+  to_address?: string;
+  from_address?: string;
 }
 
 interface Matter {
@@ -170,9 +173,11 @@ export default function Communications() {
           </div>
           
           <select
+            id="channel_filter"
             value={channelFilter}
             onChange={(e) => setChannelFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Filter by Channel"
           >
             <option value="all">All Channels</option>
             <option value="Email">Email</option>
@@ -182,9 +187,11 @@ export default function Communications() {
           </select>
 
           <select
+            id="direction_filter"
             value={directionFilter}
             onChange={(e) => setDirectionFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Filter by Direction"
           >
             <option value="all">All Directions</option>
             <option value="Inbound">Inbound</option>
@@ -192,9 +199,11 @@ export default function Communications() {
           </select>
 
           <select
+            id="matter_filter"
             value={matterFilter}
             onChange={(e) => setMatterFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Filter by Matter"
           >
             <option value="all">All Matters</option>
             {matters.map(matter => (
@@ -214,10 +223,10 @@ export default function Communications() {
               Recent Communications ({filteredCommunications.length})
             </h3>
             <div className="flex items-center space-x-2">
-              <button className="p-2 text-gray-400 hover:text-gray-600">
+              <button className="p-2 text-gray-400 hover:text-gray-600" aria-label="Filter Communications">
                 <Filter className="w-4 h-4" />
               </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600">
+              <button className="p-2 text-gray-400 hover:text-gray-600" aria-label="Archive Communications">
                 <Archive className="w-4 h-4" />
               </button>
             </div>
@@ -227,7 +236,7 @@ export default function Communications() {
         <div className="divide-y divide-gray-200">
           {filteredCommunications.length > 0 ? (
             filteredCommunications.map((comm) => {
-              const ChannelIcon = getChannelIcon(comm.channel);
+              const ChannelIcon = getChannelIcon(comm.channel || 'Email');
               
               return (
                 <div
@@ -236,7 +245,7 @@ export default function Communications() {
                   onClick={() => setSelectedComm(comm)}
                 >
                   <div className="flex items-start space-x-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getChannelColor(comm.channel)}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getChannelColor(comm.channel || 'Email')}`}>
                       <ChannelIcon className="w-5 h-5" />
                     </div>
                     
@@ -289,6 +298,7 @@ export default function Communications() {
                           // Toggle star
                         }}
                         className="p-1 text-gray-400 hover:text-yellow-500"
+                        aria-label="Star Communication"
                       >
                         <Star className="w-4 h-4" />
                       </button>
@@ -298,6 +308,7 @@ export default function Communications() {
                           setSelectedComm(comm);
                         }}
                         className="p-1 text-gray-400 hover:text-gray-600"
+                        aria-label="View Communication"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -334,9 +345,9 @@ export default function Communications() {
             <div className="border-b border-gray-200 p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getChannelColor(selectedComm.channel)}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getChannelColor(selectedComm.channel || 'Email')}`}>
                     {(() => {
-                      const Icon = getChannelIcon(selectedComm.channel);
+                      const Icon = getChannelIcon(selectedComm.channel || 'Email');
                       return <Icon className="w-4 h-4" />;
                     })()}
                   </div>
@@ -503,7 +514,7 @@ function NewCommunicationForm({
         matter_id: parseInt(formData.matter_id),
         sent_at: new Date().toISOString(),
       });
-      onSave(created as Communication);
+      onSave(created as unknown as Communication);
     } catch {
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
@@ -519,11 +530,13 @@ function NewCommunicationForm({
             Matter *
           </label>
           <select
+            id="comm_matter_id"
             value={formData.matter_id}
             onChange={(e) => setFormData({ ...formData, matter_id: e.target.value })}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.matter_id ? 'border-red-300' : 'border-gray-300'
             }`}
+            aria-label="Select Matter"
           >
             <option value="">Select a matter...</option>
             {matters.map((matter) => (
@@ -542,9 +555,11 @@ function NewCommunicationForm({
             Channel
           </label>
           <select
+            id="comm_channel"
             value={formData.channel}
             onChange={(e) => setFormData({ ...formData, channel: e.target.value as 'SMS' | 'Email' | 'Phone' | 'Portal' })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Select Channel"
           >
             <option value="Email">Email</option>
             <option value="Phone">Phone</option>

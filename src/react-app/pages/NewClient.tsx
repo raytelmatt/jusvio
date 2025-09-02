@@ -113,6 +113,7 @@ export default function NewClient() {
           <button
             onClick={() => navigate('/clients')}
             className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200"
+            aria-label="Back to Clients"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -166,11 +167,13 @@ export default function NewClient() {
                   Date of Birth
                 </label>
                 <input
+                  id="date_of_birth"
                   type="date"
                   name="date_of_birth"
                   value={formData.date_of_birth}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
+                  aria-label="Date of Birth"
                 />
               </div>
               <div>
@@ -229,10 +232,12 @@ export default function NewClient() {
                   Preferred Contact Method
                 </label>
                 <select
+                  id="preferred_contact_method"
                   name="preferred_contact_method"
                   value={formData.preferred_contact_method}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200"
+                  aria-label="Preferred Contact Method"
                 >
                   <option value="">Select preferred method</option>
                   <option value="Email">Email</option>

@@ -33,7 +33,7 @@ export default function Calendar() {
 
   useEffect(() => {
     fetchHearings();
-  }, [currentDate, selectedPracticeArea]);
+  }, [fetchHearings]);
 
   const fetchHearings = useCallback(async () => {
     try {
@@ -158,9 +158,11 @@ export default function Calendar() {
         </div>
         <div className="flex items-center space-x-3">
           <select
+            id="practice_area_filter"
             value={selectedPracticeArea}
             onChange={(e) => setSelectedPracticeArea(e.target.value)}
             className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
+            aria-label="Filter by Practice Area"
           >
             <option value="" className="bg-slate-800 text-white">All Practice Areas</option>
             <option value="Criminal" className="bg-slate-800 text-white">Criminal Defense</option>
@@ -185,6 +187,7 @@ export default function Calendar() {
               <button
                 onClick={() => navigateMonth('prev')}
                 className="p-2 hover:bg-white/10 rounded-lg text-blue-200 hover:text-white"
+                aria-label="Previous Month"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -194,6 +197,7 @@ export default function Calendar() {
               <button
                 onClick={() => navigateMonth('next')}
                 className="p-2 hover:bg-white/10 rounded-lg text-blue-200 hover:text-white"
+                aria-label="Next Month"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>

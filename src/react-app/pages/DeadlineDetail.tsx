@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import { 
   ArrowLeft, 
@@ -31,6 +31,10 @@ interface Deadline {
     subject?: string;
     body?: string;
     sent_at: string;
+    created_at?: string;
+    from_address?: string;
+    to_address?: string;
+    meta?: string;
   }>;
   notes: Array<{
     id: string;
@@ -48,27 +52,27 @@ export default function DeadlineDetail() {
   const [newNote, setNewNote] = useState('');
   const [addingNote, setAddingNote] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      fetchDeadlineDetails();
-    }
-  }, [id]);
-
-  const fetchDeadlineDetails = async () => {
+  const fetchDeadlineDetails = useCallback(async () => {
     if (!id) return;
 
     try {
       const data = await databases.getDocument(DATABASE_ID, COLLECTIONS.deadlines, String(id));
       const notesList = await databases.listDocuments(DATABASE_ID, COLLECTIONS.deadlineNotes, []);
       const notes = (notesList.documents || []).filter((n: Record<string, unknown>) => String(n.deadline_id) === String(id));
-      setDeadline({ ...(data as Record<string, unknown>), notes } as Deadline);
+      setDeadline({ ...(data as Record<string, unknown>), notes } as unknown as Deadline);
     } catch {
       console.error('Error fetching deadline');
       setError('Failed to load deadline');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchDeadlineDetails();
+    }
+  }, [id, fetchDeadlineDetails]);
 
   const addNote = async () => {
     if (!id || !newNote.trim()) return;
@@ -327,7 +331,7 @@ export default function DeadlineDetail() {
             {/* Notes List */}
             <div className="space-y-4">
               {deadline.notes && deadline.notes.length > 0 ? (
-                deadline.notes.map((note: any) => (
+                deadline.notes.map((note: Deadline['notes'][0]) => (
                   <div key={note.id} className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2">
@@ -369,9 +373,9 @@ export default function DeadlineDetail() {
           <div className="p-6">
             {deadline.communications && deadline.communications.length > 0 ? (
               <div className="space-y-4">
-                {deadline.communications.map((comm: any) => {
+                {deadline.communications.map((comm: Deadline['communications'][0]) => {
                   const isInbound = comm.direction === 'Inbound';
-                  const commDate = new Date(comm.sent_at || comm.created_at);
+                  const commDate = new Date(comm.sent_at || comm.created_at || '');
                   
                   return (
                     <div

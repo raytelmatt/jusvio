@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { 
   ArrowLeft, 
@@ -83,14 +83,6 @@ export default function ClientDetail() {
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    if (id) {
-      fetchClientDetails();
-      fetchClientMatters();
-      fetchClientBalance();
-    }
-  }, [id]);
-
-  useEffect(() => {
     // Check if we should open billing tab based on URL params
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
@@ -99,7 +91,7 @@ export default function ClientDetail() {
     }
   }, []);
 
-  const fetchClientDetails = async () => {
+  const fetchClientDetails = useCallback(async () => {
     try {
       const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.clients, String(id));
       const normalized: Record<string, unknown> = {
@@ -115,9 +107,9 @@ export default function ClientDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchClientMatters = async () => {
+  const fetchClientMatters = useCallback(async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, [
         Query.equal('client_id', String(id)),
@@ -131,12 +123,21 @@ export default function ClientDetail() {
     } catch (error) {
       console.error('Error fetching client matters:', error);
     }
-  };
+  }, [id]);
 
-  const fetchClientBalance = async () => {
+  const fetchClientBalance = useCallback(async () => {
     // Not yet implemented against Appwrite. Leave empty to avoid blocking page render.
     setClientBalance(null);
-  };
+  }, []);
+
+  // Fetch client data when component mounts or id changes
+  useEffect(() => {
+    if (id) {
+      fetchClientDetails();
+      fetchClientMatters();
+      fetchClientBalance();
+    }
+  }, [id, fetchClientDetails, fetchClientMatters, fetchClientBalance]);
 
   const togglePortalAccess = async () => {
     if (!client) return;
@@ -147,7 +148,7 @@ export default function ClientDetail() {
         String(id),
         { portal_enabled: !client.portal_enabled }
       );
-      setClient({ ...(updated as unknown as Client) });
+      setClient({ ...(updated as Record<string, unknown>) } as Client);
     } catch (error) {
       console.error('Error updating client:', error);
     }
@@ -307,15 +308,15 @@ export default function ClientDetail() {
       </div>
 
       {/* Client Balance Overview */}
-      {clientBalance && clientBalance.total_balance > 0 && (
+      {clientBalance && clientBalance.total_balance && clientBalance.total_balance > 0 && (
         <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-xl p-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-red-900">Outstanding Balance</h3>
               <p className="text-3xl font-bold text-red-600">${clientBalance.total_balance.toLocaleString()}</p>
               <p className="text-sm text-red-700 mt-1">
-                Total invoiced: ${clientBalance.total_invoiced.toLocaleString()} • 
-                Total paid: ${clientBalance.total_paid.toLocaleString()}
+                Total invoiced: ${clientBalance.total_invoiced?.toLocaleString() || '0'} • 
+                Total paid: ${clientBalance.total_paid?.toLocaleString() || '0'}
               </p>
             </div>
             <div className="text-right">
@@ -486,6 +487,7 @@ export default function ClientDetail() {
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                           client.portal_enabled ? 'bg-blue-600' : 'bg-gray-200'
                         }`}
+                        aria-label="Toggle Portal Access"
                       >
                         <span
                           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -551,9 +553,9 @@ export default function ClientDetail() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-blue-200">Balance Due</span>
                           <span className={`text-sm font-medium ${
-                            clientBalance.total_balance > 0 ? 'text-red-400' : 'text-green-400'
+                            (clientBalance.total_balance ?? 0) > 0 ? 'text-red-400' : 'text-green-400'
                           }`}>
-                            ${clientBalance.total_balance?.toLocaleString() || '0'}
+                            ${(clientBalance.total_balance ?? 0).toLocaleString()}
                           </span>
                         </div>
                       </>
@@ -615,7 +617,7 @@ export default function ClientDetail() {
                     <h3 className="text-lg font-semibold text-gray-900">Balance by Matter</h3>
                   </div>
                   <div className="divide-y divide-gray-200">
-                    {clientBalance.matter_balances.map((matter: Record<string, unknown>) => (
+                    {clientBalance.matter_balances.map((matter) => (
                       <div key={matter.matter_id} className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -632,11 +634,11 @@ export default function ClientDetail() {
                             <div className="grid grid-cols-3 gap-4 text-sm">
                               <div>
                                 <span className="text-gray-500">Invoiced:</span>
-                                <span className="ml-1 font-medium">${matter.total_invoiced?.toLocaleString() || '0'}</span>
+                                <span className="ml-1 font-medium">${(matter as Record<string, unknown>).total_invoiced?.toString() || '0'}</span>
                               </div>
                               <div>
                                 <span className="text-gray-500">Paid:</span>
-                                <span className="ml-1 font-medium text-green-600">${matter.total_paid?.toLocaleString() || '0'}</span>
+                                <span className="ml-1 font-medium text-green-600">${(matter as Record<string, unknown>).total_paid?.toString() || '0'}</span>
                               </div>
                               <div>
                                 <span className="text-gray-500">Balance:</span>
@@ -669,7 +671,7 @@ export default function ClientDetail() {
                     <h3 className="text-lg font-semibold text-gray-900">Recent Invoices</h3>
                   </div>
                   <div className="divide-y divide-gray-200">
-                    {clientBalance.recent_invoices.slice(0, 5).map((invoice: Record<string, unknown>) => {
+                    {clientBalance.recent_invoices.slice(0, 5).map((invoice) => {
                       const statusColors = {
                         Draft: 'bg-gray-100 text-gray-800',
                         Sent: 'bg-blue-100 text-blue-800',
@@ -716,7 +718,7 @@ export default function ClientDetail() {
                     <h3 className="text-lg font-semibold text-gray-900">Recent Payments</h3>
                   </div>
                   <div className="divide-y divide-gray-200">
-                    {clientBalance.recent_payments.slice(0, 5).map((payment: Record<string, unknown>) => (
+                    {clientBalance.recent_payments.slice(0, 5).map((payment) => (
                       <div key={payment.id} className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -839,6 +841,7 @@ export default function ClientDetail() {
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     client.portal_enabled ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
+                  aria-label="Toggle Portal Access"
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -918,9 +921,9 @@ export default function ClientDetail() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-blue-200">Balance Due</span>
                     <span className={`text-sm font-medium ${
-                      clientBalance.total_balance > 0 ? 'text-red-400' : 'text-green-400'
+                      (clientBalance.total_balance ?? 0) > 0 ? 'text-red-400' : 'text-green-400'
                     }`}>
-                      ${clientBalance.total_balance?.toLocaleString() || '0'}
+                      ${(clientBalance.total_balance ?? 0).toLocaleString()}
                     </span>
                   </div>
                 </>

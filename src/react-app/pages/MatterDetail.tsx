@@ -1596,10 +1596,12 @@ export default function MatterDetail() {
                 <div>
                   <label className="block text-sm font-medium text-blue-200 mb-1">Due Date</label>
                   <input
+                    id="invoice_due_date"
                     type="date"
                     value={invoiceForm.due_date}
                     onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
                     className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    aria-label="Invoice Due Date"
                   />
                 </div>
 
@@ -1767,19 +1769,23 @@ export default function MatterDetail() {
                 <div>
                   <label className="block text-sm font-medium text-blue-200 mb-1">Due Date (optional)</label>
                   <input
+                    id="task_due_date"
                     type="date"
                     value={taskForm.due_at}
                     onChange={(e) => setTaskForm({ ...taskForm, due_at: e.target.value })}
                     className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    aria-label="Task Due Date"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-blue-200 mb-1">Priority</label>
                   <select
+                    id="task_priority"
                     value={taskForm.priority}
                     onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as 'Low' | 'Medium' | 'High' })}
                     className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    aria-label="Task Priority"
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -1790,9 +1796,11 @@ export default function MatterDetail() {
                 <div>
                   <label className="block text-sm font-medium text-blue-200 mb-1">Status</label>
                   <select
+                    id="task_status"
                     value={taskForm.status}
                     onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value as 'Open' | 'InProgress' | 'Completed' })}
                     className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    aria-label="Task Status"
                   >
                     <option value="Open">Open</option>
                     <option value="InProgress">In Progress</option>
@@ -1803,10 +1811,12 @@ export default function MatterDetail() {
                 <div>
                   <label className="block text-sm font-medium text-blue-200 mb-1">Assignees (optional)</label>
                   <select
+                    id="task_assignees"
                     multiple
                     value={taskForm.assignee_ids}
                     onChange={(e) => setTaskForm({ ...taskForm, assignee_ids: Array.from(e.target.selectedOptions).map(option => option.value) })}
                     className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-blue-500/40"
+                    aria-label="Task Assignees"
                   >
                     {/* Assuming users are fetched from a separate collection or passed as props */}
                     {/* For now, a placeholder for assignee selection */}

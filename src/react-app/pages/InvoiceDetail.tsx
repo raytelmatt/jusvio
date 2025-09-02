@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import { ArrowLeft, Download, Send, Calendar, User, FileText } from 'lucide-react';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
@@ -30,11 +30,7 @@ export default function InvoiceDetail() {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchInvoice();
-  }, [id]);
-
-  const fetchInvoice = async () => {
+  const fetchInvoice = useCallback(async () => {
     try {
       const data = await databases.getDocument(DATABASE_ID, COLLECTIONS.invoices, String(id));
       const normalized = {
@@ -50,7 +46,11 @@ export default function InvoiceDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchInvoice();
+  }, [fetchInvoice]);
 
   const sendInvoice = async () => {
     if (!invoice) return;

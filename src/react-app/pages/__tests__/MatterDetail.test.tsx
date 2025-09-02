@@ -1,5 +1,6 @@
+import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import MatterDetail from '../MatterDetail'
@@ -16,6 +17,15 @@ vi.mock('../../lib/appwrite', () => ({
   },
   DATABASE_ID: 'jusivo',
 }))
+
+// Type definitions for mocks
+type MockDatabase = {
+  getDocument: ReturnType<typeof vi.fn>
+  listDocuments: ReturnType<typeof vi.fn>
+  updateDocument: ReturnType<typeof vi.fn>
+  createDocument: ReturnType<typeof vi.fn>
+  deleteDocument: ReturnType<typeof vi.fn>
+}
 
 // Mock DocumentPreview component
 vi.mock('../../components/DocumentPreview', () => ({
@@ -105,8 +115,8 @@ describe('MatterDetail Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Setup default mock responses
-    ;(databases.getDocument as any).mockResolvedValue(mockMatter)
-    ;(databases.listDocuments as any).mockResolvedValue({ documents: [] })
+    ;(databases.getDocument as MockDatabase['getDocument']).mockResolvedValue(mockMatter)
+    ;(databases.listDocuments as MockDatabase['listDocuments']).mockResolvedValue({ documents: [] })
   })
 
   describe('Component Loading', () => {
@@ -116,7 +126,7 @@ describe('MatterDetail Component', () => {
     })
 
     it('should fetch and display matter details', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'invoices') {
           return Promise.resolve({ documents: mockInvoices })
         }
@@ -134,7 +144,7 @@ describe('MatterDetail Component', () => {
 
     it('should display error state when matter fetch fails', async () => {
       const errorMessage = 'Failed to fetch matter'
-      ;(databases.getDocument as any).mockRejectedValue(new Error(errorMessage))
+      ;(databases.getDocument as MockDatabase['getDocument']).mockRejectedValue(new Error(errorMessage))
 
       renderComponent()
 
@@ -145,7 +155,7 @@ describe('MatterDetail Component', () => {
     })
 
     it('should display not found message for invalid matter', async () => {
-      ;(databases.getDocument as any).mockResolvedValue(null)
+      ;(databases.getDocument as MockDatabase['getDocument']).mockResolvedValue(null)
 
       renderComponent()
 
@@ -157,7 +167,7 @@ describe('MatterDetail Component', () => {
 
   describe('Tab Navigation', () => {
     beforeEach(async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'invoices') {
           return Promise.resolve({ documents: mockInvoices })
         }
@@ -176,7 +186,7 @@ describe('MatterDetail Component', () => {
     })
 
     it('should switch to documents tab when clicked', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'documents') {
           return Promise.resolve({ documents: mockDocuments })
         }
@@ -196,7 +206,7 @@ describe('MatterDetail Component', () => {
     })
 
     it('should switch to communications tab when clicked', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'communications') {
           return Promise.resolve({ documents: mockCommunications })
         }
@@ -228,7 +238,7 @@ describe('MatterDetail Component', () => {
 
   describe('Criminal Case Data', () => {
     it('should display criminal case information in overview tab', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'invoices') {
           return Promise.resolve({ documents: mockInvoices })
         }
@@ -251,7 +261,7 @@ describe('MatterDetail Component', () => {
 
   describe('Edit Mode', () => {
     it('should toggle edit mode when Edit button is clicked', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'invoices') {
           return Promise.resolve({ documents: mockInvoices })
         }
@@ -272,7 +282,7 @@ describe('MatterDetail Component', () => {
     })
 
     it('should show Save Changes button', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'invoices') {
           return Promise.resolve({ documents: mockInvoices })
         }
@@ -296,7 +306,7 @@ describe('MatterDetail Component', () => {
 
   describe('Data Fetching', () => {
     it('should fetch timeline events when timeline tab is clicked', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'invoices') {
           return Promise.resolve({ documents: mockInvoices })
         }
@@ -332,7 +342,7 @@ describe('MatterDetail Component', () => {
     })
 
     it('should refresh documents when Refresh Documents button is clicked', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'documents') {
           return Promise.resolve({ documents: mockDocuments })
         }
@@ -368,7 +378,7 @@ describe('MatterDetail Component', () => {
 
   describe('Practice Area and Status Badges', () => {
     it('should display correct practice area badge color for Criminal', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'invoices') {
           return Promise.resolve({ documents: mockInvoices })
         }
@@ -384,7 +394,7 @@ describe('MatterDetail Component', () => {
     })
 
     it('should display correct status badge color for Open', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation((_db: string, collection: string) => {
         if (collection === 'invoices') {
           return Promise.resolve({ documents: mockInvoices })
         }
@@ -432,7 +442,7 @@ describe('MatterDetail Component', () => {
     })
 
     it('should display empty state for invoices', async () => {
-      ;(databases.listDocuments as any).mockImplementation((db: string, collection: string) => {
+      ;(databases.listDocuments as MockDatabase['listDocuments']).mockImplementation(() => {
         return Promise.resolve({ documents: [] })
       })
 

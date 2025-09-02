@@ -122,11 +122,13 @@ export default function NewHearing() {
                 Matter *
               </label>
               <select
+                id="hearing_matter_id"
                 value={formData.matter_id}
                 onChange={(e) => setFormData({ ...formData, matter_id: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200 ${
                   errors.matter_id ? 'border-red-400/50' : 'border-white/20'
                 }`}
+                aria-label="Select Matter"
               >
                 <option value="" className="bg-slate-800 text-white">Select a matter...</option>
                 {matters.map((matter) => (
@@ -194,12 +196,14 @@ export default function NewHearing() {
                   Start Date/Time *
                 </label>
                 <input
+                  id="start_at"
                   type="datetime-local"
                   value={formData.start_at}
                   onChange={(e) => setFormData({ ...formData, start_at: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200 ${
                     errors.start_at ? 'border-red-400/50' : 'border-white/20'
                   }`}
+                  aria-label="Start Date and Time"
                 />
                 {errors.start_at && (
                   <p className="mt-1 text-sm text-red-400">{errors.start_at}</p>
@@ -211,10 +215,12 @@ export default function NewHearing() {
                   End Date/Time
                 </label>
                 <input
+                  id="end_at"
                   type="datetime-local"
                   value={formData.end_at}
                   onChange={(e) => setFormData({ ...formData, end_at: e.target.value })}
                   className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200"
+                  aria-label="End Date and Time"
                 />
               </div>
             </div>

@@ -107,7 +107,7 @@ export default function NewMatter() {
       console.error('Error creating matter:', error);
       const message = (error as { message?: string })?.message || 'Error creating matter. Please check required fields and try again.';
       setErrors({ submit: message });
-      try { alert(message); } catch {}
+      try { alert(message); } catch (e) { console.error('Alert failed:', e); }
     } finally {
       setLoading(false);
     }
@@ -142,11 +142,13 @@ export default function NewMatter() {
                 Select Client *
               </label>
               <select
+                id="client_id"
                 value={formData.client_id}
                 onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 focus:text-white transition-all duration-200 ${
                   errors.client_id ? 'border-red-400/50' : 'border-white/20'
                 }`}
+                aria-label="Select Client"
               >
                 <option value="" className="bg-slate-800 text-white">Choose a client...</option>
                 {clients.map((client) => (
@@ -212,11 +214,13 @@ export default function NewMatter() {
                 Practice Area *
               </label>
               <select
+                id="practice_area"
                 value={formData.practice_area}
                 onChange={(e) => setFormData({ ...formData, practice_area: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 focus:text-white transition-all duration-200 ${
                   errors.practice_area ? 'border-red-400/50' : 'border-white/20'
                 }`}
+                aria-label="Practice Area"
               >
                 <option value="" className="bg-slate-800 text-white">Select practice area...</option>
                 <option value="Criminal" className="bg-slate-800 text-white">Criminal Defense</option>

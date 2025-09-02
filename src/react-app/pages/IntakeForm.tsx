@@ -260,16 +260,18 @@ export default function IntakeForm() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
                     First Name *
                   </label>
                   <input
+                    id="first_name"
                     type="text"
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.first_name ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="First Name"
                   />
                   {errors.first_name && (
                     <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>
@@ -277,16 +279,18 @@ export default function IntakeForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
                     Last Name *
                   </label>
                   <input
+                    id="last_name"
                     type="text"
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.last_name ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="Last Name"
                   />
                   {errors.last_name && (
                     <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>
@@ -294,16 +298,18 @@ export default function IntakeForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email Address *
                   </label>
                   <input
+                    id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.email ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="Email Address"
                   />
                   {errors.email && (
                     <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -311,14 +317,16 @@ export default function IntakeForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="date_of_birth" className="block text-sm font-medium text-gray-700 mb-1">
                     Date of Birth
                   </label>
                   <input
+                    id="date_of_birth"
                     type="date"
                     value={formData.date_of_birth}
                     onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    aria-label="Date of Birth"
                   />
                 </div>
               </div>
@@ -334,16 +342,18 @@ export default function IntakeForm() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number *
                   </label>
                   <input
+                    id="phone"
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.phone ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="Phone Number"
                   />
                   {errors.phone && (
                     <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
@@ -351,13 +361,15 @@ export default function IntakeForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="preferred_contact_method" className="block text-sm font-medium text-gray-700 mb-1">
                     Preferred Contact Method
                   </label>
                   <select
+                    id="preferred_contact_method"
                     value={formData.preferred_contact_method}
                     onChange={(e) => setFormData({ ...formData, preferred_contact_method: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    aria-label="Preferred Contact Method"
                   >
                     <option value="Email">Email</option>
                     <option value="Phone">Phone</option>
@@ -366,10 +378,11 @@ export default function IntakeForm() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
                     Street Address *
                   </label>
                   <input
+                    id="street"
                     type="text"
                     value={formData.address.street}
                     onChange={(e) => setFormData({ 
@@ -379,6 +392,7 @@ export default function IntakeForm() {
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.street ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="Street Address"
                   />
                   {errors.street && (
                     <p className="mt-1 text-sm text-red-600">{errors.street}</p>
@@ -386,10 +400,11 @@ export default function IntakeForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
                     City *
                   </label>
                   <input
+                    id="city"
                     type="text"
                     value={formData.address.city}
                     onChange={(e) => setFormData({ 
@@ -399,6 +414,7 @@ export default function IntakeForm() {
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.city ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="City"
                   />
                   {errors.city && (
                     <p className="mt-1 text-sm text-red-600">{errors.city}</p>
@@ -406,10 +422,11 @@ export default function IntakeForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
                     State *
                   </label>
                   <input
+                    id="state"
                     type="text"
                     value={formData.address.state}
                     onChange={(e) => setFormData({ 
@@ -419,6 +436,7 @@ export default function IntakeForm() {
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.state ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="State"
                   />
                   {errors.state && (
                     <p className="mt-1 text-sm text-red-600">{errors.state}</p>
@@ -426,10 +444,11 @@ export default function IntakeForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="zip" className="block text-sm font-medium text-gray-700 mb-1">
                     ZIP Code *
                   </label>
                   <input
+                    id="zip"
                     type="text"
                     value={formData.address.zip}
                     onChange={(e) => setFormData({ 
@@ -439,6 +458,7 @@ export default function IntakeForm() {
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.zip ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="ZIP Code"
                   />
                   {errors.zip && (
                     <p className="mt-1 text-sm text-red-600">{errors.zip}</p>
@@ -451,10 +471,11 @@ export default function IntakeForm() {
                 <h3 className="text-base font-medium text-gray-900 mb-4">Emergency Contact</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="emergency_name" className="block text-sm font-medium text-gray-700 mb-1">
                       Name
                     </label>
                     <input
+                      id="emergency_name"
                       type="text"
                       value={formData.emergency_contact.name}
                       onChange={(e) => setFormData({ 
@@ -462,13 +483,15 @@ export default function IntakeForm() {
                         emergency_contact: { ...formData.emergency_contact, name: e.target.value }
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      aria-label="Emergency Contact Name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="emergency_relationship" className="block text-sm font-medium text-gray-700 mb-1">
                       Relationship
                     </label>
                     <input
+                      id="emergency_relationship"
                       type="text"
                       value={formData.emergency_contact.relationship}
                       onChange={(e) => setFormData({ 
@@ -476,13 +499,15 @@ export default function IntakeForm() {
                         emergency_contact: { ...formData.emergency_contact, relationship: e.target.value }
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      aria-label="Emergency Contact Relationship"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="emergency_phone" className="block text-sm font-medium text-gray-700 mb-1">
                       Phone
                     </label>
                     <input
+                      id="emergency_phone"
                       type="tel"
                       value={formData.emergency_contact.phone}
                       onChange={(e) => setFormData({ 
@@ -490,6 +515,7 @@ export default function IntakeForm() {
                         emergency_contact: { ...formData.emergency_contact, phone: e.target.value }
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      aria-label="Emergency Contact Phone"
                     />
                   </div>
                 </div>
@@ -506,15 +532,17 @@ export default function IntakeForm() {
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="practice_area" className="block text-sm font-medium text-gray-700 mb-1">
                     Practice Area *
                   </label>
                   <select
+                    id="practice_area"
                     value={formData.practice_area}
                     onChange={(e) => setFormData({ ...formData, practice_area: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.practice_area ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="Practice Area"
                   >
                     <option value="">Select practice area...</option>
                     <option value="Criminal">Criminal Defense</option>
@@ -527,10 +555,11 @@ export default function IntakeForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="case_description" className="block text-sm font-medium text-gray-700 mb-1">
                     Case Description *
                   </label>
                   <textarea
+                    id="case_description"
                     value={formData.case_description}
                     onChange={(e) => setFormData({ ...formData, case_description: e.target.value })}
                     rows={4}
@@ -538,6 +567,7 @@ export default function IntakeForm() {
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.case_description ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    aria-label="Case Description"
                   />
                   {errors.case_description && (
                     <p className="mt-1 text-sm text-red-600">{errors.case_description}</p>
@@ -546,25 +576,29 @@ export default function IntakeForm() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="incident_date" className="block text-sm font-medium text-gray-700 mb-1">
                       Incident Date
                     </label>
                     <input
+                      id="incident_date"
                       type="date"
                       value={formData.incident_date}
                       onChange={(e) => setFormData({ ...formData, incident_date: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      aria-label="Incident Date"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="urgency_level" className="block text-sm font-medium text-gray-700 mb-1">
                       Urgency Level
                     </label>
                     <select
+                      id="urgency_level"
                       value={formData.urgency_level}
                       onChange={(e) => setFormData({ ...formData, urgency_level: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      aria-label="Urgency Level"
                     >
                       <option value="Low">Low - General consultation</option>
                       <option value="Medium">Medium - Standard timeline</option>
@@ -580,36 +614,42 @@ export default function IntakeForm() {
                     <h4 className="font-medium text-red-900 mb-3">Criminal Case Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-red-800 mb-1">
+                        <label htmlFor="criminal_charges" className="block text-sm font-medium text-red-800 mb-1">
                           Charges (if known)
                         </label>
                         <input
+                          id="criminal_charges"
                           type="text"
                           value={formData.criminal_charges || ''}
                           onChange={(e) => setFormData({ ...formData, criminal_charges: e.target.value })}
                           className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          aria-label="Criminal Charges"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-red-800 mb-1">
+                        <label htmlFor="arrest_date" className="block text-sm font-medium text-red-800 mb-1">
                           Arrest Date
                         </label>
                         <input
+                          id="arrest_date"
                           type="date"
                           value={formData.arrest_date || ''}
                           onChange={(e) => setFormData({ ...formData, arrest_date: e.target.value })}
                           className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          aria-label="Arrest Date"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-red-800 mb-1">
+                        <label htmlFor="jurisdiction" className="block text-sm font-medium text-red-800 mb-1">
                           Jurisdiction/Court
                         </label>
                         <input
+                          id="jurisdiction"
                           type="text"
                           value={formData.jurisdiction || ''}
                           onChange={(e) => setFormData({ ...formData, jurisdiction: e.target.value })}
                           className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          aria-label="Jurisdiction or Court"
                         />
                       </div>
                     </div>
@@ -621,13 +661,15 @@ export default function IntakeForm() {
                     <h4 className="font-medium text-blue-900 mb-3">Personal Injury Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-blue-800 mb-1">
+                        <label htmlFor="pi_incident_type" className="block text-sm font-medium text-blue-800 mb-1">
                           Type of Incident
                         </label>
                         <select
+                          id="pi_incident_type"
                           value={formData.pi_incident_type || ''}
                           onChange={(e) => setFormData({ ...formData, pi_incident_type: e.target.value })}
                           className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          aria-label="Type of Incident"
                         >
                           <option value="">Select incident type...</option>
                           <option value="Motor Vehicle Accident">Motor Vehicle Accident</option>
@@ -639,25 +681,29 @@ export default function IntakeForm() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-blue-800 mb-1">
+                        <label htmlFor="pi_insurance_company" className="block text-sm font-medium text-blue-800 mb-1">
                           Insurance Company (if known)
                         </label>
                         <input
+                          id="pi_insurance_company"
                           type="text"
                           value={formData.pi_insurance_company || ''}
                           onChange={(e) => setFormData({ ...formData, pi_insurance_company: e.target.value })}
                           className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          aria-label="Insurance Company"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-blue-800 mb-1">
+                        <label htmlFor="pi_injuries" className="block text-sm font-medium text-blue-800 mb-1">
                           Injuries Sustained
                         </label>
                         <textarea
+                          id="pi_injuries"
                           value={formData.pi_injuries || ''}
                           onChange={(e) => setFormData({ ...formData, pi_injuries: e.target.value })}
                           rows={3}
                           className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          aria-label="Injuries Sustained"
                         />
                       </div>
                     </div>
@@ -669,13 +715,15 @@ export default function IntakeForm() {
                     <h4 className="font-medium text-green-900 mb-3">Social Security Disability Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-green-800 mb-1">
+                        <label htmlFor="ssd_disability_type" className="block text-sm font-medium text-green-800 mb-1">
                           Type of Disability
                         </label>
                         <select
+                          id="ssd_disability_type"
                           value={formData.ssd_disability_type || ''}
                           onChange={(e) => setFormData({ ...formData, ssd_disability_type: e.target.value })}
                           className="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          aria-label="Type of Disability"
                         >
                           <option value="">Select disability type...</option>
                           <option value="Physical">Physical Disability</option>
@@ -684,26 +732,30 @@ export default function IntakeForm() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-green-800 mb-1">
+                        <label htmlFor="ssd_work_date" className="block text-sm font-medium text-green-800 mb-1">
                           Last Date Worked
                         </label>
                         <input
+                          id="ssd_work_date"
                           type="date"
                           value={formData.ssd_work_date || ''}
                           onChange={(e) => setFormData({ ...formData, ssd_work_date: e.target.value })}
                           className="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          aria-label="Last Date Worked"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-green-800 mb-1">
+                        <label htmlFor="ssd_medical_providers" className="block text-sm font-medium text-green-800 mb-1">
                           Medical Providers
                         </label>
                         <textarea
+                          id="ssd_medical_providers"
                           value={formData.ssd_medical_providers || ''}
                           onChange={(e) => setFormData({ ...formData, ssd_medical_providers: e.target.value })}
                           rows={3}
                           placeholder="List your doctors, hospitals, and other medical providers..."
                           className="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          aria-label="Medical Providers"
                         />
                       </div>
                     </div>

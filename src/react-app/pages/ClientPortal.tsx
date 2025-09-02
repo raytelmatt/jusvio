@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router';
 import { 
   FolderOpen, 
@@ -75,11 +75,7 @@ export default function ClientPortal() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    fetchClientPortalData();
-  }, [clientId]);
-
-  const fetchClientPortalData = async () => {
+  const fetchClientPortalData = useCallback(async () => {
     try {
       const response = await fetch(`/api/client-portal/${clientId}`, {
         credentials: 'include',
@@ -93,7 +89,11 @@ export default function ClientPortal() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [clientId]);
+
+  useEffect(() => {
+    fetchClientPortalData();
+  }, [fetchClientPortalData]);
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: User },
@@ -346,10 +346,10 @@ export default function ClientPortal() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <button className="p-2 text-gray-400 hover:text-gray-600">
+                        <button className="p-2 text-gray-400 hover:text-gray-600" aria-label="View Document">
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-gray-400 hover:text-gray-600">
+                        <button className="p-2 text-gray-400 hover:text-gray-600" aria-label="Download Document">
                           <Download className="w-4 h-4" />
                         </button>
                       </div>

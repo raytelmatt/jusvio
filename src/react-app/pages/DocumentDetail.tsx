@@ -43,7 +43,7 @@ export default function DocumentDetail() {
   useEffect(() => {
     fetchDocument();
     fetchVersions();
-  }, [id]); // fetchDocument and fetchVersions are stable functions defined in component
+  }, [fetchDocument, fetchVersions]); // fetchDocument and fetchVersions are stable functions defined in component
 
   const fetchDocument = useCallback(async () => {
     try {

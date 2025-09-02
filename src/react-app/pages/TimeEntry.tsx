@@ -105,11 +105,13 @@ export default function TimeEntry() {
                 Matter *
               </label>
               <select
+                id="time_matter_id"
                 value={formData.matter_id}
                 onChange={(e) => setFormData({ ...formData, matter_id: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200 ${
                   errors.matter_id ? 'border-red-400/50' : 'border-white/20'
                 }`}
+                aria-label="Select Matter"
               >
                 <option value="" className="bg-slate-800 text-white">Select a matter...</option>
                 {matters.map((matter) => (
@@ -145,12 +147,14 @@ export default function TimeEntry() {
                   Date *
                 </label>
                 <input
+                  id="entry_date"
                   type="date"
                   value={formData.entry_date}
                   onChange={(e) => setFormData({ ...formData, entry_date: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200 ${
                     errors.entry_date ? 'border-red-400/50' : 'border-white/20'
                   }`}
+                  aria-label="Entry Date"
                 />
                 {errors.entry_date && (
                   <p className="mt-1 text-sm text-red-400">{errors.entry_date}</p>
@@ -186,6 +190,7 @@ export default function TimeEntry() {
                     <span className="text-blue-200 sm:text-sm">$</span>
                   </div>
                   <input
+                    id="rate"
                     type="number"
                     step="0.01"
                     min="0"
@@ -194,6 +199,7 @@ export default function TimeEntry() {
                     className={`w-full pl-7 pr-3 py-2 border rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 focus:bg-white/15 transition-all duration-200 ${
                       errors.rate ? 'border-red-400/50' : 'border-white/20'
                     }`}
+                    aria-label="Hourly Rate"
                   />
                 </div>
                 {errors.rate && (

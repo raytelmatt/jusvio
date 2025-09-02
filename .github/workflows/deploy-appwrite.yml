@@ -4,6 +4,11 @@ on:
   push:
     branches: [ "main" ]
 
+env:
+  APPWRITE_ENDPOINT: "https://nyc.cloud.appwrite.io/v1"
+  APPWRITE_PROJECT_ID: "6897443a0034c54b3fd8"
+  APPWRITE_SITE_ID: "689776cb0024f4ccb0ed"
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -36,17 +41,29 @@ jobs:
 
       - name: Deploy to Appwrite Sites
         env:
-          APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
+          APPWRITE_API_KEY: "${{ secrets.APPWRITE_API_KEY }}"
         run: |
           set -x
-          APPWRITE_ENDPOINT="https://nyc.cloud.appwrite.io/v1"
-          APPWRITE_PROJECT_ID="6897443a0034c54b3fd8"
-          APPWRITE_SITE_ID="689776cb0024f4ccb0ed"
+          
+          # Validate required environment variables
+          if [ -z "$APPWRITE_API_KEY" ]; then
+            echo "Error: APPWRITE_API_KEY environment variable is empty"
+            echo "Please ensure the APPWRITE_API_KEY secret is configured in repository settings"
+            exit 1
+          fi
+          
+          if [ -z "$APPWRITE_ENDPOINT" ] || [ -z "$APPWRITE_PROJECT_ID" ] || [ -z "$APPWRITE_SITE_ID" ]; then
+            echo "Error: Missing required Appwrite configuration"
+            exit 1
+          fi
+          
           FILE="code.zip"
           if [ ! -s "$FILE" ]; then
             FILE="code.tar.gz"
           fi
           ls -lh "$FILE" || { echo "Archive missing"; exit 1; }
+          
+          echo "Deploying to Appwrite Sites..."
           curl -fsS \
             --connect-timeout 30 \
             --max-time 300 \
@@ -57,6 +74,8 @@ jobs:
             -H "X-Appwrite-Project: $APPWRITE_PROJECT_ID" \
             -H "X-Appwrite-Key: $APPWRITE_API_KEY" \
             -F "code=@${FILE}" \
-            -F "activate=true"
+            -F "activate=true" \
+          && echo "Deployment successful!" \
+          || { echo "Deployment failed"; exit 1; }
 
 

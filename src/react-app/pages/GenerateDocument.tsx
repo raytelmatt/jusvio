@@ -129,7 +129,7 @@ export default function GenerateDocument() {
         template: selectedTemplate,
         variables: formData.variables,
         title: formData.title || selectedTemplate.name
-      } as Record<string, unknown>);
+      });
 
       if (!generatedDoc.blob || generatedDoc.blob.size === 0) {
         throw new Error('Generated document is empty');
@@ -141,7 +141,7 @@ export default function GenerateDocument() {
       const fileId = (created as { $id: string }).$id;
 
       // Create document record
-      const doc = await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
+      await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
         matter_id: formData.matter_id,
         template_id: selectedTemplate?.id?.toString?.() ?? null,
         title: formData.title || selectedTemplate.name,
@@ -151,8 +151,10 @@ export default function GenerateDocument() {
         created_by: user?.$id ?? 'system',
       });
 
-      const normalized = { ...(doc as Record<string, unknown>), id: (doc as Record<string, unknown>).id ?? (doc as Record<string, unknown>).$id };
-      setGeneratedDocument(normalized);
+      setGeneratedDocument({
+        blob: generatedDoc.blob,
+        filename: generatedDoc.filename
+      });
       // local download for convenience; storage remains private
       downloadDocument(generatedDoc.blob, generatedDoc.filename);
       setTimeout(() => navigate('/documents'), 1200);
@@ -422,15 +424,15 @@ export default function GenerateDocument() {
                   <div>
                     <p className="text-sm font-medium text-green-900">Document Generated Successfully</p>
                     <p className="text-xs text-green-700">
-                      {generatedDocument.title} has been created, saved, and downloaded.
+                      {generatedDocument.filename} has been created, saved, and downloaded.
                     </p>
                   </div>
                 </div>
                 <Link
-                  to={`/documents/${generatedDocument.id}`}
+                  to="/documents"
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
-                  View Document
+                  View All Documents
                 </Link>
               </div>
             </div>

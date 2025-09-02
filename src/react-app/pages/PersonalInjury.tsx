@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import { 
   ArrowLeft, 
@@ -56,11 +56,7 @@ export default function PersonalInjury() {
     lost_wages_total: '',
   });
 
-  useEffect(() => {
-    fetchData();
-  }, [id]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const response = await fetch(`/api/matters/${id}/personal-injury`, {
         credentials: 'include',
@@ -86,7 +82,11 @@ export default function PersonalInjury() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const saveData = async () => {
     try {
@@ -249,10 +249,12 @@ export default function PersonalInjury() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Incident Date</label>
               {isEditing ? (
                 <input
+                  id="incident_date"
                   type="date"
                   value={formData.incident_date}
                   onChange={(e) => setFormData({...formData, incident_date: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  aria-label="Incident Date"
                 />
               ) : (
                 <p className="text-sm text-gray-900">
@@ -264,9 +266,11 @@ export default function PersonalInjury() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Incident Type</label>
               {isEditing ? (
                 <select
+                  id="incident_type"
                   value={formData.incident_type}
                   onChange={(e) => setFormData({...formData, incident_type: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  aria-label="Incident Type"
                 >
                   <option value="">Select type...</option>
                   <option value="Motor Vehicle Accident">Motor Vehicle Accident</option>
@@ -469,9 +473,11 @@ export default function PersonalInjury() {
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
                       <select
+                        id={`provider_type_${index}`}
                         value={provider.type || ''}
                         onChange={(e) => updateProvider(index, 'type', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        aria-label="Provider Type"
                       >
                         <option value="">Select type...</option>
                         <option value="Hospital">Hospital</option>

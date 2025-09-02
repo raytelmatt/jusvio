@@ -261,9 +261,11 @@ export default function Billing() {
           <div className="flex items-center space-x-4">
             {activeTab === 'invoices' && (
               <select
+                id="status_filter"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
+                aria-label="Filter by Status"
               >
                 <option value="all">All Status</option>
                 <option value="draft">Draft</option>
@@ -422,6 +424,7 @@ export default function Billing() {
                         <button 
                           onClick={() => alert('Download invoice functionality would be implemented here')}
                           className="p-2 text-blue-300 hover:text-blue-100"
+                          aria-label="Download Invoice"
                         >
                           <Download className="w-4 h-4" />
                         </button>
@@ -429,6 +432,7 @@ export default function Billing() {
                           <button 
                             onClick={() => sendInvoice(invoice.id)}
                             className="p-2 text-blue-300 hover:text-blue-100"
+                            aria-label="Send Invoice"
                           >
                             <Send className="w-4 h-4" />
                           </button>
