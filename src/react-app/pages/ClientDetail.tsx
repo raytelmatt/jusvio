@@ -31,12 +31,53 @@ interface Matter {
   created_at: string;
 }
 
+interface ClientBalance {
+  id: number;
+  client_id: string;
+  client_number?: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  balance: number;
+  current_balance?: number;
+  total_paid?: number;
+  total_invoiced?: number;
+  unbilled_amount?: number;
+  last_payment_date?: string;
+  outstanding_invoices: number;
+  total_balance?: number;
+  matter_balances?: Array<{
+    matter_id: string;
+    matter_number: string;
+    matter_title: string;
+    balance: number;
+  }>;
+  recent_invoices?: Array<{
+    id: string;
+    invoice_number: string;
+    status: string;
+    matter_title: string;
+    issue_date: string;
+    due_date: string;
+    total: number;
+  }>;
+  recent_payments?: Array<{
+    id: string;
+    invoice_number: string;
+    matter_title: string;
+    received_at: string;
+    payment_method: string;
+    reference?: string;
+    amount: number;
+  }>;
+}
+
 export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [client, setClient] = useState<Client | null>(null);
   const [matters, setMatters] = useState<Matter[]>([]);
-  const [clientBalance, setClientBalance] = useState<Record<string, unknown> | null>(null);
+  const [clientBalance, setClientBalance] = useState<ClientBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -106,7 +147,7 @@ export default function ClientDetail() {
         String(id),
         { portal_enabled: !client.portal_enabled }
       );
-      setClient({ ...(updated as Client) });
+      setClient({ ...(updated as unknown as Client) });
     } catch (error) {
       console.error('Error updating client:', error);
     }
