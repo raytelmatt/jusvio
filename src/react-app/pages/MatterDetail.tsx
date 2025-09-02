@@ -693,6 +693,8 @@ export default function MatterDetail() {
       const message = (err && typeof err === 'object' && 'message' in err) ? String((err as Error).message) : 'Failed to save changes';
       if (message.toLowerCase().includes('permission') || message.toLowerCase().includes('unauthorized')) {
         setSaveError('You do not have permission to update this matter. Ask an admin to grant update access or create a new matter yourself.');
+      } else if (message.toLowerCase().includes('collection') && message.toLowerCase().includes('not be found')) {
+        setSaveError('Storage collection for extended data is missing. Run the Appwrite setup to create "matters_meta" or add it in the console.');
       } else if (message.toLowerCase().includes('attribute') || message.toLowerCase().includes('case_data')) {
         setSaveError('The matter is missing the "case_data" field in Appwrite. Run the setup script or add this attribute in the console.');
       } else {
