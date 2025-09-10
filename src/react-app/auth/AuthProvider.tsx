@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Client, Account, Models } from "appwrite";
-import { setClientJWT } from "@/react-app/lib/appwrite";
+import { getBackendService, setClientJWT } from "@/react-app/lib/backend";
+import type { BackendUser } from "@/react-app/lib/backend/types";
 
-type AuthUser = Models.User<Models.Preferences> | null;
+type AuthUser = BackendUser | null;
 
 interface AuthContextValue {
   user: AuthUser;
@@ -16,41 +16,32 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function getEnv(name: string, fallback?: string): string {
-  // Vite exposes env as import.meta.env.VITE_*
-  const key = `VITE_${name}` as keyof ImportMetaEnv;
-  const val = import.meta.env?.[key];
-  return (val as string) || fallback || "";
-}
-
-function createAppwriteClients() {
-  const endpoint = getEnv("APPWRITE_ENDPOINT", "https://cloud.appwrite.io/v1");
-  const projectId = getEnv("APPWRITE_PROJECT_ID", "6897443a0034c54b3fd8");
-  if (!endpoint || !projectId) {
-    // Allow rendering without crashing; auth will be disabled
-    return { client: null as unknown as Client, account: null as unknown as Account };
+function createBackendService() {
+  try {
+    return getBackendService();
+  } catch (error) {
+    console.error('Failed to initialize backend service:', error);
+    // Return null to allow rendering without crashing; auth will be disabled
+    return null;
   }
-  const client = new Client().setEndpoint(endpoint).setProject(projectId);
-  const account = new Account(client);
-  return { client, account };
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [{ account }] = useState(createAppwriteClients());
+  const [backend] = useState(createBackendService());
   const [user, setUser] = useState<AuthUser>(null);
   const [isPending, setIsPending] = useState<boolean>(true);
 
   const refreshUser = useCallback(async () => {
-    if (!account) {
+    if (!backend) {
       setUser(null);
       setIsPending(false);
       return;
     }
     try {
-      const current = await account.get();
-      // Ensure DB/Storage calls carry an Authorization header for Appwrite Cloud
+      const current = await backend.auth.getCurrentUser();
+      // Ensure DB/Storage calls carry an Authorization header
       try {
-        const jwt = await account.createJWT();
+        const jwt = await backend.auth.createJWT();
         setClientJWT(jwt.jwt || null);
       } catch {
         // Ignore JWT creation errors
@@ -62,45 +53,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsPending(false);
     }
-  }, [account]);
+  }, [backend]);
 
   useEffect(() => {
     void refreshUser();
   }, [refreshUser]);
 
   const loginWithGoogle = useCallback(async () => {
-    if (!account) return;
+    if (!backend) return;
     const successUrl = window.location.origin + "/auth/callback";
     const failureUrl = window.location.origin + "/login";
     // This redirects the browser to the provider, then back
-    await account.createOAuth2Session("google", successUrl, failureUrl);
-  }, [account]);
+    await backend.auth.loginWithGoogle(successUrl, failureUrl);
+  }, [backend]);
 
   const loginWithEmailPassword = useCallback(async (email: string, password: string) => {
-    if (!account) return;
-    await account.createEmailSession(email, password);
+    if (!backend) return;
+    await backend.auth.loginWithEmailPassword(email, password);
     await refreshUser();
-  }, [account, refreshUser]);
+  }, [backend, refreshUser]);
 
   const logout = useCallback(async () => {
-    if (!account) return;
+    if (!backend) return;
     try {
-      await account.deleteSession("current");
+      await backend.auth.logout();
     } finally {
       setUser(null);
       setClientJWT(null);
     }
-  }, [account]);
+  }, [backend]);
 
   const getJwt = useCallback(async (): Promise<string | null> => {
-    if (!account) return null;
+    if (!backend) return null;
     try {
-      const jwt = await account.createJWT();
+      const jwt = await backend.auth.createJWT();
       return jwt.jwt || null;
     } catch {
       return null;
     }
-  }, [account]);
+  }, [backend]);
 
   const value = useMemo<AuthContextValue>(() => ({
     user,

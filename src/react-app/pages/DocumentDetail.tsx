@@ -40,11 +40,6 @@ export default function DocumentDetail() {
     status: 'Draft' as 'Draft' | 'Final',
   });
 
-  useEffect(() => {
-    fetchDocument();
-    fetchVersions();
-  }, [fetchDocument, fetchVersions]); // fetchDocument and fetchVersions are stable functions defined in component
-
   const fetchDocument = useCallback(async () => {
     try {
       const data = await databases.getDocument(DATABASE_ID, COLLECTIONS.documents, String(id)) as AppwriteDocument;
@@ -80,9 +75,14 @@ export default function DocumentDetail() {
     }
   }, [id]);
 
+  useEffect(() => {
+    fetchDocument();
+    fetchVersions();
+  }, [fetchDocument, fetchVersions]);
+
   const saveChanges = async () => {
     try {
-      const updated = await databases.updateDocument(DATABASE_ID, COLLECTIONS.documents, String(id), editData) as AppwriteDocument;
+      const updated = await databases.updateDocument(DATABASE_ID, COLLECTIONS.documents, String(id), editData) as unknown as AppwriteDocument;
       const normalized = DocumentSchema.parse({
         ...updated,
         id: updated.id ?? updated.$id,
@@ -107,7 +107,7 @@ export default function DocumentDetail() {
         created_by: user?.$id ?? 'system',
         created_at: new Date().toISOString(),
         changes_summary: 'Manual version creation',
-      }) as AppwriteDocument;
+      }) as unknown as AppwriteDocument;
       const newVersion = DocumentVersionSchema.parse({
         ...newVersionDoc,
         id: newVersionDoc.id ?? newVersionDoc.$id,
@@ -132,7 +132,7 @@ export default function DocumentDetail() {
         version: 1,
         file_url: document.file_url || null,
         created_by: user?.$id ?? 'system',
-      }) as AppwriteDocument;
+      }) as unknown as AppwriteDocument;
       const newId = created.id ?? created.$id;
       navigate(`/documents/${newId}`);
     } catch (error) {

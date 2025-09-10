@@ -31,10 +31,6 @@ export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedPracticeArea, setSelectedPracticeArea] = useState<string>('');
 
-  useEffect(() => {
-    fetchHearings();
-  }, [fetchHearings]);
-
   const fetchHearings = useCallback(async () => {
     try {
       const params = new URLSearchParams();
@@ -62,6 +58,10 @@ export default function Calendar() {
       setLoading(false);
     }
   }, [currentDate, selectedPracticeArea]);
+
+  useEffect(() => {
+    fetchHearings();
+  }, [fetchHearings]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
