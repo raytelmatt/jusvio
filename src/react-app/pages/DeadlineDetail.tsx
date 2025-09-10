@@ -107,8 +107,8 @@ export default function DeadlineDetail() {
 
   const getPriorityColor = (daysUntilDue: number, status: string) => {
     if (status === 'Completed') return 'text-green-600';
-    if (daysUntilDue < 0) return 'text-red-600';
-    if (daysUntilDue <= 1) return 'text-red-600';
+    if (daysUntilDue < 0) return 'text-red-400';
+    if (daysUntilDue <= 1) return 'text-red-400';
     if (daysUntilDue <= 3) return 'text-orange-600';
     if (daysUntilDue <= 7) return 'text-yellow-600';
     return 'text-gray-600';
@@ -171,7 +171,7 @@ export default function DeadlineDetail() {
           <h1 className="text-2xl font-bold text-gray-900">Error Loading Deadline</h1>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-400">{error}</p>
         </div>
       </div>
     );
@@ -406,11 +406,18 @@ export default function DeadlineDetail() {
                         </time>
                       </div>
                       
-                      {comm.meta && JSON.parse(comm.meta).subject && (
-                        <p className="text-sm font-medium text-gray-800 mb-2">
-                          Subject: {JSON.parse(comm.meta).subject}
-                        </p>
-                      )}
+                      {comm.meta && (() => {
+                        try {
+                          const meta = JSON.parse(comm.meta);
+                          return meta.subject && (
+                            <p className="text-sm font-medium text-gray-800 mb-2">
+                              Subject: {meta.subject}
+                            </p>
+                          );
+                        } catch {
+                          return null;
+                        }
+                      })()}
                       
                       <p className="text-sm text-gray-600 whitespace-pre-wrap">
                         {comm.body}

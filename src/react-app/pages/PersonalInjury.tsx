@@ -67,12 +67,18 @@ export default function PersonalInjury() {
         setFormData({
           incident_date: data.personal_injury_case?.incident_date || '',
           incident_type: data.personal_injury_case?.incident_type || '',
-          injuries: data.personal_injury_case?.injuries ? JSON.parse(data.personal_injury_case.injuries) : [],
-          providers: data.personal_injury_case?.providers ? JSON.parse(data.personal_injury_case.providers) : [],
+          injuries: data.personal_injury_case?.injuries ? (() => {
+            try { return JSON.parse(data.personal_injury_case.injuries); } catch { return []; }
+          })() : [],
+          providers: data.personal_injury_case?.providers ? (() => {
+            try { return JSON.parse(data.personal_injury_case.providers); } catch { return []; }
+          })() : [],
           policy_limits: data.personal_injury_case?.policy_limits || '',
           demand_amount: data.personal_injury_case?.demand_amount || '',
           settlement_amount: data.personal_injury_case?.settlement_amount || '',
-          liens: data.personal_injury_case?.liens ? JSON.parse(data.personal_injury_case.liens) : [],
+          liens: data.personal_injury_case?.liens ? (() => {
+            try { return JSON.parse(data.personal_injury_case.liens); } catch { return []; }
+          })() : [],
           med_bills_total: data.personal_injury_case?.med_bills_total || '',
           lost_wages_total: data.personal_injury_case?.lost_wages_total || '',
         });
@@ -393,7 +399,7 @@ export default function PersonalInjury() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <Stethoscope className="h-5 w-5 text-red-600 mr-2" />
+            <Stethoscope className="h-5 w-5 text-red-400 mr-2" />
             <h3 className="text-lg font-semibold text-gray-900">Injuries</h3>
           </div>
           {isEditing && (
@@ -422,7 +428,7 @@ export default function PersonalInjury() {
                     />
                     <button
                       onClick={() => removeInjury(index)}
-                      className="px-2 py-1 text-red-600 hover:text-red-800"
+                      className="px-2 py-1 text-red-400 hover:text-red-600"
                     >
                       Remove
                     </button>
@@ -521,7 +527,7 @@ export default function PersonalInjury() {
                     <div className="md:col-span-2 flex justify-end">
                       <button
                         onClick={() => removeProvider(index)}
-                        className="px-3 py-1.5 text-sm text-red-600 hover:text-red-800"
+                        className="px-3 py-1.5 text-sm text-red-400 hover:text-red-600"
                       >
                         Remove Provider
                       </button>

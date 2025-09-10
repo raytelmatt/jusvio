@@ -126,8 +126,12 @@ export default function ClientDetail() {
   }, [id]);
 
   const fetchClientBalance = useCallback(async () => {
-    // Not yet implemented against Appwrite. Leave empty to avoid blocking page render.
-    setClientBalance(null);
+    try {
+      setClientBalance(null);
+    } catch (error) {
+      console.error('Error fetching client balance:', error);
+      setClientBalance(null);
+    }
   }, []);
 
   // Fetch client data when component mounts or id changes
@@ -176,9 +180,13 @@ export default function ClientDetail() {
 
   const callClient = () => {
     if (client?.phones) {
-      const phones = JSON.parse(client.phones);
-      if (phones.length > 0) {
-        window.location.href = `tel:${phones[0]}`;
+      try {
+        const phones = JSON.parse(client.phones);
+        if (phones.length > 0) {
+          window.location.href = `tel:${phones[0]}`;
+        }
+      } catch (error) {
+        console.error('Error parsing phone numbers:', error);
       }
     }
   };
@@ -241,9 +249,15 @@ export default function ClientDetail() {
     );
   }
 
-  const address = client.address ? JSON.parse(client.address) : null;
-  const emergencyContact = client.emergency_contact ? JSON.parse(client.emergency_contact) : null;
-  const phones = client.phones ? JSON.parse(client.phones) : [];
+  const address = client.address ? (() => {
+    try { return JSON.parse(client.address); } catch { return null; }
+  })() : null;
+  const emergencyContact = client.emergency_contact ? (() => {
+    try { return JSON.parse(client.emergency_contact); } catch { return null; }
+  })() : null;
+  const phones = client.phones ? (() => {
+    try { return JSON.parse(client.phones); } catch { return []; }
+  })() : [];
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: User },
@@ -313,7 +327,7 @@ export default function ClientDetail() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-red-900">Outstanding Balance</h3>
-              <p className="text-3xl font-bold text-red-600">${clientBalance.total_balance.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-red-400">${clientBalance.total_balance.toLocaleString()}</p>
               <p className="text-sm text-red-700 mt-1">
                 Total invoiced: ${clientBalance.total_invoiced?.toLocaleString() || '0'} • 
                 Total paid: ${clientBalance.total_paid?.toLocaleString() || '0'}
@@ -571,39 +585,39 @@ export default function ClientDetail() {
               {/* Billing Summary */}
               {clientBalance && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="bg-blue-500/20 backdrop-blur-sm rounded-lg p-4 border border-blue-400/30">
                     <div className="flex items-center">
-                      <FileText className="h-5 w-5 text-blue-600 mr-2" />
+                      <FileText className="h-5 w-5 text-blue-300 mr-2" />
                       <div>
-                        <p className="text-xs font-medium text-blue-600">Total Invoiced</p>
-                        <p className="text-lg font-bold text-blue-900">${clientBalance.total_invoiced?.toLocaleString() || '0'}</p>
+                        <p className="text-xs font-medium text-blue-200">Total Invoiced</p>
+                        <p className="text-lg font-bold text-white">${clientBalance.total_invoiced?.toLocaleString() || '0'}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-green-50 rounded-lg p-4">
+                  <div className="bg-green-500/20 backdrop-blur-sm rounded-lg p-4 border border-green-400/30">
                     <div className="flex items-center">
-                      <CreditCard className="h-5 w-5 text-green-600 mr-2" />
+                      <CreditCard className="h-5 w-5 text-green-300 mr-2" />
                       <div>
-                        <p className="text-xs font-medium text-green-600">Total Paid</p>
-                        <p className="text-lg font-bold text-green-900">${clientBalance.total_paid?.toLocaleString() || '0'}</p>
+                        <p className="text-xs font-medium text-green-200">Total Paid</p>
+                        <p className="text-lg font-bold text-white">${clientBalance.total_paid?.toLocaleString() || '0'}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-red-50 rounded-lg p-4">
+                  <div className="bg-red-500/20 backdrop-blur-sm rounded-lg p-4 border border-red-400/30">
                     <div className="flex items-center">
-                      <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                      <AlertCircle className="h-5 w-5 text-red-300 mr-2" />
                       <div>
-                        <p className="text-xs font-medium text-red-600">Balance Due</p>
-                        <p className="text-lg font-bold text-red-900">${clientBalance.total_balance?.toLocaleString() || '0'}</p>
+                        <p className="text-xs font-medium text-red-200">Balance Due</p>
+                        <p className="text-lg font-bold text-white">${clientBalance.total_balance?.toLocaleString() || '0'}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-purple-50 rounded-lg p-4">
+                  <div className="bg-purple-500/20 backdrop-blur-sm rounded-lg p-4 border border-purple-400/30">
                     <div className="flex items-center">
-                      <FolderOpen className="h-5 w-5 text-purple-600 mr-2" />
+                      <FolderOpen className="h-5 w-5 text-purple-300 mr-2" />
                       <div>
-                        <p className="text-xs font-medium text-purple-600">Matters</p>
-                        <p className="text-lg font-bold text-purple-900">{clientBalance.matter_balances?.length || 0}</p>
+                        <p className="text-xs font-medium text-purple-200">Matters</p>
+                        <p className="text-lg font-bold text-white">{clientBalance.matter_balances?.length || 0}</p>
                       </div>
                     </div>
                   </div>
@@ -642,7 +656,7 @@ export default function ClientDetail() {
                               </div>
                               <div>
                                 <span className="text-gray-500">Balance:</span>
-                                <span className={`ml-1 font-medium ${matter.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                <span className={`ml-1 font-medium ${matter.balance > 0 ? 'text-red-400' : 'text-green-600'}`}>
                                   ${matter.balance?.toLocaleString() || '0'}
                                 </span>
                               </div>

@@ -274,7 +274,7 @@ export default function IntakeForm() {
                     aria-label="First Name"
                   />
                   {errors.first_name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.first_name}</p>
                   )}
                 </div>
 
@@ -293,7 +293,7 @@ export default function IntakeForm() {
                     aria-label="Last Name"
                   />
                   {errors.last_name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.last_name}</p>
                   )}
                 </div>
 
@@ -312,7 +312,7 @@ export default function IntakeForm() {
                     aria-label="Email Address"
                   />
                   {errors.email && (
-                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.email}</p>
                   )}
                 </div>
 
@@ -356,7 +356,7 @@ export default function IntakeForm() {
                     aria-label="Phone Number"
                   />
                   {errors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.phone}</p>
                   )}
                 </div>
 
@@ -395,7 +395,7 @@ export default function IntakeForm() {
                     aria-label="Street Address"
                   />
                   {errors.street && (
-                    <p className="mt-1 text-sm text-red-600">{errors.street}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.street}</p>
                   )}
                 </div>
 
@@ -417,7 +417,7 @@ export default function IntakeForm() {
                     aria-label="City"
                   />
                   {errors.city && (
-                    <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.city}</p>
                   )}
                 </div>
 
@@ -439,7 +439,7 @@ export default function IntakeForm() {
                     aria-label="State"
                   />
                   {errors.state && (
-                    <p className="mt-1 text-sm text-red-600">{errors.state}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.state}</p>
                   )}
                 </div>
 
@@ -461,7 +461,7 @@ export default function IntakeForm() {
                     aria-label="ZIP Code"
                   />
                   {errors.zip && (
-                    <p className="mt-1 text-sm text-red-600">{errors.zip}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.zip}</p>
                   )}
                 </div>
               </div>
@@ -550,7 +550,7 @@ export default function IntakeForm() {
                     <option value="SSD">Social Security Disability</option>
                   </select>
                   {errors.practice_area && (
-                    <p className="mt-1 text-sm text-red-600">{errors.practice_area}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.practice_area}</p>
                   )}
                 </div>
 
@@ -570,7 +570,7 @@ export default function IntakeForm() {
                     aria-label="Case Description"
                   />
                   {errors.case_description && (
-                    <p className="mt-1 text-sm text-red-600">{errors.case_description}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.case_description}</p>
                   )}
                 </div>
 

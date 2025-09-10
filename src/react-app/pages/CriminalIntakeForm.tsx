@@ -284,7 +284,7 @@ export default function CriminalIntakeForm() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <Scale className="w-8 h-8 text-red-600 mr-3" />
+            <Scale className="w-8 h-8 text-red-400 mr-3" />
             <h1 className="text-3xl font-bold text-gray-900">Criminal Defense Intake Form</h1>
           </div>
           <p className="text-lg text-gray-600 mb-2">
@@ -329,7 +329,7 @@ export default function CriminalIntakeForm() {
             {steps.map((step) => (
               <div key={step.id} className="text-center">
                 <p className={`text-xs font-medium ${
-                  currentStep >= step.id ? 'text-red-600' : 'text-gray-500'
+                  currentStep >= step.id ? 'text-red-400' : 'text-gray-500'
                 }`}>
                   {step.name}
                 </p>
@@ -344,7 +344,7 @@ export default function CriminalIntakeForm() {
           {currentStep === 1 && (
             <div className="space-y-6">
               <div className="flex items-center mb-6">
-                <User className="h-6 w-6 text-red-600 mr-3" />
+                <User className="h-6 w-6 text-red-400 mr-3" />
                 <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
               </div>
 
@@ -362,7 +362,7 @@ export default function CriminalIntakeForm() {
                     }`}
                   />
                   {errors.first_name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.first_name}</p>
                   )}
                 </div>
 
@@ -379,7 +379,7 @@ export default function CriminalIntakeForm() {
                     }`}
                   />
                   {errors.last_name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.last_name}</p>
                   )}
                 </div>
 
@@ -408,7 +408,7 @@ export default function CriminalIntakeForm() {
                     }`}
                   />
                   {errors.date_of_birth && (
-                    <p className="mt-1 text-sm text-red-600">{errors.date_of_birth}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.date_of_birth}</p>
                   )}
                 </div>
 
@@ -428,7 +428,7 @@ export default function CriminalIntakeForm() {
                     }`}
                   />
                   {errors.ssn_last4 && (
-                    <p className="mt-1 text-sm text-red-600">{errors.ssn_last4}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.ssn_last4}</p>
                   )}
                 </div>
 

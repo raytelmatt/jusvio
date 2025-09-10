@@ -138,7 +138,7 @@ export default function NewHearing() {
                 ))}
               </select>
               {errors.matter_id && (
-                <p className="mt-1 text-sm text-red-600">{errors.matter_id}</p>
+                <p className="mt-1 text-sm text-red-400">{errors.matter_id}</p>
               )}
             </div>
 

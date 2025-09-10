@@ -89,7 +89,7 @@ export default function Clients() {
       ...filteredClients.map(client => [
         `"${client.first_name} ${client.last_name}"`,
         `"${client.email || ''}"`,
-        `"${client.phones ? JSON.parse(client.phones)[0] || '' : ''}"`,
+        `"${client.phones ? (() => { try { return JSON.parse(client.phones)[0] || ''; } catch { return ''; } })() : ''}"`,
         `"${client.preferred_contact_method || ''}"`,
         `"${client.portal_enabled ? 'Enabled' : 'Disabled'}"`,
         `"${new Date(client.created_at).toLocaleDateString()}"`
@@ -413,7 +413,7 @@ export default function Clients() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className={`text-sm font-medium ${
-                        (client.current_balance || 0) > 0 ? 'text-red-600' : 'text-green-600'
+                        (client.current_balance || 0) > 0 ? 'text-red-400' : 'text-green-600'
                       }`}>
                         ${client.current_balance?.toLocaleString() || '0'}
                       </div>
@@ -467,7 +467,7 @@ export default function Clients() {
                         {client.phones && (
                           <div className="flex items-center text-sm text-blue-200">
                             <Phone className="mr-2 h-3 w-3 text-blue-300" />
-                            {JSON.parse(client.phones)[0]}
+                            {(() => { try { return JSON.parse(client.phones)[0]; } catch { return 'Invalid phone data'; } })()}
                           </div>
                         )}
                       </div>

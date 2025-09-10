@@ -188,7 +188,9 @@ export default function Settings() {
         last_name: docSafe.last_name || '',
         role: (docSafe.role as RoleOption) || 'Attorney',
         bar_number: docSafe.bar_number || '',
-        practice_areas: docSafe.practice_areas ? JSON.parse(docSafe.practice_areas) : [],
+        practice_areas: docSafe.practice_areas ? (() => {
+          try { return JSON.parse(docSafe.practice_areas); } catch { return []; }
+        })() : [],
         phone: docSafe.phone || '',
       });
 
@@ -314,7 +316,9 @@ export default function Settings() {
         last_name: d.last_name || '',
         role: (d.role as RoleOption) || 'Staff',
         bar_number: d.bar_number || '',
-        practice_areas: d.practice_areas ? JSON.parse(d.practice_areas) : [],
+        practice_areas: d.practice_areas ? (() => {
+          try { return JSON.parse(d.practice_areas); } catch { return []; }
+        })() : [],
         phone: d.phone || '',
         is_active: typeof d.is_active === 'boolean' ? d.is_active : true,
         email: d.email || undefined,
@@ -1316,7 +1320,7 @@ export default function Settings() {
             {activeTab === 'security' && (
               <div className="p-6">
                 <div className="flex items-center mb-6">
-                  <Shield className="h-5 w-5 text-red-600 mr-2" />
+                  <Shield className="h-5 w-5 text-red-400 mr-2" />
                   <h2 className="text-lg font-semibold text-gray-900">Security & Privacy</h2>
                 </div>
 

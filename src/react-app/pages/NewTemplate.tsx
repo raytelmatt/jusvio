@@ -207,7 +207,7 @@ export default function NewTemplate() {
             {/* Error Message */}
             {errors.submit && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-sm text-red-600">{errors.submit}</p>
+                <p className="text-sm text-red-400">{errors.submit}</p>
               </div>
             )}
 

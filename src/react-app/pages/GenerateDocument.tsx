@@ -77,7 +77,9 @@ export default function GenerateDocument() {
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
         updated_at: d.updated_at ?? d.$updatedAt,
-        variables: Array.isArray(d.variables) ? d.variables : (typeof d.variables === 'string' ? JSON.parse(d.variables as string || '[]') : []),
+        variables: Array.isArray(d.variables) ? d.variables : (typeof d.variables === 'string' ? (() => {
+          try { return JSON.parse(d.variables as string || '[]'); } catch { return []; }
+        })() : []),
       })) as unknown as DocumentTemplate[];
       setTemplates(rows);
     } catch (error) {
@@ -227,7 +229,7 @@ export default function GenerateDocument() {
                   ))}
                 </select>
                 {errors.matter_id && (
-                  <p className="mt-1 text-sm text-red-600">{errors.matter_id}</p>
+                  <p className="mt-1 text-sm text-red-400">{errors.matter_id}</p>
                 )}
               </div>
 
@@ -268,7 +270,7 @@ export default function GenerateDocument() {
                   ))}
                 </select>
                 {errors.template_id && (
-                  <p className="mt-1 text-sm text-red-600">{errors.template_id}</p>
+                  <p className="mt-1 text-sm text-red-400">{errors.template_id}</p>
                 )}
               </div>
 
@@ -287,7 +289,7 @@ export default function GenerateDocument() {
                   aria-label="Document title"
                 />
                 {errors.title && (
-                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                  <p className="mt-1 text-sm text-red-400">{errors.title}</p>
                 )}
               </div>
             </div>
@@ -319,7 +321,7 @@ export default function GenerateDocument() {
                       placeholder={`Enter ${variable.replace(/_/g, ' ')}`}
                     />
                     {errors[`variable_${variable}`] && (
-                      <p className="mt-1 text-sm text-red-600">{errors[`variable_${variable}`]}</p>
+                      <p className="mt-1 text-sm text-red-400">{errors[`variable_${variable}`]}</p>
                     )}
                   </div>
                 ))}
@@ -330,7 +332,7 @@ export default function GenerateDocument() {
           {/* Error Message */}
           {errors.submit && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-600">{errors.submit}</p>
+              <p className="text-sm text-red-400">{errors.submit}</p>
             </div>
           )}
 

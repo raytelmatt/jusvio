@@ -57,6 +57,11 @@ export default function NewMatter() {
     if (!formData.practice_area) newErrors.practice_area = 'Practice area is required';
     if (formData.fee_model === 'FlatRate' && !formData.flat_rate_amount) {
       newErrors.flat_rate_amount = 'Flat rate amount is required';
+    } else if (formData.fee_model === 'FlatRate' && formData.flat_rate_amount) {
+      const amount = parseFloat(formData.flat_rate_amount);
+      if (isNaN(amount) || amount <= 0) {
+        newErrors.flat_rate_amount = 'Flat rate amount must be a positive number';
+      }
     }
 
     setErrors(newErrors);
@@ -101,13 +106,11 @@ export default function NewMatter() {
         payload,
         permissions
       );
-      // Ensure navigation occurs after state update cycle
-      setTimeout(() => navigate(`/matters/${created.$id}`), 0);
+      navigate(`/matters/${created.$id}`);
     } catch (error) {
       console.error('Error creating matter:', error);
       const message = (error as { message?: string })?.message || 'Error creating matter. Please check required fields and try again.';
       setErrors({ submit: message });
-      try { alert(message); } catch (e) { console.error('Alert failed:', e); }
     } finally {
       setLoading(false);
     }

@@ -546,7 +546,7 @@ function NewCommunicationForm({
             ))}
           </select>
           {errors.matter_id && (
-            <p className="mt-1 text-sm text-red-600">{errors.matter_id}</p>
+            <p className="mt-1 text-sm text-red-400">{errors.matter_id}</p>
           )}
         </div>
 
@@ -613,7 +613,7 @@ function NewCommunicationForm({
               placeholder="Recipient address/number"
             />
             {errors.to_address && (
-              <p className="mt-1 text-sm text-red-600">{errors.to_address}</p>
+              <p className="mt-1 text-sm text-red-400">{errors.to_address}</p>
             )}
           </div>
         )}
@@ -633,7 +633,7 @@ function NewCommunicationForm({
               placeholder="Sender address/number"
             />
             {errors.from_address && (
-              <p className="mt-1 text-sm text-red-600">{errors.from_address}</p>
+              <p className="mt-1 text-sm text-red-400">{errors.from_address}</p>
             )}
           </div>
         )}
@@ -653,13 +653,13 @@ function NewCommunicationForm({
           placeholder="Enter the communication content..."
         />
         {errors.body && (
-          <p className="mt-1 text-sm text-red-600">{errors.body}</p>
+          <p className="mt-1 text-sm text-red-400">{errors.body}</p>
         )}
       </div>
 
       {errors.submit && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-600">{errors.submit}</p>
+          <p className="text-sm text-red-400">{errors.submit}</p>
         </div>
       )}
 

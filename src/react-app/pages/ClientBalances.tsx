@@ -154,9 +154,9 @@ export default function ClientBalances() {
         </div>
         <div className="bg-red-50 rounded-lg p-4">
           <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
             <div>
-              <p className="text-xs font-medium text-red-600">Outstanding</p>
+              <p className="text-xs font-medium text-red-400">Outstanding</p>
               <p className="text-lg font-bold text-red-900">${totalOutstanding.toLocaleString()}</p>
             </div>
           </div>
@@ -273,7 +273,7 @@ export default function ClientBalances() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className={`text-sm font-medium ${
-                        (client.current_balance || 0) > 0 ? 'text-red-600' : 'text-green-600'
+                        (client.current_balance || 0) > 0 ? 'text-red-400' : 'text-green-600'
                       }`}>
                         ${client.current_balance?.toLocaleString() || '0'}
                       </div>
@@ -311,7 +311,7 @@ export default function ClientBalances() {
       {totalOutstanding > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-6">
           <div className="flex items-start">
-            <AlertCircle className="h-6 w-6 text-red-600 mr-3 mt-0.5" />
+            <AlertCircle className="h-6 w-6 text-red-400 mr-3 mt-0.5" />
             <div>
               <h3 className="text-lg font-semibold text-red-900">Outstanding Balances Alert</h3>
               <p className="text-sm text-red-700 mt-1">

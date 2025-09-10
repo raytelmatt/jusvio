@@ -74,7 +74,7 @@ export default function Deadlines() {
 
   const getUrgencyIcon = (daysUntilDue: number, status: string) => {
     if (status === 'Completed') return <CheckCircle className="h-5 w-5 text-green-600" />;
-    if (status === 'PastDue' || daysUntilDue <= 1) return <AlertTriangle className="h-5 w-5 text-red-600" />;
+    if (status === 'PastDue' || daysUntilDue <= 1) return <AlertTriangle className="h-5 w-5 text-red-400" />;
     if (daysUntilDue <= 7) return <AlertTriangle className="h-5 w-5 text-orange-600" />;
     return <Clock className="h-5 w-5 text-blue-600" />;
   };
@@ -214,9 +214,9 @@ export default function Deadlines() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Overdue</p>
-              <p className="text-2xl font-bold text-red-600">{groupedDeadlines.overdue.length}</p>
+              <p className="text-2xl font-bold text-red-400">{groupedDeadlines.overdue.length}</p>
             </div>
-            <AlertTriangle className="h-8 w-8 text-red-600" />
+            <AlertTriangle className="h-8 w-8 text-red-400" />
           </div>
         </div>
         
