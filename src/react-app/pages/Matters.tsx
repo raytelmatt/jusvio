@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Plus, Search, MoreHorizontal, FolderOpen } from 'lucide-react';
 import { databases, DATABASE_ID } from '@/react-app/lib/appwrite';
-import { Matter } from '@/shared/types';
+import { Matter, AppwriteDocument } from '@/shared/types';
 
 const PRACTICE_AREA_COLORS = {
   Criminal: 'bg-red-100 text-red-800',
@@ -33,7 +33,7 @@ export default function Matters() {
   const fetchMatters = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, 'matters', []);
-      setMatters(list.documents || []);
+      setMatters(list.documents as unknown as Matter[] || []);
     } catch (error) {
       console.error('Error fetching matters:', error);
     } finally {
@@ -182,13 +182,13 @@ export default function Matters() {
           </div>
         ) : (
           filteredMatters.map((matter) => (
-            <div key={String(matter.id ?? matter.$id)} className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 hover:shadow-2xl transition-all duration-200 hover:-translate-y-1">
+            <div key={String(matter.id ?? (matter as unknown as AppwriteDocument).$id)} className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 hover:shadow-2xl transition-all duration-200 hover:-translate-y-1">
               <div className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <Link
-                        to={`/matters/${matter.id ?? matter.$id}`}
+                        to={`/matters/${matter.id ?? (matter as unknown as AppwriteDocument).$id}`}
                         className="text-lg font-semibold text-bright hover:text-blue-300"
                       >
                         {matter.title}
@@ -207,7 +207,7 @@ export default function Matters() {
                     <div className="flex items-center space-x-6 text-sm text-bright-secondary">
                       <span>Matter #{matter.matter_number}</span>
                       <span>Client: {matter.client_first_name} {matter.client_last_name}</span>
-                      <span>Opened: {new Date(matter.opened_at || matter.created_at || matter.$createdAt).toLocaleDateString()}</span>
+                      <span>Opened: {new Date(matter.opened_at || matter.created_at || (matter as unknown as AppwriteDocument).$createdAt).toLocaleDateString()}</span>
                       <span className="capitalize">{matter.fee_model === 'FlatRate' ? 'Flat Rate' : 'Progressive'}</span>
                     </div>
                     {matter.description && (
@@ -216,7 +216,7 @@ export default function Matters() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Link
-                      to={`/matters/${matter.id ?? matter.$id}`}
+                      to={`/matters/${matter.id ?? (matter as unknown as AppwriteDocument).$id}`}
                       className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
                     >
                       View
