@@ -1,0 +1,77 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: firebase-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy (main)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      # Build-time env for Vite
+      VITE_BACKEND_PROVIDER: appwrite
+      VITE_APPWRITE_ENDPOINT: https://nyc.cloud.appwrite.io/v1
+      VITE_APPWRITE_PROJECT_ID: 6897443a0034c54b3fd8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Firebase Hosting (production)
+        run: npx firebase-tools deploy --only hosting --token "$FIREBASE_TOKEN"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+  preview:
+    name: Build and Preview (PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      VITE_BACKEND_PROVIDER: appwrite
+      VITE_APPWRITE_ENDPOINT: https://nyc.cloud.appwrite.io/v1
+      VITE_APPWRITE_PROJECT_ID: 6897443a0034c54b3fd8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy preview channel
+        run: npx firebase-tools hosting:channel:deploy pr-${{ github.event.number }} --expires 7d --token "$FIREBASE_TOKEN"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+
