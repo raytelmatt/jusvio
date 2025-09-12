@@ -696,11 +696,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="emergency_relationship" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Relationship *
                     </label>
                     <input
-                      id="emergency_relationship"
                       type="text"
                       value={formData.emergency_contact.relationship}
                       onChange={(e) => setFormData({ 
@@ -718,11 +717,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="emergency_mobile_phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Mobile Phone
                     </label>
                     <input
-                      id="emergency_mobile_phone"
                       type="tel"
                       value={formData.emergency_contact.mobile_phone}
                       onChange={(e) => setFormData({ 
@@ -734,11 +732,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="emergency_home_phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Home Phone
                     </label>
                     <input
-                      id="emergency_home_phone"
                       type="tel"
                       value={formData.emergency_contact.home_phone}
                       onChange={(e) => setFormData({ 
@@ -750,11 +747,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="emergency_email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email Address
                     </label>
                     <input
-                      id="emergency_email"
                       type="email"
                       value={formData.emergency_contact.email}
                       onChange={(e) => setFormData({ 
@@ -769,11 +765,10 @@ export default function CriminalIntakeForm() {
                     <h4 className="text-base font-medium text-gray-700 mb-3">Emergency Contact Mailing Address</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-3">
-                        <label htmlFor="emergency_contact_address_street" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Street Address
                         </label>
                         <input
-                          id="emergency_contact_address_street"
                           type="text"
                           value={formData.emergency_contact.address.street}
                           onChange={(e) => setFormData({ 
@@ -787,11 +782,10 @@ export default function CriminalIntakeForm() {
                         />
                       </div>
                       <div>
-                        <label htmlFor="emergency_contact_address_city" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           City
                         </label>
                         <input
-                          id="emergency_contact_address_city"
                           type="text"
                           value={formData.emergency_contact.address.city}
                           onChange={(e) => setFormData({ 
@@ -805,11 +799,10 @@ export default function CriminalIntakeForm() {
                         />
                       </div>
                       <div>
-                        <label htmlFor="emergency_contact_address_state" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           State
                         </label>
                         <input
-                          id="emergency_contact_address_state"
                           type="text"
                           value={formData.emergency_contact.address.state}
                           onChange={(e) => setFormData({ 
@@ -823,11 +816,10 @@ export default function CriminalIntakeForm() {
                         />
                       </div>
                       <div>
-                        <label htmlFor="emergency_contact_address_zip" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           ZIP Code
                         </label>
                         <input
-                          id="emergency_contact_address_zip"
                           type="text"
                           value={formData.emergency_contact.address.zip}
                           onChange={(e) => setFormData({ 
@@ -857,11 +849,10 @@ export default function CriminalIntakeForm() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="employment_status" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Employment Status
                   </label>
                   <select
-                    id="employment_status"
                     value={formData.employment_status}
                     onChange={(e) => setFormData({ ...formData, employment_status: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -878,11 +869,10 @@ export default function CriminalIntakeForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="monthly_income" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Monthly Income (approximate)
                   </label>
                   <select
-                    id="monthly_income"
                     value={formData.monthly_income}
                     onChange={(e) => setFormData({ ...formData, monthly_income: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -898,11 +888,10 @@ export default function CriminalIntakeForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="employer_name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Employer Name
                   </label>
                   <input
-                    id="employer_name"
                     type="text"
                     value={formData.employer_name}
                     onChange={(e) => setFormData({ ...formData, employer_name: e.target.value })}
@@ -911,11 +900,10 @@ export default function CriminalIntakeForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="employer_address" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Employer Address
                   </label>
                   <input
-                    id="employer_address"
                     type="text"
                     value={formData.employer_address}
                     onChange={(e) => setFormData({ ...formData, employer_address: e.target.value })}
@@ -939,11 +927,10 @@ export default function CriminalIntakeForm() {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Current Charges</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
-                    <label htmlFor="charges" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       What are you charged with? *
                     </label>
                     <textarea
-                      id="charges"
                       value={formData.charges}
                       onChange={(e) => setFormData({ ...formData, charges: e.target.value })}
                       rows={3}
@@ -958,11 +945,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="charge_type" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Charge Type
                     </label>
                     <select
-                      id="charge_type"
                       value={formData.charge_type}
                       onChange={(e) => setFormData({ ...formData, charge_type: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -982,11 +968,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="arrest_date" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Arrest Date
                     </label>
                     <input
-                      id="arrest_date"
                       type="date"
                       value={formData.arrest_date}
                       onChange={(e) => setFormData({ ...formData, arrest_date: e.target.value })}
@@ -995,11 +980,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="arrest_county" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       County of Arrest
                     </label>
                     <input
-                      id="arrest_county"
                       type="text"
                       value={formData.arrest_county}
                       onChange={(e) => setFormData({ ...formData, arrest_county: e.target.value })}
@@ -1009,11 +993,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="case_number" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Case Number (if known)
                     </label>
                     <input
-                      id="case_number"
                       type="text"
                       value={formData.case_number}
                       onChange={(e) => setFormData({ ...formData, case_number: e.target.value })}
@@ -1022,11 +1005,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="court_date" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Next Court Date
                     </label>
                     <input
-                      id="court_date"
                       type="date"
                       value={formData.court_date}
                       onChange={(e) => setFormData({ ...formData, court_date: e.target.value })}
@@ -1035,11 +1017,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="court_name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Court Name
                     </label>
                     <input
-                      id="court_name"
                       type="text"
                       value={formData.court_name}
                       onChange={(e) => setFormData({ ...formData, court_name: e.target.value })}
@@ -1049,11 +1030,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="bond_amount" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Bond Amount
                     </label>
                     <input
-                      id="bond_amount"
                       type="text"
                       value={formData.bond_amount}
                       onChange={(e) => setFormData({ ...formData, bond_amount: e.target.value })}
@@ -1063,11 +1043,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="bond_status" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Bond Status
                     </label>
                     <select
-                      id="bond_status"
                       value={formData.bond_status}
                       onChange={(e) => setFormData({ ...formData, bond_status: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -1082,11 +1061,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="jail_release_date" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Jail Release Date (if applicable)
                     </label>
                     <input
-                      id="jail_release_date"
                       type="date"
                       value={formData.jail_release_date}
                       onChange={(e) => setFormData({ ...formData, jail_release_date: e.target.value })}
@@ -1095,11 +1073,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="appointed_counsel" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Do you have a court-appointed attorney?
                     </label>
                     <select
-                      id="appointed_counsel"
                       value={formData.appointed_counsel}
                       onChange={(e) => setFormData({ ...formData, appointed_counsel: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -1118,11 +1095,10 @@ export default function CriminalIntakeForm() {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Background Information</h3>
                 <div className="space-y-6">
                   <div>
-                    <label htmlFor="prior_arrests" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Prior Arrests
                     </label>
                     <textarea
-                      id="prior_arrests"
                       value={formData.prior_arrests}
                       onChange={(e) => setFormData({ ...formData, prior_arrests: e.target.value })}
                       rows={2}
@@ -1132,11 +1108,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="prior_convictions" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Prior Convictions
                     </label>
                     <textarea
-                      id="prior_convictions"
                       value={formData.prior_convictions}
                       onChange={(e) => setFormData({ ...formData, prior_convictions: e.target.value })}
                       rows={2}
@@ -1147,11 +1122,10 @@ export default function CriminalIntakeForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="probation_parole_status" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Probation/Parole Status
                       </label>
                       <select
-                        id="probation_parole_status"
                         value={formData.probation_parole_status}
                         onChange={(e) => setFormData({ ...formData, probation_parole_status: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -1166,11 +1140,10 @@ export default function CriminalIntakeForm() {
                     </div>
 
                     <div>
-                      <label htmlFor="drivers_license_status" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Driver's License Status
                       </label>
                       <select
-                        id="drivers_license_status"
                         value={formData.drivers_license_status}
                         onChange={(e) => setFormData({ ...formData, drivers_license_status: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -1186,11 +1159,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="immigration_concerns" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Immigration Concerns
                     </label>
                     <textarea
-                      id="immigration_concerns"
                       value={formData.immigration_concerns}
                       onChange={(e) => setFormData({ ...formData, immigration_concerns: e.target.value })}
                       rows={2}
@@ -1206,11 +1178,10 @@ export default function CriminalIntakeForm() {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Incident Details</h3>
                 <div className="space-y-6">
                   <div>
-                    <label htmlFor="incident_description" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Describe what happened *
                     </label>
                     <textarea
-                      id="incident_description"
                       value={formData.incident_description}
                       onChange={(e) => setFormData({ ...formData, incident_description: e.target.value })}
                       rows={4}
@@ -1226,11 +1197,10 @@ export default function CriminalIntakeForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="incident_location" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Location of Incident
                       </label>
                       <input
-                        id="incident_location"
                         type="text"
                         value={formData.incident_location}
                         onChange={(e) => setFormData({ ...formData, incident_location: e.target.value })}
@@ -1240,11 +1210,10 @@ export default function CriminalIntakeForm() {
                     </div>
 
                     <div>
-                      <label htmlFor="police_report_number" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Police Report Number
                       </label>
                       <input
-                        id="police_report_number"
                         type="text"
                         value={formData.police_report_number}
                         onChange={(e) => setFormData({ ...formData, police_report_number: e.target.value })}
@@ -1254,11 +1223,10 @@ export default function CriminalIntakeForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="witnesses" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Witnesses
                     </label>
                     <textarea
-                      id="witnesses"
                       value={formData.witnesses}
                       onChange={(e) => setFormData({ ...formData, witnesses: e.target.value })}
                       rows={2}
@@ -1275,11 +1243,10 @@ export default function CriminalIntakeForm() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="medical_conditions" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Medical Conditions
                       </label>
                       <textarea
-                        id="medical_conditions"
                         value={formData.medical_conditions}
                         onChange={(e) => setFormData({ ...formData, medical_conditions: e.target.value })}
                         rows={2}
@@ -1289,11 +1256,10 @@ export default function CriminalIntakeForm() {
                     </div>
 
                     <div>
-                      <label htmlFor="medications" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Current Medications
                       </label>
                       <textarea
-                        id="medications"
                         value={formData.medications}
                         onChange={(e) => setFormData({ ...formData, medications: e.target.value })}
                         rows={2}
@@ -1303,11 +1269,10 @@ export default function CriminalIntakeForm() {
                     </div>
 
                     <div>
-                      <label htmlFor="mental_health_treatment" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Mental Health Treatment
                       </label>
                       <textarea
-                        id="mental_health_treatment"
                         value={formData.mental_health_treatment}
                         onChange={(e) => setFormData({ ...formData, mental_health_treatment: e.target.value })}
                         rows={2}
@@ -1317,11 +1282,10 @@ export default function CriminalIntakeForm() {
                     </div>
 
                     <div>
-                      <label htmlFor="substance_abuse_history" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Substance Abuse History
                       </label>
                       <textarea
-                        id="substance_abuse_history"
                         value={formData.substance_abuse_history}
                         onChange={(e) => setFormData({ ...formData, substance_abuse_history: e.target.value })}
                         rows={2}
@@ -1333,11 +1297,10 @@ export default function CriminalIntakeForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="urgency_level" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Urgency Level
                       </label>
                       <select
-                        id="urgency_level"
                         value={formData.urgency_level}
                         onChange={(e) => setFormData({ ...formData, urgency_level: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -1350,11 +1313,10 @@ export default function CriminalIntakeForm() {
                     </div>
 
                     <div>
-                      <label htmlFor="how_did_you_hear" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         How did you hear about us?
                       </label>
                       <select
-                        id="how_did_you_hear"
                         value={formData.how_did_you_hear}
                         onChange={(e) => setFormData({ ...formData, how_did_you_hear: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"

@@ -10,19 +10,8 @@ import {
   CreditCard,
   TrendingUp
 } from 'lucide-react';
+import { fetchClientBalances as getClientBalances, type ClientBalance } from '@/react-app/lib/client-balances';
 
-interface ClientBalance {
-  id: number;
-  client_number: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  total_invoiced: number;
-  total_paid: number;
-  current_balance: number;
-  unbilled_amount: number;
-  total_amount_due: number;
-}
 
 export default function ClientBalances() {
   const [clientBalances, setClientBalances] = useState<ClientBalance[]>([]);
@@ -35,15 +24,12 @@ export default function ClientBalances() {
 
   const fetchClientBalances = async () => {
     try {
-      const response = await fetch('/api/clients/balances', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setClientBalances(data);
-      }
+      const balances = await getClientBalances();
+      setClientBalances(balances);
     } catch (error) {
       console.error('Error fetching client balances:', error);
+      // Set empty array to prevent UI errors
+      setClientBalances([]);
     } finally {
       setLoading(false);
     }

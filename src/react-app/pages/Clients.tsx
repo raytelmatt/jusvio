@@ -5,22 +5,8 @@ import type { Client } from '@/shared/types';
 import ClientActionsMenu from '../components/ClientActionsMenu';
 import ClientFilterModal, { type ClientFilters } from '../components/ClientFilterModal';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
+import { fetchClientBalances as getClientBalances, type ClientBalance } from '@/react-app/lib/client-balances';
 
-interface ClientBalance {
-  id: number;
-  client_id: string;
-  client_number?: string;
-  first_name: string;
-  last_name: string;
-  email?: string;
-  balance: number;
-  current_balance?: number;
-  total_paid?: number;
-  total_invoiced?: number;
-  unbilled_amount?: number;
-  last_payment_date?: string;
-  outstanding_invoices: number;
-}
 
 export default function Clients() {
   const navigate = useNavigate();
@@ -65,19 +51,13 @@ export default function Clients() {
   const fetchClientBalances = async () => {
     try {
       console.log('Fetching client balances...');
-      const response = await fetch('/api/clients/balances', {
-        credentials: 'include',
-      });
-      console.log('Balance response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Client balances data:', data);
-        setClientBalances(data);
-      } else {
-        console.error('Failed to fetch client balances:', response.status, response.statusText);
-      }
+      const balances = await getClientBalances();
+      console.log('Client balances data:', balances);
+      setClientBalances(balances);
     } catch (error) {
       console.error('Error fetching client balances:', error);
+      // Set empty array to prevent UI errors
+      setClientBalances([]);
     }
   };
 
