@@ -4,7 +4,7 @@ import type { BackendUser } from '@/react-app/lib/backend/types';
 export type NotificationType = 'deadline' | 'hearing' | 'payment' | 'document' | 'message' | 'system';
 export type NotificationPriority = 'low' | 'medium' | 'high' | 'urgent';
 
-export interface NotificationItem {
+export interface AppwriteNotification {
   id: string;
   title: string;
   message: string;
@@ -50,7 +50,7 @@ function mapDoc(doc: NotificationDocument): AppwriteNotification {
   };
 }
 
-export async function fetchNotifications(filter: 'all' | 'unread' = 'all'): Promise<{ notifications: NotificationItem[]; unreadCount: number; }> {
+export async function fetchNotifications(filter: 'all' | 'unread' = 'all'): Promise<{ notifications: AppwriteNotification[]; unreadCount: number; }> {
   const userId = await ensureUserId();
 
   const baseQueries = [

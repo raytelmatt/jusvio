@@ -137,20 +137,20 @@ export default function Settings() {
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
     try {
-      // Find by account user_id first, then by email
+      // Find by Appwrite account user_id first, then by email
       const byUserId = await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.userProfiles,
-        [Query.equal('user_id', String((user as any).$id))]
+        [Query.equal('user_id', user.$id)]
       );
 
       let doc = byUserId.documents[0] as unknown as UserProfileDoc | undefined;
 
-      if (!doc && (user as any)?.email) {
+      if (!doc && user?.email) {
         const byEmail = await databases.listDocuments(
           DATABASE_ID,
           COLLECTIONS.userProfiles,
-          [Query.equal('email', String((user as any).email))]
+          [Query.equal('email', user.email)]
         );
         doc = byEmail.documents[0] as unknown as UserProfileDoc | undefined;
       }
@@ -192,10 +192,10 @@ export default function Settings() {
         phone: docSafe.phone || '',
       });
 
-      const prefsRaw = docSafe.preferences as unknown as string | null | undefined;
+      const prefsRaw = docSafe.preferences;
       if (prefsRaw) {
         try {
-          setPreferences(JSON.parse(prefsRaw as string));
+          setPreferences(JSON.parse(prefsRaw));
         } catch (err) {
           console.warn('Failed to parse stored preferences JSON; using defaults', err);
         }

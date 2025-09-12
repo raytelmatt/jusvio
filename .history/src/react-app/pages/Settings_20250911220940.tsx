@@ -137,7 +137,7 @@ export default function Settings() {
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
     try {
-      // Find by account user_id first, then by email
+      // Find by Appwrite account user_id first, then by email
       const byUserId = await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.userProfiles,
