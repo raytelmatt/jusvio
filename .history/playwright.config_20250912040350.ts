@@ -26,8 +26,8 @@ export default defineConfig({
   },
 
   // Global test configuration for Firebase
-  globalSetup: './tests/global-setup.ts',
-  globalTeardown: './tests/global-teardown.ts',
+  globalSetup: require.resolve('./tests/global-setup.ts'),
+  globalTeardown: require.resolve('./tests/global-teardown.ts'),
 
   projects: [
     {

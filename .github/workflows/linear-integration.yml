@@ -1,0 +1,139 @@
+name: Linear Integration Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  linear-integration-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check for Linear issue references
+        id: linear-check
+        run: |
+          echo "Checking for Linear issue references in commits and PR..."
+          
+          # Get the PR number if this is a PR event
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUMBER="${{ github.event.number }}"
+            echo "PR Number: $PR_NUMBER"
+            
+            # Check PR title and description for Linear issue reference
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_BODY="${{ github.event.pull_request.body }}"
+            
+            if echo "$PR_TITLE $PR_BODY" | grep -q "RAY-[0-9]\+"; then
+              echo "✅ Linear issue reference found in PR"
+              echo "linear_reference_found=true" >> $GITHUB_OUTPUT
+            else
+              echo "❌ No Linear issue reference found in PR title or description"
+              echo "linear_reference_found=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # For push events, check commit messages
+            COMMITS=$(git log --oneline ${{ github.event.before }}..${{ github.sha }})
+            echo "Checking commits:"
+            echo "$COMMITS"
+            
+            if echo "$COMMITS" | grep -q "RAY-[0-9]\+"; then
+              echo "✅ Linear issue reference found in commits"
+              echo "linear_reference_found=true" >> $GITHUB_OUTPUT
+            else
+              echo "❌ No Linear issue reference found in commit messages"
+              echo "linear_reference_found=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+      
+      - name: Comment on PR if no Linear reference
+        if: github.event_name == 'pull_request' && steps.linear-check.outputs.linear_reference_found == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ⚠️ Linear Integration Required
+              
+              This PR does not reference a Linear issue. According to our development workflow, all changes must be tracked in Linear.
+              
+              **Please:**
+              1. Create a Linear issue for this change
+              2. Reference the Linear issue in your PR title or description (e.g., "RAY-123: Add feature")
+              3. Update your commit messages to include the Linear issue reference
+              
+              **Example:**
+              - PR Title: \`[FEATURE] Add user search functionality (RAY-123)\`
+              - Commit: \`RAY-123: Add user search functionality\`
+              
+              For more information, see our [Linear Integration Workflow](https://github.com/${{ github.repository }}/blob/main/docs/linear-integration-workflow.md).
+              `
+            })
+      
+      - name: Fail if no Linear reference on main branch
+        if: github.ref == 'refs/heads/main' && steps.linear-check.outputs.linear_reference_found == 'false'
+        run: |
+          echo "❌ Changes pushed to main branch without Linear issue reference"
+          echo "This violates our Linear integration rule."
+          exit 1
+      
+      - name: Success message
+        if: steps.linear-check.outputs.linear_reference_found == 'true'
+        run: |
+          echo "✅ Linear integration check passed"
+          echo "All changes are properly tracked in Linear"
+
+  test-playwright:
+    runs-on: ubuntu-latest
+    needs: linear-integration-check
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run Playwright tests
+        run: npm run test:e2e
+        env:
+          BASE_URL: http://localhost:5173
+          FIREBASE_PROJECT_ID: jusivo
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: jusivo.firebaseapp.com
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+      
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

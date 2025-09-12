@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { authenticateWithFirebase, getFirebaseTestConfig } from './firebase-test-utils';
 
 async function ensureAtLeastOneMatter(page: import('@playwright/test').Page, clientName: string, matterTitle: string) {
   // Check if any existing matters are present
@@ -38,10 +37,9 @@ test('Create a Task in a Matter', async ({ page }) => {
   const baseUrl = test.info().project.use.baseURL as string | undefined;
   expect(baseUrl, 'BASE_URL must be provided (e.g., BASE_URL=https://www.jusivo.com)').toBeTruthy();
 
-  // Get Firebase test credentials
-  const config = getFirebaseTestConfig();
-  const email = config.testEmail;
-  const password = config.testPassword;
+  // Firebase test credentials - should be set via environment variables
+  const email = process.env.TEST_EMAIL || 'iahmatt@icloud.com';
+  const password = process.env.TEST_PASSWORD || 'Kb5teh04';
 
   const uniqueSuffix = Date.now();
   const clientName = `E2E Client ${uniqueSuffix}`;
@@ -49,8 +47,8 @@ test('Create a Task in a Matter', async ({ page }) => {
   const taskTitle = `E2E Task ${uniqueSuffix}`;
   const taskDescription = `E2E task created at ${new Date(uniqueSuffix).toISOString()}`;
 
-  // Authenticate with Firebase
-  await authenticateWithFirebase(page, email, password);
+  // Navigate to the app (authentication should be handled by setup)
+  await page.goto('/');
 
   // Verify we're authenticated by checking for dashboard elements
   await expect(page.getByRole('link', { name: 'Matters' })).toBeVisible({ timeout: 30_000 });
