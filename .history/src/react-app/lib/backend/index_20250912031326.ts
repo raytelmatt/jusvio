@@ -45,6 +45,9 @@ function createBackendConfig(): BackendConfig {
 
 function createBackendService(config: BackendConfig): BackendService {
   switch (config.provider) {
+    case 'appwrite':
+      return new AppwriteBackendService(config);
+    
     case 'firebase':
       return new FirebaseBackendService(config);
     

@@ -12,6 +12,13 @@ function createBackendConfig(): BackendConfig {
   const provider = getEnv('BACKEND_PROVIDER', 'firebase') as BackendConfig['provider'];
   
   switch (provider) {
+    case 'appwrite':
+      return {
+        provider: 'appwrite',
+        endpoint: getEnv('APPWRITE_ENDPOINT', 'https://nyc.cloud.appwrite.io/v1'),
+        projectId: getEnv('APPWRITE_PROJECT_ID', '6897443a0034c54b3fd8'),
+      };
+    
     case 'firebase':
       return {
         provider: 'firebase',
@@ -39,12 +46,15 @@ function createBackendConfig(): BackendConfig {
       };
     
     default:
-      throw new Error(`Unsupported backend provider: ${provider}. Only 'firebase', 'supabase', and 'custom' are supported.`);
+      throw new Error(`Unsupported backend provider: ${provider}`);
   }
 }
 
 function createBackendService(config: BackendConfig): BackendService {
   switch (config.provider) {
+    case 'appwrite':
+      return new AppwriteBackendService(config);
+    
     case 'firebase':
       return new FirebaseBackendService(config);
     
