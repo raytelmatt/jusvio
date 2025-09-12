@@ -22,3 +22,4 @@ logs/
 # Builds
 *.zip
 *.tar.gz
+firebase-service-account.json
