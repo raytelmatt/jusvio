@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
-import { Query } from 'appwrite';
+import { Query } from '@/react-app/lib/appwrite';
 
 interface UserProfile {
   id?: string;

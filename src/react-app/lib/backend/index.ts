@@ -1,6 +1,7 @@
 
 import type { BackendService, BackendConfig } from './types';
 import { AppwriteBackendService } from './appwrite-adapter';
+import { FirebaseBackendService } from './firebase-adapter';
 
 function getEnv(name: string, fallback?: string): string {
   const key = `VITE_${name}` as keyof ImportMetaEnv;
@@ -56,7 +57,7 @@ function createBackendService(config: BackendConfig): BackendService {
       return new AppwriteBackendService(config);
     
     case 'firebase':
-      throw new Error('Firebase backend adapter not yet implemented');
+      return new FirebaseBackendService(config);
     
     case 'supabase':
       throw new Error('Supabase backend adapter not yet implemented');

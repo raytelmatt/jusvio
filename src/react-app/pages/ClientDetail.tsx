@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import type { Client } from '@/shared/types';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
-import { Query } from 'appwrite';
+import { Query } from '@/react-app/lib/appwrite';
 
 interface Matter {
   id: number;
@@ -126,9 +126,16 @@ export default function ClientDetail() {
   }, [id]);
 
   const fetchClientBalance = useCallback(async () => {
-    // Not yet implemented against Appwrite. Leave empty to avoid blocking page render.
-    setClientBalance(null);
-  }, []);
+    if (!id) return;
+    try {
+      const { fetchClientBalance } = await import('@/react-app/lib/client-balances');
+      const balance = await fetchClientBalance(id);
+      setClientBalance(balance);
+    } catch (error) {
+      console.error('Error fetching client balance:', error);
+      setClientBalance(null);
+    }
+  }, [id]);
 
   // Fetch client data when component mounts or id changes
   useEffect(() => {

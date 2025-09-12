@@ -1,4 +1,4 @@
-import { Query } from 'appwrite';
+import { Query } from '@/react-app/lib/appwrite';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/appwrite';
 import type { DashboardStats } from '@/shared/types';
 

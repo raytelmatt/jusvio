@@ -1,5 +1,5 @@
-import { Query, Models } from 'appwrite';
-import { databases, DATABASE_ID, COLLECTIONS, account } from '@/react-app/lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS, account, Query } from '@/react-app/lib/appwrite';
+import type { BackendUser } from '@/react-app/lib/backend/types';
 
 export type NotificationType = 'deadline' | 'hearing' | 'payment' | 'document' | 'message' | 'system';
 export type NotificationPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -31,8 +31,8 @@ let cachedUserId: string | null = null;
 
 async function ensureUserId(): Promise<string> {
   if (cachedUserId) return cachedUserId;
-  const me = await account.get();
-  cachedUserId = (me as Models.User<Models.Preferences>).$id;
+  const me = (await account.get()) as unknown as BackendUser | null;
+  cachedUserId = me?.$id ?? null;
   return cachedUserId;
 }
 

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import DocumentPreview from '../components/DocumentPreview';
 import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
-import { Query } from 'appwrite';
+import { Query } from '@/react-app/lib/appwrite';
 import { Matter, Document, Communication, Task } from '@/shared/types';
 // import { Invoice, Payment } from '../../shared/types';
 
