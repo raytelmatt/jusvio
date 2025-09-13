@@ -17,8 +17,8 @@ export function getFirebaseTestConfig(): FirebaseTestConfig {
     projectId: process.env.FIREBASE_PROJECT_ID || 'jusivo',
     apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyAb45jjLqzrnRYnqc5WlYvvKwYHZhxoU8g',
     authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'jusivo.firebaseapp.com',
-    testEmail: process.env.TEST_EMAIL || 'iahmatt@icloud.com',
-    testPassword: process.env.TEST_PASSWORD || 'Kb5teh04',
+    testEmail: process.env.TEST_EMAIL,
+    testPassword: process.env.TEST_PASSWORD,
   };
 }
 

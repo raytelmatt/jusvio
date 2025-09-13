@@ -111,10 +111,48 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
       databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, [Query.limit(1000)])
     ]);
 
-    const invoices = invoicesResponse.documents as InvoiceDoc[] || [];
-    const payments = paymentsResponse.documents as PaymentDoc[] || [];
-    const timeEntries = timeEntriesResponse.documents as TimeEntryDoc[] || [];
-    const matters = mattersResponse.documents as MatterDoc[] || [];
+    const invoices: InvoiceDoc[] = (invoicesResponse.documents as unknown[] || []).map((d) => ({
+      $id: (d as any).$id,
+      id: (d as any).id,
+      matter_id: (d as any).matter_id || (d as any).matters?.id || (d as any).matters?.$id,
+      matters: (d as any).matters,
+      invoice_number: String((d as any).invoice_number || ''),
+      total: (typeof (d as any).total === 'number' ? (d as any).total : undefined),
+      amount: (typeof (d as any).amount === 'number' ? (d as any).amount : undefined),
+      status: String((d as any).status || ''),
+      issue_date: (d as any).issue_date,
+      due_date: (d as any).due_date,
+      $createdAt: (d as any).$createdAt,
+    }));
+    const payments: PaymentDoc[] = (paymentsResponse.documents as unknown[] || []).map((d) => ({
+      $id: (d as any).$id,
+      id: (d as any).id,
+      invoice_id: (d as any).invoice_id || (d as any).invoices?.id || (d as any).invoices?.$id,
+      invoices: (d as any).invoices,
+      amount: Number((d as any).amount || 0),
+      payment_method: String((d as any).payment_method || ''),
+      reference: (d as any).reference,
+      received_at: (d as any).received_at,
+      $createdAt: (d as any).$createdAt,
+    }));
+    const timeEntries: TimeEntryDoc[] = (timeEntriesResponse.documents as unknown[] || []).map((d) => ({
+      $id: (d as any).$id,
+      id: (d as any).id,
+      matter_id: (d as any).matter_id || (d as any).matters?.id || (d as any).matters?.$id,
+      matters: (d as any).matters,
+      hours: Number((d as any).hours || 0),
+      rate: Number((d as any).rate || 0),
+      $createdAt: (d as any).$createdAt,
+    }));
+    const matters: MatterDoc[] = (mattersResponse.documents as unknown[] || []).map((d) => ({
+      $id: (d as any).$id,
+      id: (d as any).id,
+      client_id: (d as any).client_id || (d as any).clients?.id || (d as any).clients?.$id,
+      clients: (d as any).clients,
+      title: String((d as any).title || ''),
+      matter_number: (d as any).matter_number,
+      $createdAt: (d as any).$createdAt,
+    }));
 
     // Create lookup maps for efficiency
     const invoicesByMatter = new Map<string, InvoiceDoc[]>();
@@ -168,7 +206,8 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
 
     // Calculate balances for each client
     const clientBalances: ClientBalance[] = clients.map((client: Client) => {
-      const clientId = client.id || client.$id || '';
+      // Support records that may contain either numeric id or $id
+      const clientId = String((client as any).id ?? (client as any).$id ?? '');
       const clientMatters = mattersByClient.get(clientId) || [];
       
       let totalInvoiced = 0;
@@ -290,10 +329,10 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
       return {
         id: clientId,
         client_id: clientId,
-        client_number: client.client_number,
+        client_number: (client as any).client_number ?? undefined,
         first_name: client.first_name,
         last_name: client.last_name,
-        email: client.email,
+        email: (client as any).email ?? undefined,
         balance: currentBalance,
         current_balance: currentBalance,
         total_paid: totalPaid,

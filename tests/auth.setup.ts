@@ -1,8 +1,12 @@
 import { test as setup, expect } from '@playwright/test';
 
-// Firebase test credentials - these should be set via environment variables in CI/CD
-const TEST_EMAIL = process.env.TEST_EMAIL || 'iahmatt@icloud.com';
-const TEST_PASSWORD = process.env.TEST_PASSWORD || 'Kb5teh04';
+// Firebase test credentials - must be provided via environment variables
+const TEST_EMAIL = process.env.TEST_EMAIL;
+const TEST_PASSWORD = process.env.TEST_PASSWORD;
+
+if (!TEST_EMAIL || !TEST_PASSWORD) {
+  throw new Error('Missing TEST_EMAIL or TEST_PASSWORD env for Playwright auth setup');
+}
 
 setup('authenticate with Firebase', async ({ page }) => {
   // Navigate to login page

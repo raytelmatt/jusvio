@@ -24,16 +24,20 @@ export interface BackendFile {
   $createdAt: string;
 }
 
-export interface BackendQuery {
-  equal(attribute: string, value: unknown): BackendQuery;
-  notEqual(attribute: string, value: unknown): BackendQuery;
-  lessThan(attribute: string, value: unknown): BackendQuery;
-  greaterThan(attribute: string, value: unknown): BackendQuery;
-  search(attribute: string, value: string): BackendQuery;
-  orderAsc(attribute: string): BackendQuery;
-  orderDesc(attribute: string): BackendQuery;
-  limit(limit: number): BackendQuery;
-  offset(offset: number): BackendQuery;
+// Query builder API exposed to callers; returns string-encoded descriptors
+export interface BackendQueryApi {
+  equal(attribute: string, value: unknown): string;
+  notEqual(attribute: string, value: unknown): string;
+  lessThan(attribute: string, value: unknown): string;
+  lessThanEqual(attribute: string, value: unknown): string;
+  greaterThan(attribute: string, value: unknown): string;
+  greaterThanEqual(attribute: string, value: unknown): string;
+  in(attribute: string, values: unknown[]): string;
+  search(attribute: string, value: string): string;
+  orderAsc(attribute: string): string;
+  orderDesc(attribute: string): string;
+  limit(limit: number): string;
+  offset(offset: number): string;
 }
 
 export interface BackendListResponse<T> {
@@ -116,17 +120,7 @@ export interface BackendService {
   
   setJWT(jwt: string | null): void;
   
-  Query: {
-    equal(attribute: string, value: unknown): unknown;
-    notEqual(attribute: string, value: unknown): unknown;
-    lessThan(attribute: string, value: unknown): unknown;
-    greaterThan(attribute: string, value: unknown): unknown;
-    search(attribute: string, value: string): unknown;
-    orderAsc(attribute: string): unknown;
-    orderDesc(attribute: string): unknown;
-    limit(limit: number): unknown;
-    offset(offset: number): unknown;
-  };
+  Query: BackendQueryApi;
 }
 
 export interface BackendConfig {

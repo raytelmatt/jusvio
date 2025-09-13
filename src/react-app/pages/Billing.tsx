@@ -187,7 +187,7 @@ export default function Billing() {
             Log Time
           </Link>
           <Link
-            to="/clients/balances"
+            to="/client-balances"
             className="inline-flex items-center px-4 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 hover:bg-white/20 backdrop-blur-sm"
           >
             <Users className="mr-2 h-4 w-4" />

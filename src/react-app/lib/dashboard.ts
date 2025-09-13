@@ -39,7 +39,7 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     count(COLLECTIONS.hearings, [Query.greaterThanEqual('start_at', now), Query.lessThanEqual('start_at', in7)]),
     count(COLLECTIONS.deadlines, [Query.equal('status', 'Open'), Query.greaterThanEqual('due_at', now), Query.lessThanEqual('due_at', in7)]),
     count(COLLECTIONS.deadlines, [Query.equal('status', 'Open'), Query.greaterThanEqual('due_at', now), Query.lessThanEqual('due_at', in30)]),
-    count(COLLECTIONS.invoices, [Query.equal('status', ['Sent', 'Overdue'])]),
+    count(COLLECTIONS.invoices, [Query.in('status', ['Sent', 'Overdue'])]),
   ]);
 
   const stats: DashboardStats = {

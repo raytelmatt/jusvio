@@ -13,10 +13,10 @@ import {
   CheckCheck
 } from 'lucide-react';
 import {
-  fetchNotifications,
-  markAsRead,
-  markAllAsRead,
-  deleteNotification,
+  fetchNotifications as fetchNotificationsApi,
+  markAsRead as markAsReadApi,
+  markAllAsRead as markAllAsReadApi,
+  deleteNotification as deleteNotificationApi,
 } from '@/react-app/lib/notifications';
 
 // AppwriteNotification is imported and used as the notification model
@@ -106,10 +106,10 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
     };
   }, [isOpen, onClose]);
 
-  const fetchNotifications = useCallback(async () => {
+  const loadNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const { notifications, unreadCount } = await fetchNotifications(filter);
+      const { notifications, unreadCount } = await fetchNotificationsApi(filter);
       setNotifications(notifications);
       onUnreadCountChange(unreadCount);
     } catch (error) {
@@ -121,13 +121,13 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
 
   useEffect(() => {
     if (isOpen) {
-      fetchNotifications();
+      loadNotifications();
     }
-  }, [isOpen, filter, fetchNotifications]);
+  }, [isOpen, filter, loadNotifications]);
 
-  const markAsRead = async (notificationId: string) => {
+  const handleMarkAsRead = async (notificationId: string) => {
     try {
-      await markAsRead(notificationId);
+      await markAsReadApi(notificationId);
       setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
       onUnreadCountChange(Math.max(0, unreadCount - 1));
     } catch (error) {
@@ -135,9 +135,9 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
     }
   };
 
-  const markAllAsRead = async () => {
+  const handleMarkAllAsRead = async () => {
     try {
-      await markAllAsRead();
+      await markAllAsReadApi();
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       onUnreadCountChange(0);
     } catch (error) {
@@ -145,10 +145,10 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
     }
   };
 
-  const deleteNotification = async (notificationId: string) => {
+  const handleDeleteNotification = async (notificationId: string) => {
     try {
       const notification = notifications.find(n => n.id === notificationId);
-      await deleteNotification(notificationId);
+      await deleteNotificationApi(notificationId);
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
       if (notification && !notification.is_read) {
         onUnreadCountChange(Math.max(0, unreadCount - 1));
@@ -160,7 +160,7 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
 
   const handleNotificationClick = (notification: any) => {
     if (!notification.is_read) {
-      markAsRead(notification.id);
+      void handleMarkAsRead(notification.id);
     }
     
     if (notification.action_url) {
@@ -219,7 +219,7 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
           
           {unreadCount > 0 && (
             <button
-              onClick={markAllAsRead}
+              onClick={handleMarkAllAsRead}
               className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
             >
               <CheckCheck className="w-4 h-4 mr-1" />
@@ -283,7 +283,7 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                markAsRead(notification.id);
+                                void handleMarkAsRead(notification.id);
                               }}
                               className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
                               title="Mark as read"
@@ -294,7 +294,7 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              deleteNotification(notification.id);
+                              void handleDeleteNotification(notification.id);
                             }}
                             className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
                             title="Delete notification"

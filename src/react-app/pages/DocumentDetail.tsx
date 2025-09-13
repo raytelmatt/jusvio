@@ -101,13 +101,13 @@ export default function DocumentDetail() {
     
     try {
       const nextVersion = (versions[0]?.version ?? (document?.version ?? 1)) + 1;
-      const newVersionDoc = await databases.createDocument(DATABASE_ID, COLLECTIONS.documentVersions, 'unique()', {
+      const newVersionDoc: any = await databases.createDocument(DATABASE_ID, COLLECTIONS.documentVersions, 'unique()', {
         document_id: String(id),
         version: nextVersion,
         created_by: user?.$id ?? 'system',
         created_at: new Date().toISOString(),
         changes_summary: 'Manual version creation',
-      }) as unknown as AppwriteDocument;
+      });
       const newVersion = DocumentVersionSchema.parse({
         ...newVersionDoc,
         id: newVersionDoc.id ?? newVersionDoc.$id,
@@ -124,7 +124,7 @@ export default function DocumentDetail() {
     if (!document) return;
     
     try {
-      const created = await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
+      const created: any = await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
         matter_id: String(document.matter_id),
         template_id: document.template_id ? String(document.template_id) : null,
         title: `${document.title} (Copy)`,
@@ -132,7 +132,7 @@ export default function DocumentDetail() {
         version: 1,
         file_url: document.file_url || null,
         created_by: user?.$id ?? 'system',
-      }) as unknown as AppwriteDocument;
+      });
       const newId = created.id ?? created.$id;
       navigate(`/documents/${newId}`);
     } catch (error) {

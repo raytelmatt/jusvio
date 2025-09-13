@@ -16,36 +16,39 @@ export interface NotificationItem {
   related_matter_id?: string;
 }
 
-interface NotificationDocument extends Models.Document {
-  title: string;
-  message: string;
-  type: NotificationType;
-  is_read: boolean;
-  priority: NotificationPriority;
+type NotificationDocument = {
+  $id?: string;
+  $createdAt?: string;
+  created_at?: string;
+  title?: string;
+  message?: string;
+  type?: NotificationType;
+  is_read?: boolean;
+  priority?: NotificationPriority;
   action_url?: string;
   related_matter_id?: string;
-  user_id: string;
-}
+  user_id?: string;
+};
 
 let cachedUserId: string | null = null;
 
 async function ensureUserId(): Promise<string> {
   if (cachedUserId) return cachedUserId;
   const me = (await account.get()) as unknown as BackendUser | null;
-  cachedUserId = me?.$id ?? null;
+  cachedUserId = me?.$id ?? '';
   return cachedUserId;
 }
 
-function mapDoc(doc: NotificationDocument): AppwriteNotification {
+function mapDoc(doc: NotificationDocument): NotificationItem {
   return {
-    id: doc.$id,
+    id: String(doc.$id || ''),
     title: doc.title ?? '',
     message: doc.message ?? '',
-    type: doc.type ?? 'system',
+    type: (doc.type as NotificationType) ?? 'system',
     is_read: Boolean(doc.is_read),
-    priority: doc.priority ?? 'low',
+    priority: (doc.priority as NotificationPriority) ?? 'low',
     action_url: doc.action_url ?? undefined,
-    created_at: doc.$createdAt,
+    created_at: doc.created_at || doc.$createdAt || new Date().toISOString(),
     related_matter_id: doc.related_matter_id ?? undefined,
   };
 }
@@ -55,7 +58,7 @@ export async function fetchNotifications(filter: 'all' | 'unread' = 'all'): Prom
 
   const baseQueries = [
     Query.equal('user_id', userId),
-    Query.orderDesc('$createdAt'),
+    Query.orderDesc('created_at'),
     Query.limit(50),
   ];
   const listQueries = filter === 'unread' ? [...baseQueries, Query.equal('is_read', false)] : baseQueries;

@@ -31,7 +31,7 @@ interface Matter {
 }
 
 interface ClientBalance {
-  id: number;
+  id: string;
   client_id: string;
   client_number?: string;
   first_name: string;

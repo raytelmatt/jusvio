@@ -43,7 +43,7 @@ import {
 } from 'firebase/storage';
 
 type QueryDescriptor =
-  | { type: 'where'; op: '==' | '!=' | '>' | '>=' | '<' | '<='; attribute: string; value: unknown }
+  | { type: 'where'; op: '==' | '!=' | '>' | '>=' | '<' | '<=' | 'in'; attribute: string; value: unknown }
   | { type: 'order'; attribute: string; direction: 'asc' | 'desc' }
   | { type: 'limit'; value: number }
   | { type: 'offset'; value: number };
@@ -132,7 +132,7 @@ class FirebaseDatabaseService implements BackendDatabaseService {
 
     for (const d of descriptors) {
       if (d.type === 'where') {
-        constraints.push(where(d.attribute, d.op, d.value as any));
+        constraints.push(where(d.attribute as any, d.op as any, d.value as any));
       } else if (d.type === 'order') {
         constraints.push(orderBy(d.attribute, d.direction));
       } else if (d.type === 'limit') {
@@ -144,7 +144,10 @@ class FirebaseDatabaseService implements BackendDatabaseService {
 
     const q = constraints.length > 0 ? fsQuery(colRef, ...constraints) : colRef;
     const snap = await getDocs(q as any);
-    let docs = snap.docs.map((docSnap) => ({ $id: docSnap.id, ...docSnap.data() })) as T[];
+    let docs = snap.docs.map((docSnap) => {
+      const data = (docSnap.data?.() ?? {}) as Record<string, unknown>;
+      return { $id: docSnap.id, ...data } as unknown as T;
+    });
 
     if (typeof offset === 'number' && offset > 0) {
       docs = docs.slice(offset);
@@ -283,14 +286,17 @@ export class FirebaseBackendService implements BackendService {
     lessThan(attribute: string, value: unknown) {
       return JSON.stringify({ type: 'where', op: '<', attribute, value });
     },
-    greaterThan(attribute: string, value: unknown) {
-      return JSON.stringify({ type: 'where', op: '>', attribute, value });
-    },
     lessThanEqual(attribute: string, value: unknown) {
       return JSON.stringify({ type: 'where', op: '<=', attribute, value });
     },
+    greaterThan(attribute: string, value: unknown) {
+      return JSON.stringify({ type: 'where', op: '>', attribute, value });
+    },
     greaterThanEqual(attribute: string, value: unknown) {
       return JSON.stringify({ type: 'where', op: '>=', attribute, value });
+    },
+    in(attribute: string, values: unknown[]) {
+      return JSON.stringify({ type: 'where', op: 'in', attribute, value: values });
     },
     search(attribute: string, value: string) {
       // Firestore has no full-text search natively; treat as equality for now
@@ -326,5 +332,3 @@ export class FirebaseBackendService implements BackendService {
     // No-op: Firebase SDK manages auth state automatically in the browser
   }
 }
-
-
