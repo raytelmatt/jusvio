@@ -317,15 +317,15 @@ export class FirebaseBackendService implements BackendService {
   };
 
   constructor(config: BackendConfig) {
-    if (!config.projectId) {
-      throw new Error('Firebase backend requires projectId');
-    }
+    // Allow running with default values to avoid blank pages in dev
+    const effectiveProjectId = (config.projectId as string) || 'jusivo';
+    const effectiveBucket = (config as any).storageBucket || 'jusivo.appspot.com';
     // Ensure the app is initialized (lib/firebase.ts holds config)
     getFirebaseApp();
 
     this.auth = new FirebaseAuthService();
-    this.database = new FirebaseDatabaseService(config.projectId);
-    this.storage = new FirebaseStorageService(config.storageBucket as string | undefined);
+    this.database = new FirebaseDatabaseService(effectiveProjectId);
+    this.storage = new FirebaseStorageService(effectiveBucket as string | undefined);
   }
 
   setJWT(_jwt: string | null): void {

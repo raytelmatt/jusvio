@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router';
+import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/backend';
 import { 
   Plus, 
   Calendar as CalendarIcon, 
@@ -33,25 +34,36 @@ export default function Calendar() {
 
   const fetchHearings = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
       const startOfMonth = new Date(year, month, 1).toISOString();
-      const endOfMonth = new Date(year, month + 1, 0).toISOString();
-      
-      params.append('start', startOfMonth);
-      params.append('end', endOfMonth);
+      const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+
+      const queries: string[] = [
+        Query.greaterThanEqual('start_at', startOfMonth),
+        Query.lessThanEqual('start_at', endOfMonth),
+        Query.limit(1000),
+      ];
       if (selectedPracticeArea) {
-        params.append('practice_area', selectedPracticeArea);
+        queries.push(Query.equal('practice_area', selectedPracticeArea));
       }
 
-      const response = await fetch(`/api/hearings?${params.toString()}`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setHearings(data);
-      }
+      const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.hearings, queries);
+      const rows = (list.documents || []).map((d: any) => ({
+        id: Number(d.id ?? d.$id),
+        matter_id: Number(d.matter_id ?? d.matters?.id ?? d.matters?.$id),
+        matter_title: d.matter_title ?? '',
+        client_name: d.client_name ?? '',
+        hearing_type: d.hearing_type ?? '',
+        start_at: d.start_at ?? d.$createdAt,
+        end_at: d.end_at ?? d.start_at,
+        courtroom: d.courtroom ?? '',
+        judge_or_alj: d.judge_or_alj ?? '',
+        court_name: d.court_name ?? '',
+        is_ssa_hearing: Boolean(d.is_ssa_hearing),
+        practice_area: d.practice_area ?? '',
+      })) as Hearing[];
+      setHearings(rows);
     } catch (error) {
       console.error('Error fetching hearings:', error);
     } finally {

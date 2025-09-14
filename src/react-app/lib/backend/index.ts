@@ -13,13 +13,14 @@ function createBackendConfig(): BackendConfig {
   
   switch (provider) {
     case 'firebase':
+      // Provide sane defaults matching local firebase.ts to avoid blank pages in dev
       return {
         provider: 'firebase',
-        projectId: getEnv('FIREBASE_PROJECT_ID', ''),
-        apiKey: getEnv('FIREBASE_API_KEY', ''),
-        authDomain: getEnv('FIREBASE_AUTH_DOMAIN', ''),
+        projectId: getEnv('FIREBASE_PROJECT_ID', 'jusivo'),
+        apiKey: getEnv('FIREBASE_API_KEY', 'AIzaSyAb45jjLqzrnRYnqc5WlYvvKwYHZhxoU8g'),
+        authDomain: getEnv('FIREBASE_AUTH_DOMAIN', 'jusivo.firebaseapp.com'),
         databaseURL: getEnv('FIREBASE_DATABASE_URL', ''),
-        storageBucket: getEnv('FIREBASE_STORAGE_BUCKET', ''),
+        storageBucket: getEnv('FIREBASE_STORAGE_BUCKET', 'jusivo.appspot.com'),
       };
     
     case 'supabase':

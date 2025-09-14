@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router';
+import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/backend';
 import { 
   FolderOpen, 
   FileText, 
@@ -77,15 +78,92 @@ export default function ClientPortal() {
 
   const fetchClientPortalData = useCallback(async () => {
     try {
-      const response = await fetch(`/api/client-portal/${clientId}`, {
-        credentials: 'include',
+      // Load client
+      const client = await databases.getDocument(DATABASE_ID, COLLECTIONS.clients, String(clientId));
+
+      // Load matters for client
+      const matterList = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, [
+        Query.equal('client_id', String(clientId)),
+        Query.limit(1000),
+      ]);
+      const matters = (matterList.documents || []).map((d: any) => ({
+        id: String(d.id ?? d.$id),
+        title: String(d.title || ''),
+        matter_number: String(d.matter_number || ''),
+        status: String(d.status || ''),
+        practice_area: String(d.practice_area || ''),
+        opened_at: String(d.opened_at || d.created_at || d.$createdAt || ''),
+        fee_model: String(d.fee_model || ''),
+        description: (d.description as string) || '',
+      })) as Matter[];
+
+      const matterIds = new Set(matters.map(m => String(m.id)));
+
+      // Load documents linked to those matters
+      const docsRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.documents, [Query.limit(1000)]);
+      const documents = (docsRes.documents || [])
+        .filter((doc: any) => matterIds.has(String(doc.matter_id)))
+        .map((doc: any) => ({
+          id: String(doc.id ?? doc.$id),
+          title: String(doc.title || ''),
+          status: String(doc.status || 'Draft'),
+          created_at: String(doc.created_at || doc.$createdAt || ''),
+        })) as Document[];
+
+      // Load communications for those matters
+      const commRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.communications, [Query.limit(1000)]);
+      const messages = (commRes.documents || [])
+        .filter((c: any) => matterIds.has(String(c.matter_id)))
+        .map((c: any) => ({
+          id: String(c.id ?? c.$id),
+          subject: String(c.subject || ''),
+          body: String(c.body || ''),
+          sent_at: String(c.sent_at || c.$createdAt || ''),
+          direction: String(c.direction || 'Inbound'),
+        })) as Message[];
+
+      // Load invoices for those matters
+      const invRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.invoices, [Query.limit(1000)]);
+      const invoices = (invRes.documents || [])
+        .filter((inv: any) => matterIds.has(String(inv.matter_id)))
+        .map((inv: any) => ({
+          id: String(inv.id ?? inv.$id),
+          invoice_number: String(inv.invoice_number || ''),
+          total: Number(inv.total || inv.amount || 0),
+          status: String(inv.status || 'Draft'),
+          due_date: String(inv.due_date || ''),
+        })) as Invoice[];
+
+      // Load upcoming hearings
+      const hearRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.hearings, [Query.limit(1000)]);
+      const upcomingHearings = (hearRes.documents || [])
+        .filter((h: any) => matterIds.has(String(h.matter_id)))
+        .map((h: any) => ({
+          id: String(h.id ?? h.$id),
+          hearing_type: String(h.hearing_type || ''),
+          scheduled_at: String(h.start_at || ''),
+          location: String(h.court_name || h.courtroom || ''),
+        })) as Hearing[];
+
+      const clientData: Client = {
+        id: String(client.id ?? (client as any).$id ?? ''),
+        first_name: String((client as any).first_name || ''),
+        last_name: String((client as any).last_name || ''),
+        email: String((client as any).email || ''),
+        client_number: String((client as any).client_number || ''),
+      };
+
+      setData({
+        client: clientData,
+        matters,
+        documents,
+        messages,
+        invoices,
+        upcomingHearings,
       });
-      if (response.ok) {
-        const data = await response.json();
-        setData(data);
-      }
     } catch (error) {
       console.error('Error fetching client portal data:', error);
+      setData(null);
     } finally {
       setLoading(false);
     }

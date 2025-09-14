@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/backend';
 import { Search, Scale, Users, ArrowRight, Mail, Phone } from 'lucide-react';
 
 export default function ClientPortalLogin() {
@@ -18,27 +19,39 @@ export default function ClientPortalLogin() {
     setError('');
 
     try {
-      const searchParams = new URLSearchParams();
-      searchParams.set('method', searchMethod);
-      searchParams.set('value', searchValue);
-      if (searchMethod === 'name' && lastName.trim()) {
-        searchParams.set('lastName', lastName);
+      let clientId: string | null = null;
+      if (searchMethod === 'email') {
+        const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, [Query.equal('email', searchValue), Query.limit(1)]);
+        const found = (res.documents?.[0] as any) || null;
+        const idVal = found ? (found.$id ?? found.id) : null;
+        clientId = idVal ? String(idVal) : null;
+      } else if (searchMethod === 'phone') {
+        const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, [Query.limit(500)]);
+        const match = (res.documents || []).find((c: any) => {
+          try {
+            const phones = c.phones ? JSON.parse(c.phones as string) : [];
+            return Array.isArray(phones) && phones.some((p: string) => (p || '').includes(searchValue));
+          } catch { return false; }
+        });
+        const idVal = match ? (match.$id ?? match.id) : null;
+        clientId = idVal ? String(idVal) : null;
+      } else {
+        const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, [Query.limit(500)]);
+        const match = (res.documents || []).find((c: any) => {
+          const first = (c.first_name || '').toString().toLowerCase();
+          const last = (c.last_name || '').toString().toLowerCase();
+          return first === searchValue.toLowerCase() && (!lastName || last === lastName.toLowerCase());
+        });
+        const idVal = match ? (match.$id ?? match.id) : null;
+        clientId = idVal ? String(idVal) : null;
       }
 
-      const response = await fetch(`/api/client-portal/lookup?${searchParams}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('No client found with that information. Please check your details or contact our office.');
-          return;
-        }
-        throw new Error('Failed to search for client');
+      if (!clientId) {
+        setError('No client found with that information. Please check your details or contact our office.');
+        return;
       }
 
-      const client = await response.json();
-      
-      // Redirect to client portal
-      navigate(`/client-portal/${client.id}`);
+      navigate(`/client-portal/${clientId}`);
     } catch (error) {
       console.error('Error searching for client:', error);
       setError('An error occurred while searching. Please try again or contact our office.');

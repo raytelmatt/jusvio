@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
+import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/backend';
 import { ArrowLeft, Save, Calendar, FolderOpen } from 'lucide-react';
 
 interface Matter {
@@ -33,13 +34,16 @@ export default function NewHearing() {
 
   const fetchMatters = async () => {
     try {
-      const response = await fetch('/api/matters', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setMatters(data);
-      }
+      const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, [Query.limit(1000)]);
+      const rows = (list.documents || []).map((d: any) => ({
+        id: Number(d.id ?? d.$id),
+        title: String(d.title || ''),
+        matter_number: String(d.matter_number || ''),
+        practice_area: String(d.practice_area || ''),
+        client_first_name: String(d.client_first_name || ''),
+        client_last_name: String(d.client_last_name || ''),
+      }));
+      setMatters(rows as Matter[]);
     } catch (error) {
       console.error('Error fetching matters:', error);
     }
@@ -63,32 +67,20 @@ export default function NewHearing() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/hearings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          matter_id: parseInt(formData.matter_id),
-          hearing_type: formData.hearing_type,
-          start_at: new Date(formData.start_at).toISOString(),
-          end_at: formData.end_at ? new Date(formData.end_at).toISOString() : null,
-          courtroom: formData.courtroom || null,
-          judge_or_alj: formData.judge_or_alj || null,
-          notes: formData.notes || null,
-          is_ssa_hearing: formData.is_ssa_hearing,
-        }),
+      await databases.createDocument(DATABASE_ID, COLLECTIONS.hearings, 'unique()', {
+        matter_id: parseInt(formData.matter_id),
+        hearing_type: formData.hearing_type,
+        start_at: new Date(formData.start_at).toISOString(),
+        end_at: formData.end_at ? new Date(formData.end_at).toISOString() : null,
+        courtroom: formData.courtroom || null,
+        judge_or_alj: formData.judge_or_alj || null,
+        notes: formData.notes || null,
+        is_ssa_hearing: formData.is_ssa_hearing,
+        created_at: new Date().toISOString(),
       });
-
-      if (response.ok) {
-        navigate('/calendar');
-      } else {
-        const errorData = await response.json();
-        setErrors({ submit: errorData.error || 'Failed to schedule hearing' });
-      }
-    } catch {
-      setErrors({ submit: 'Network error. Please try again.' });
+      navigate('/calendar');
+    } catch (e) {
+      setErrors({ submit: 'Failed to schedule hearing' });
     } finally {
       setLoading(false);
     }
