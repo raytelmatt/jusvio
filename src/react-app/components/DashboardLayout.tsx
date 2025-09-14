@@ -26,6 +26,7 @@ const navigation = [
   { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Deadlines', href: '/deadlines', icon: Clock },
   { name: 'Documents', href: '/documents', icon: FileText },
+  { name: 'Intakes', href: '/intakes', icon: FileText },
   { name: 'Communications', href: '/communications', icon: MessageSquare },
   { name: 'Billing', href: '/billing', icon: DollarSign },
   { name: 'Settings', href: '/settings', icon: Settings },

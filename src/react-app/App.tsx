@@ -31,6 +31,7 @@ import NewHearing from "@/react-app/pages/NewHearing";
 import ClientDetail from "@/react-app/pages/ClientDetail";
 import DeadlineDetail from "@/react-app/pages/DeadlineDetail";
 import ClientBalances from "@/react-app/pages/ClientBalances";
+import IntakesAdmin from "@/react-app/pages/Intakes";
 import ProtectedRoute from "@/react-app/components/ProtectedRoute";
 
 export default function App() {
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/documents/upload" element={<ProtectedRoute><UploadDocument /></ProtectedRoute>} />
           <Route path="/documents/templates/new" element={<ProtectedRoute><NewTemplate /></ProtectedRoute>} />
           <Route path="/documents/:id" element={<ProtectedRoute><DocumentDetail /></ProtectedRoute>} />
+          <Route path="/intakes" element={<ProtectedRoute><IntakesAdmin /></ProtectedRoute>} />
           <Route path="/communications" element={<ProtectedRoute><Communications /></ProtectedRoute>} />
           <Route path="/deadlines/new" element={<ProtectedRoute><NewDeadline /></ProtectedRoute>} />
           <Route path="/deadlines/:id" element={<ProtectedRoute><DeadlineDetail /></ProtectedRoute>} />
