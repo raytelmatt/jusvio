@@ -139,6 +139,7 @@ export const COLLECTIONS = {
   matters: 'matters',
   mattersMeta: 'matters_meta',
   hearings: 'hearings',
+  intakes: 'intakes',
   documents: 'documents',
   documentTemplates: 'document_templates',
   documentVersions: 'document_versions',

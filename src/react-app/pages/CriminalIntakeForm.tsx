@@ -10,6 +10,7 @@ import {
   Scale,
   Shield
 } from 'lucide-react';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
 
 interface CriminalIntakeFormData {
   // Personal Information
@@ -226,20 +227,23 @@ export default function CriminalIntakeForm() {
 
     setLoading(true);
     try {
-      // Submit criminal intake form (no auth required)
-      const response = await fetch('/api/criminal-intake', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit intake form');
-      }
-
+      // Persist intake using backend adapter
+      const payload = {
+        type: 'criminal',
+        practice_area: 'Criminal',
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.mobile_phone || formData.home_phone || formData.work_phone || '',
+        charges: formData.charges,
+        arrest_date: formData.arrest_date || null,
+        case_number: formData.case_number || null,
+        court_name: formData.court_name || null,
+        urgency_level: formData.urgency_level,
+        submitted_at: new Date().toISOString(),
+        data: JSON.stringify(formData),
+      } as Record<string, unknown>;
+      await databases.createDocument(DATABASE_ID, COLLECTIONS.intakes, 'unique()', payload);
       setSubmitted(true);
     } catch (error) {
       setErrors({ submit: error instanceof Error ? error.message : 'Failed to submit intake form. Please try again.' });

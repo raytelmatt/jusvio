@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Check
 } from 'lucide-react';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
 
 interface IntakeFormData {
   // Client Info
@@ -137,20 +138,23 @@ export default function IntakeForm() {
 
     setLoading(true);
     try {
-      // Submit intake form (no auth required)
-      const response = await fetch('/api/intakes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit intake form');
-      }
-
+      // Persist intake using backend adapter
+      const payload = {
+        type: 'general',
+        practice_area: formData.practice_area || 'General',
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone,
+        preferred_contact_method: formData.preferred_contact_method,
+        case_description: formData.case_description,
+        incident_date: formData.incident_date || null,
+        urgency_level: formData.urgency_level,
+        submitted_at: new Date().toISOString(),
+        // Store full form payload for review
+        data: JSON.stringify(formData),
+      } as Record<string, unknown>;
+      await databases.createDocument(DATABASE_ID, COLLECTIONS.intakes, 'unique()', payload);
       setSubmitted(true);
     } catch (error) {
       setErrors({ submit: error instanceof Error ? error.message : 'Failed to submit intake form. Please try again.' });
