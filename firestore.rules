@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  function isAuthenticated() {
+    return request.auth != null;
+  }
+
+  match /databases/{database}/documents {
+    // Allow public intake submissions but keep review restricted to staff.
+    match /intakes/{intakeId} {
+      allow create: if true;
+      allow read, update, delete: if isAuthenticated();
+    }
+
+    // Staff-only collections. Require a signed-in Firebase Auth user.
+    match /user_profiles/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /clients/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /matters/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /matters_meta/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /hearings/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /documents/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /document_templates/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /document_versions/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /deadlines/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /deadline_notes/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /time_entries/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /tasks/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /invoices/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /payments/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /communications/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /notifications/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Everything else is denied by default.
+  }
+}
