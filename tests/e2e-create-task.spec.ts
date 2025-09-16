@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { authenticateWithFirebase, getFirebaseTestConfig } from './firebase-test-utils';
+import { authenticateWithFirebase, getFirebaseTestConfig, waitForFirebaseAuth } from './firebase-test-utils';
 
 async function ensureAtLeastOneMatter(page: import('@playwright/test').Page, clientName: string, matterTitle: string) {
   // Check if any existing matters are present
-  await page.getByRole('link', { name: 'Matters' }).click();
+  await page.getByTestId('nav-matters').click();
   
   // Wait for the page to load and look for matters
   await page.waitForLoadState('networkidle');
@@ -52,8 +52,8 @@ test('Create a Task in a Matter', async ({ page }) => {
   // Authenticate with Firebase
   await authenticateWithFirebase(page, email, password);
 
-  // Verify we're authenticated by checking for dashboard elements
-  await expect(page.getByRole('link', { name: 'Matters' })).toBeVisible({ timeout: 30_000 });
+  // Verify authentication completed robustly
+  await waitForFirebaseAuth(page);
 
   // Ensure there is at least one matter (or create one)
   await ensureAtLeastOneMatter(page, clientName, matterTitle);
@@ -76,5 +76,3 @@ test('Create a Task in a Matter', async ({ page }) => {
   // Verify task appears in list
   await expect(page.getByText(taskTitle, { exact: true })).toBeVisible({ timeout: 30_000 });
 });
-
-

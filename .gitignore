@@ -22,3 +22,5 @@ logs/
 # Builds
 *.zip
 *.tar.gz
+
+.history/

@@ -2,6 +2,7 @@ import { FullConfig } from '@playwright/test';
 import { unlink } from 'fs/promises';
 
 async function globalTeardown(config: FullConfig) {
+  void config;
   console.log('Cleaning up Firebase test artifacts...');
   
   try {

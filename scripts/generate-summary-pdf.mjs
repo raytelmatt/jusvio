@@ -68,31 +68,31 @@ const summarySections = [
   {
     heading: 'What it is',
     paragraphs: [
-      'A legal case manager app, now fully on Appwrite:'
+      'A legal case manager app running entirely on Firebase:'
     ],
     bullets: [
       'Frontend: React 19 + Vite 6 + React Router + Tailwind',
-      'Backend: Appwrite-first (Databases, Storage, Auth). No Cloudflare Worker.',
-      'Auth: Appwrite Auth (Google OAuth via Web SDK).',
-      'Hosting: Static site deployed to Appwrite Sites via GitHub Actions'
+      'Backend: Firebase-first (Auth, Firestore, Storage). No Cloudflare Worker.',
+      'Auth: Firebase Auth (email/password + OAuth).',
+      'Hosting: Static site deployed to Firebase Hosting via GitHub Actions'
     ]
   },
   {
     heading: 'Key directories and files',
     paragraphs: [
-      'Frontend (SPA): index.html boots /src/react-app/main.tsx; pages under src/react-app/pages; shared components in src/react-app/components; AuthProvider manages session context; lib/appwrite.ts wires Appwrite Web SDK; storage/file uploads via Appwrite Storage.',
+      'Frontend (SPA): index.html boots /src/react-app/main.tsx; pages under src/react-app/pages; shared components in src/react-app/components; AuthProvider manages session context; lib/backend.ts wires the Firebase adapter; storage/file uploads go through Firebase Storage.',
       'Shared utilities: src/shared/email-service.ts (SendGrid send/parse, templates, reply tracking), src/shared/document-generator.ts (docx/html-docx-js/jsPDF).',
-      'Data & infra: migrations/ capture historical schema; scripts/appwrite/setup.mjs provisions Appwrite (database, collections, bucket). CI deploys dist/ to Appwrite Sites.'
+      'Data & infra: migrations/ capture historical schema; scripts/firebase/seed-firestore.mjs provisions Firestore collections. CI deploys dist/ to Firebase Hosting.'
     ]
   },
   {
     heading: 'How it works (end-to-end)',
     bullets: [
-      'Auth: Appwrite Web SDK handles Google OAuth sessions (Account.createOAuth2Session).',
-      'Data: Frontend reads/writes via Appwrite Databases (collections: clients, matters, documents, deadlines, hearings, invoices, etc.).',
-      'Files: Uploaded directly to Appwrite Storage (bucket: documents); file URLs use storage:// scheme resolved by UI.',
-      'Email: SendGrid for notifications (server-side integration to be hosted on Appwrite Functions).',
-      'Hosting: Frontend on Appwrite Sites.'
+      'Auth: Firebase Web SDK handles OAuth/email sessions.',
+      'Data: Frontend reads/writes via Firestore collections (clients, matters, documents, deadlines, hearings, invoices, etc.).',
+      'Files: Uploaded directly to Firebase Storage (bucket: documents).',
+      'Email: SendGrid for notifications (future server-side integration via Cloud Functions or Cloud Run).',
+      'Hosting: Frontend on Firebase Hosting.'
     ]
   },
   {
@@ -107,8 +107,8 @@ const summarySections = [
   {
     heading: 'Environment',
     bullets: [
-      'Frontend build: VITE_APPWRITE_ENDPOINT, VITE_APPWRITE_PROJECT_ID',
-      'Backend (future Appwrite Functions): SENDGRID_API_KEY if sending email from server-side'
+      'Frontend build: VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_STORAGE_BUCKET',
+      'Backend automation: FIREBASE_PROJECT_ID, FIREBASE_SERVICE_ACCOUNT, FIREBASE_STORAGE_BUCKET, SENDGRID_API_KEY (for outbound email)'
     ]
   },
   {
@@ -116,7 +116,7 @@ const summarySections = [
     bullets: [
       'Remove legacy Cloudflare Worker code and configs (src/worker/, wrangler.jsonc, .wrangler/, tsconfig.worker.json).',
       'Replace any remaining references to Mocha/Cloudflare in docs or code comments.',
-      'Optionally migrate SendGrid email flows to Appwrite Functions.'
+      'Optionally migrate SendGrid email flows to Firebase Cloud Functions.'
     ]
   }
 ];

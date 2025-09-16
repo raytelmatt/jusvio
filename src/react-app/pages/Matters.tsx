@@ -4,6 +4,48 @@ import { Plus, Search, MoreHorizontal, FolderOpen } from 'lucide-react';
 import { databases, DATABASE_ID } from '@/react-app/lib/backend';
 import { Matter } from '@/shared/types';
 
+type FirestoreMatter = Matter & {
+  $id?: string;
+  $createdAt?: string;
+  created_at?: string;
+};
+
+function normalizeMatter(raw: unknown): FirestoreMatter {
+  const record = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+  const idSource = record.id ?? record.$id;
+  const idNumber = typeof idSource === 'number' ? idSource : Number(idSource ?? 0);
+  const openedAt = typeof record.opened_at === 'string'
+    ? record.opened_at
+    : typeof record.$createdAt === 'string'
+      ? record.$createdAt
+      : typeof record.created_at === 'string'
+        ? record.created_at
+        : undefined;
+
+  return {
+    id: Number.isFinite(idNumber) ? idNumber : 0,
+    matter_number: String(record.matter_number ?? ''),
+    title: String(record.title ?? ''),
+    practice_area: (record.practice_area as Matter['practice_area']) ?? 'Criminal',
+    status: (record.status as Matter['status']) ?? 'Open',
+    client_id: typeof record.client_id === 'number' ? record.client_id : Number(record.client_id ?? 0),
+    assigned_attorney_ids: typeof record.assigned_attorney_ids === 'string' ? record.assigned_attorney_ids : null,
+    opened_at: openedAt ?? null,
+    closed_at: typeof record.closed_at === 'string' ? record.closed_at : null,
+    description: typeof record.description === 'string' ? record.description : null,
+    fee_model: (record.fee_model as Matter['fee_model']) ?? 'FlatRate',
+    flat_rate_amount: typeof record.flat_rate_amount === 'number' ? record.flat_rate_amount : null,
+    rate_card_id: typeof record.rate_card_id === 'number' ? record.rate_card_id : null,
+    created_at: typeof record.created_at === 'string' ? record.created_at : new Date().toISOString(),
+    updated_at: typeof record.updated_at === 'string' ? record.updated_at : new Date().toISOString(),
+    client_first_name: typeof record.client_first_name === 'string' ? record.client_first_name : undefined,
+    client_last_name: typeof record.client_last_name === 'string' ? record.client_last_name : undefined,
+    client_email: typeof record.client_email === 'string' ? record.client_email : undefined,
+    $id: typeof record.$id === 'string' ? record.$id : undefined,
+    $createdAt: typeof record.$createdAt === 'string' ? record.$createdAt : undefined,
+  };
+}
+
 const PRACTICE_AREA_COLORS = {
   Criminal: 'bg-red-100 text-red-800',
   PersonalInjury: 'bg-blue-100 text-blue-800',
@@ -18,7 +60,7 @@ const STATUS_COLORS = {
 };
 
 export default function Matters() {
-  const [matters, setMatters] = useState<Matter[]>([]);
+  const [matters, setMatters] = useState<FirestoreMatter[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,7 +75,8 @@ export default function Matters() {
   const fetchMatters = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, 'matters', []);
-      setMatters(list.documents as unknown as Matter[] || []);
+      const docs = (list.documents || []).map(normalizeMatter);
+      setMatters(docs);
     } catch (error) {
       console.error('Error fetching matters:', error);
     } finally {
@@ -69,7 +112,7 @@ export default function Matters() {
   }
 
   return (
-    <div className="space-y-6">
+    <div data-testid="matters-page" className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -163,7 +206,7 @@ export default function Matters() {
       </div>
 
       {/* Matters Grid/List */}
-      <div className="grid grid-cols-1 gap-6">
+      <div data-testid="matters-list" className="grid grid-cols-1 gap-6">
         {filteredMatters.length === 0 ? (
           <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 p-12 text-center">
             <FolderOpen className="mx-auto h-12 w-12 text-blue-300 mb-4" />
@@ -181,14 +224,18 @@ export default function Matters() {
             )}
           </div>
         ) : (
-          filteredMatters.map((matter) => (
-            <div key={String((matter as any).id || (matter as any).$id)} className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 hover:shadow-2xl transition-all duration-200 hover:-translate-y-1">
+          filteredMatters.map((matter) => {
+            const matterId = matter.id ?? Number(matter.$id ?? 0);
+            const safeId = `matter-${matterId}`;
+            const openedAt = matter.opened_at || matter.created_at || matter.$createdAt || '';
+            return (
+              <div key={safeId} className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 hover:shadow-2xl transition-all duration-200 hover:-translate-y-1">
               <div className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <Link
-                        to={`/matters/${String((matter as any).id || (matter as any).$id)}`}
+                        to={`/matters/${matter.id}`}
                         className="text-lg font-semibold text-bright hover:text-blue-300"
                       >
                         {matter.title}
@@ -207,7 +254,7 @@ export default function Matters() {
                     <div className="flex items-center space-x-6 text-sm text-bright-secondary">
                       <span>Matter #{matter.matter_number}</span>
                       <span>Client: {matter.client_first_name} {matter.client_last_name}</span>
-                      <span>Opened: {new Date((matter as any).opened_at || (matter as any).created_at || (matter as any).$createdAt).toLocaleDateString()}</span>
+                      <span>Opened: {openedAt ? new Date(openedAt).toLocaleDateString() : 'N/A'}</span>
                       <span className="capitalize">{matter.fee_model === 'FlatRate' ? 'Flat Rate' : 'Progressive'}</span>
                     </div>
                     {matter.description && (
@@ -216,7 +263,7 @@ export default function Matters() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Link
-                      to={`/matters/${String((matter as any).id || (matter as any).$id)}`}
+                      to={`/matters/${matter.id}`}
                       className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
                     >
                       View
@@ -233,7 +280,8 @@ export default function Matters() {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

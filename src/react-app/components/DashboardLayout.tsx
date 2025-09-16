@@ -17,7 +17,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import NotificationPanel from './NotificationPanel';
-import { getUnreadCount as getAppwriteUnreadCount } from '@/react-app/lib/notifications';
+import { getUnreadCount } from '@/react-app/lib/notifications';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -47,7 +47,7 @@ export default function DashboardLayout() {
 
   const fetchUnreadNotificationCount = async () => {
     try {
-      const count = await getAppwriteUnreadCount();
+      const count = await getUnreadCount();
       setUnreadNotificationCount(count);
     } catch (error) {
       console.error('Error fetching notification count:', error);
@@ -55,7 +55,7 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
+    <div data-testid="app-shell" className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -98,7 +98,7 @@ export default function DashboardLayout() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav data-testid="sidebar-nav" className="flex-1 px-4 py-6 space-y-2">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
               const Icon = item.icon;
@@ -107,6 +107,7 @@ export default function DashboardLayout() {
                 <Link
                   key={item.name}
                   to={item.href}
+                  data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                   className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25'

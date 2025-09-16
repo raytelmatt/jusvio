@@ -135,7 +135,7 @@ export default function GenerateDocument() {
         throw new Error('Generated document is empty');
       }
 
-      // Upload the generated file to Appwrite Storage
+      // Upload the generated file to Firebase Storage
       const file = new File([generatedDoc.blob], generatedDoc.filename, { type: generatedDoc.blob.type || 'application/octet-stream' });
       const created = await storage.createFile(BUCKETS.documents, 'unique()', file);
       const fileId = (created as { $id: string }).$id;

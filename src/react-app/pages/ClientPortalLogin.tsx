@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/backend';

@@ -9,55 +9,18 @@ function getEnv(name: string, fallback?: string): string {
 }
 
 function createBackendConfig(): BackendConfig {
-  const provider = getEnv('BACKEND_PROVIDER', 'firebase') as BackendConfig['provider'];
-  
-  switch (provider) {
-    case 'firebase':
-      // Provide sane defaults matching local firebase.ts to avoid blank pages in dev
-      return {
-        provider: 'firebase',
-        projectId: getEnv('FIREBASE_PROJECT_ID', 'jusivo'),
-        apiKey: getEnv('FIREBASE_API_KEY', 'AIzaSyAb45jjLqzrnRYnqc5WlYvvKwYHZhxoU8g'),
-        authDomain: getEnv('FIREBASE_AUTH_DOMAIN', 'jusivo.firebaseapp.com'),
-        databaseURL: getEnv('FIREBASE_DATABASE_URL', ''),
-        storageBucket: getEnv('FIREBASE_STORAGE_BUCKET', 'jusivo.appspot.com'),
-      };
-    
-    case 'supabase':
-      return {
-        provider: 'supabase',
-        endpoint: getEnv('SUPABASE_URL', ''),
-        projectId: getEnv('SUPABASE_PROJECT_ID', ''),
-        apiKey: getEnv('SUPABASE_ANON_KEY', ''),
-      };
-    
-    case 'custom':
-      return {
-        provider: 'custom',
-        endpoint: getEnv('CUSTOM_API_ENDPOINT', ''),
-        projectId: getEnv('CUSTOM_PROJECT_ID', ''),
-        apiKey: getEnv('CUSTOM_API_KEY', ''),
-      };
-    
-    default:
-      throw new Error(`Unsupported backend provider: ${provider}. Only 'firebase', 'supabase', and 'custom' are supported.`);
-  }
+  // Provide sane defaults matching local firebase.ts to avoid blank pages in dev
+  return {
+    projectId: getEnv('FIREBASE_PROJECT_ID', 'jusivo'),
+    apiKey: getEnv('FIREBASE_API_KEY', 'AIzaSyAb45jjLqzrnRYnqc5WlYvvKwYHZhxoU8g'),
+    authDomain: getEnv('FIREBASE_AUTH_DOMAIN', 'jusivo.firebaseapp.com'),
+    databaseURL: getEnv('FIREBASE_DATABASE_URL', ''),
+    storageBucket: getEnv('FIREBASE_STORAGE_BUCKET', 'jusivo.appspot.com'),
+  };
 }
 
 function createBackendService(config: BackendConfig): BackendService {
-  switch (config.provider) {
-    case 'firebase':
-      return new FirebaseBackendService(config);
-    
-    case 'supabase':
-      throw new Error('Supabase backend adapter not yet implemented');
-    
-    case 'custom':
-      throw new Error('Custom backend adapter not yet implemented');
-    
-    default:
-      throw new Error(`Unsupported backend provider: ${config.provider}`);
-  }
+  return new FirebaseBackendService(config);
 }
 
 let backendService: BackendService | null = null;

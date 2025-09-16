@@ -33,6 +33,8 @@ import {
   where,
   orderBy,
   limit as fsLimit,
+  type DocumentData,
+  type QueryConstraint,
 } from 'firebase/firestore';
 import {
   getStorage,
@@ -53,7 +55,9 @@ function tryParseQuery(raw?: string): QueryDescriptor | null {
   try {
     const parsed = JSON.parse(raw) as QueryDescriptor;
     if (typeof parsed === 'object' && parsed && 'type' in parsed) return parsed;
-  } catch {}
+  } catch {
+    return null;
+  }
   return null;
 }
 
@@ -88,7 +92,9 @@ class FirebaseAuthService implements BackendAuthService {
     return this.getCurrentUser();
   }
 
-  async loginWithGoogle(_successUrl: string, _failureUrl: string): Promise<void> {
+  async loginWithGoogle(successUrl: string, failureUrl: string): Promise<void> {
+    void successUrl;
+    void failureUrl;
     const auth = getAuth(getFirebaseApp());
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider);
@@ -127,12 +133,12 @@ class FirebaseDatabaseService implements BackendDatabaseService {
       .map((q) => tryParseQuery(q))
       .filter((x): x is QueryDescriptor => Boolean(x));
 
-    const constraints: any[] = [];
+    const constraints: QueryConstraint[] = [];
     let offset: number | undefined;
 
     for (const d of descriptors) {
       if (d.type === 'where') {
-        constraints.push(where(d.attribute as any, d.op as any, d.value as any));
+        constraints.push(where(d.attribute, d.op, d.value));
       } else if (d.type === 'order') {
         constraints.push(orderBy(d.attribute, d.direction));
       } else if (d.type === 'limit') {
@@ -143,10 +149,10 @@ class FirebaseDatabaseService implements BackendDatabaseService {
     }
 
     const q = constraints.length > 0 ? fsQuery(colRef, ...constraints) : colRef;
-    const snap = await getDocs(q as any);
+    const snap = await getDocs(q);
     let docs = snap.docs.map((docSnap) => {
-      const data = (docSnap.data?.() ?? {}) as Record<string, unknown>;
-      return { $id: docSnap.id, ...data } as unknown as T;
+      const data = (typeof docSnap.data === 'function' ? docSnap.data() : ({} as DocumentData)) ?? {};
+      return { $id: docSnap.id, ...data } as T;
     });
 
     if (typeof offset === 'number' && offset > 0) {
@@ -175,6 +181,7 @@ class FirebaseDatabaseService implements BackendDatabaseService {
     data: Partial<T>,
     _permissions?: string[]
   ): Promise<T> {
+    void _permissions;
     const db = getFirestore(getFirebaseApp());
     const now = new Date().toISOString();
     const base = { ...data, created_at: now, updated_at: now } as Record<string, unknown>;
@@ -198,6 +205,7 @@ class FirebaseDatabaseService implements BackendDatabaseService {
     data: Partial<T>,
     _permissions?: string[]
   ): Promise<T> {
+    void _permissions;
     const db = getFirestore(getFirebaseApp());
     const ref = doc(db, collectionId, documentId);
     const now = new Date().toISOString();
@@ -222,7 +230,12 @@ class FirebaseStorageService implements BackendStorageService {
 
   async createFile(bucketId: string, fileId: string, file: File): Promise<BackendFile> {
     const storage = getStorage(getFirebaseApp(), this.bucket ? `gs://${this.bucket}` : undefined);
-    const id = fileId === 'unique()' ? (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? (crypto as any).randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`) : fileId;
+    const cryptoApi = typeof globalThis.crypto !== 'undefined' ? globalThis.crypto : undefined;
+    const id = fileId === 'unique()'
+      ? (typeof cryptoApi?.randomUUID === 'function'
+        ? cryptoApi.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
+      : fileId;
     const path = `${bucketId}/${id}`;
     const ref = storageRef(storage, path);
     const res = await uploadBytes(ref, file);
@@ -255,7 +268,9 @@ class FirebaseStorageService implements BackendStorageService {
     await deleteObject(ref);
   }
 
-  getFilePreview(bucketId: string, fileId: string, _width?: number, _height?: number): string {
+  getFilePreview(bucketId: string, fileId: string, width?: number, height?: number): string {
+    void width;
+    void height;
     return this.getFileDownload(bucketId, fileId);
   }
 
@@ -318,8 +333,8 @@ export class FirebaseBackendService implements BackendService {
 
   constructor(config: BackendConfig) {
     // Allow running with default values to avoid blank pages in dev
-    const effectiveProjectId = (config.projectId as string) || 'jusivo';
-    const effectiveBucket = (config as any).storageBucket || 'jusivo.appspot.com';
+    const effectiveProjectId = config.projectId || 'jusivo';
+    const effectiveBucket = config.storageBucket || 'jusivo.appspot.com';
     // Ensure the app is initialized (lib/firebase.ts holds config)
     getFirebaseApp();
 
@@ -328,7 +343,8 @@ export class FirebaseBackendService implements BackendService {
     this.storage = new FirebaseStorageService(effectiveBucket as string | undefined);
   }
 
-  setJWT(_jwt: string | null): void {
+  setJWT(jwt: string | null): void {
+    void jwt;
     // No-op: Firebase SDK manages auth state automatically in the browser
   }
 }

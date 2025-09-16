@@ -1,4 +1,5 @@
 import { chromium, FullConfig } from '@playwright/test';
+import { waitForFirebaseAuth } from './firebase-test-utils';
 
 async function globalSetup(config: FullConfig) {
   const { baseURL } = config.projects[0].use;
@@ -17,8 +18,14 @@ async function globalSetup(config: FullConfig) {
     // Wait for the page to load
     await page.waitForLoadState('networkidle');
     
-    // Check if we're already authenticated by looking for the dashboard
-    const isAuthenticated = await page.locator('text=Matters').isVisible({ timeout: 5000 }).catch(() => false);
+    // Check if we're already authenticated by waiting briefly for auth signals
+    let isAuthenticated = false;
+    try {
+      await waitForFirebaseAuth(page, 5000);
+      isAuthenticated = true;
+    } catch {
+      isAuthenticated = false;
+    }
     
     if (!isAuthenticated) {
       console.log('Authentication required. Please ensure test credentials are configured.');

@@ -2,11 +2,10 @@
 
 These scenarios cover Login, New Client, Upload Document, and Generate Document flows using exact UI text and routes from the app.
 
-Base URL will be either your local ngrok URL (for local runs) or your production domain deployed on Appwrite Sites.
+The SPA runs on Firebase Hosting and uses Firebase Authentication + Firestore. When running locally, expose the Vite dev server if you need remote browser automation.
 
-- BASE_URL: `https://YOUR_NGROK_SUBDOMAIN.ngrok-free.app` or `https://YOUR_PROD_DOMAIN`
-- Appwrite Endpoint: https://nyc.cloud.appwrite.io/v1
-- Appwrite Project ID: `6897443a0034c54b3fd8`
+- BASE_URL: `https://YOUR_NGROK_SUBDOMAIN.ngrok-free.app` or `https://YOUR_FIREBASE_APP.web.app`
+- Firebase Project ID: `jusivo` (override with your own project values for production)
 
 Test credentials (configure in your test runner or environment):
 
@@ -19,7 +18,7 @@ Test credentials (configure in your test runner or environment):
 
 Preconditions
 
-- A valid Appwrite user exists with email/password.
+- A valid Firebase user exists with email/password.
 
 Steps
 
@@ -106,20 +105,23 @@ Steps
 ## Local Run + ngrok
 
 1. Create `.env.local` with:
-   - `VITE_APPWRITE_ENDPOINT=https://nyc.cloud.appwrite.io/v1`
-   - `VITE_APPWRITE_PROJECT_ID=6897443a0034c54b3fd8`
+   - `VITE_FIREBASE_PROJECT_ID=jusivo`
+   - `VITE_FIREBASE_API_KEY=YOUR_DEV_KEY`
+   - `VITE_FIREBASE_AUTH_DOMAIN=YOUR_PROJECT.firebaseapp.com`
+   - `VITE_FIREBASE_STORAGE_BUCKET=YOUR_PROJECT.appspot.com`
 2. Start dev server: `npm run dev` (Vite on 5173).
 3. Expose locally: `ngrok http 5173`.
 4. Use your HTTPS forwarding URL as `${BASE_URL}` for your E2E runs.
 
-## Appwrite CORS for ngrok
+## Firebase Auth & Storage
 
-- Appwrite Console → Project → Settings → Web → Allowed Origins → add your ngrok origin, for example: `https://YOUR_NGROK_SUBDOMAIN.ngrok-free.app`.
-- Also add your production domain.
+- In the Firebase console, enable Email/Password auth.
+- Add your local/preview domains under Authentication → Settings → Authorized domains.
+- To upload docs while testing locally, ensure the service account or emulator has write access to Cloud Storage.
 
 ## Optional: Sample Data
 
-For local testing, create minimal sample records using the Appwrite Console:
+For local testing, create minimal sample records using the Firestore console or the seeding script (`npm run firebase:seed`):
 
 - Create a client (e.g., John Doe).
 - Create a matter linked to the client (e.g., TEST-0001).
@@ -128,4 +130,4 @@ For local testing, create minimal sample records using the Appwrite Console:
 ## Notes
 
 - Router: `App.tsx` uses `BrowserRouter` from `react-router`; pages use hooks from `react-router`. This is correct for v7.
-- Add small assertion retries in your E2E tests for lists to handle Appwrite indexing latency.
+- Add small assertion retries in your E2E tests for lists to handle Firestore propagation latency.

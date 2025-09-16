@@ -73,7 +73,7 @@ export default function UploadDocument() {
 
     setLoading(true);
     try {
-      // Upload to Appwrite Storage and create document
+      // Upload to Firebase Storage and create document
       const created = await storage.createFile(BUCKETS.documents, 'unique()', selectedFile!);
       const fileId = created.$id;
       await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {

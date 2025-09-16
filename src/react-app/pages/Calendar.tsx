@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router';
 import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/backend';

@@ -49,7 +49,6 @@
     "check": "tsc && vite build",
     "dev": "vite",
     "lint": "eslint .",
-    "appwrite:setup": "echo 'deprecated' && exit 0",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
@@ -61,7 +60,6 @@
     "deploy": "vite build && npx firebase deploy --only hosting --project $FIREBASE_PROJECT_ID",
     "mcp:firebase": "dotenv -e .env.firebase npx -y @gannonh/firebase-mcp",
     "firebase:seed": "node scripts/firebase/seed-firestore.mjs",
-    "firebase:migrate-users": "node scripts/firebase/migrate-users-from-appwrite.mjs",
     "linear:create": "node scripts/linear/create-issue.mjs",
     "linear:update": "node scripts/linear/update-status.mjs",
     "linear:sync": "node scripts/linear/sync-github.mjs"

@@ -15,7 +15,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
+    <div data-testid="login-page" className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -79,6 +79,7 @@ export default function LoginPage() {
             
 
             <form
+              data-testid="login-form"
               onSubmit={async (e) => {
                 e.preventDefault();
                 setError(null);
@@ -100,6 +101,7 @@ export default function LoginPage() {
               <div>
                 <label className="block text-sm text-blue-200 mb-1">Email</label>
                 <input
+                  data-testid="login-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -112,6 +114,7 @@ export default function LoginPage() {
               <div>
                 <label className="block text-sm text-blue-200 mb-1">Password</label>
                 <input
+                  data-testid="login-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -125,6 +128,7 @@ export default function LoginPage() {
                 <div className="text-red-300 text-sm">{error}</div>
               )}
               <button
+                data-testid="login-submit"
                 type="submit"
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-blue-500/25 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"

@@ -988,9 +988,9 @@ export default function MatterDetail() {
       if (message.toLowerCase().includes('permission') || message.toLowerCase().includes('unauthorized')) {
         setSaveError('You do not have permission to update this matter. Ask an admin to grant update access or create a new matter yourself.');
       } else if (message.toLowerCase().includes('collection') && message.toLowerCase().includes('not be found')) {
-        setSaveError('Storage collection for extended data is missing. Run the Appwrite setup to create "matters_meta" or add it in the console.');
+        setSaveError('Storage collection for extended data is missing. Ensure the "matters_meta" collection exists in Firestore.');
       } else if (message.toLowerCase().includes('attribute') || message.toLowerCase().includes('case_data')) {
-        setSaveError('The matter is missing the "case_data" field in Appwrite. Run the setup script or add this attribute in the console.');
+        setSaveError('The matter is missing the "case_data" field in Firestore. Add this field or run the provisioning script.');
       } else {
         setSaveError(message);
       }

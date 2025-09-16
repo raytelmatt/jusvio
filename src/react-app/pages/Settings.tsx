@@ -138,29 +138,29 @@ export default function Settings() {
     if (!user) return;
     try {
       // Find by account user_id first, then by email
-      const byUserId = await databases.listDocuments(
+      const byUserId = await databases.listDocuments<UserProfileDoc>(
         DATABASE_ID,
         COLLECTIONS.userProfiles,
-        [Query.equal('user_id', String((user as any).$id))]
+        [Query.equal('user_id', user.$id)]
       );
 
-      let doc = byUserId.documents[0] as unknown as UserProfileDoc | undefined;
+      let doc = byUserId.documents[0];
 
-      if (!doc && (user as any)?.email) {
-        const byEmail = await databases.listDocuments(
+      if (!doc && user.email) {
+        const byEmail = await databases.listDocuments<UserProfileDoc>(
           DATABASE_ID,
           COLLECTIONS.userProfiles,
-          [Query.equal('email', String((user as any).email))]
+          [Query.equal('email', user.email)]
         );
-        doc = byEmail.documents[0] as unknown as UserProfileDoc | undefined;
+        doc = byEmail.documents[0];
       }
 
       if (!doc) {
-        // Create a baseline profile linked to this Appwrite account
+        // Create a baseline profile linked to this Firebase account
         const name = user?.name || '';
         const first = name ? name.split(' ')[0] : '';
         const last = name ? name.split(' ').slice(1).join(' ') : '';
-        doc = await databases.createDocument(
+        doc = await databases.createDocument<UserProfileDoc>(
           DATABASE_ID,
           COLLECTIONS.userProfiles,
           'unique()',
@@ -178,10 +178,10 @@ export default function Settings() {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }
-        ) as unknown as UserProfileDoc;
+        );
       }
 
-      const docSafe = doc as UserProfileDoc;
+      const docSafe = doc;
       setProfile({
         id: docSafe.$id,
         first_name: docSafe.first_name || '',
@@ -554,7 +554,7 @@ export default function Settings() {
                           {user?.name || user?.email || 'User'}
                         </h3>
                         <p className="text-sm text-blue-200">{user?.email || ''}</p>
-                        <p className="text-xs text-blue-300 font-medium">Appwrite Account</p>
+                        <p className="text-xs text-blue-300 font-medium">Firebase Account</p>
                       </div>
                     </div>
                   </div>

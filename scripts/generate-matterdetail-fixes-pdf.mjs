@@ -81,13 +81,13 @@ function buildPdf(outputPath) {
 
   y = addHeading(doc, 'What was broken and why it was fixed', y);
   y = addBullets(doc, [
-    'Save button didn’t save: Clicking “Save Changes” only showed a pop-up and did not store edits. Now it saves your updates (like case number or jurisdiction) to Appwrite so changes persist.',
+    'Save button didn’t save: Clicking “Save Changes” only showed a pop-up and did not store edits. Now it saves your updates (like case number or jurisdiction) to Firestore so changes persist.',
     'Case details not loading: The page looked for “criminal_data” but your data lives under “case_data” as a JSON string. It now reads and safely parses “case_data” so fields show correctly.',
     'Messages showed the wrong fields: The page used “content” while your records store message text in “body”, so messages could appear blank. It now shows the real message body and a reasonable subject.',
     'Billing totals unreliable: Some amounts arrived as text, which could break formatting or display. Totals are now converted to numbers first so currency formatting is correct.',
     'Timeline not visible: Events were collected but never displayed. The Timeline tab now shows documents, invoices, time entries, hearings, deadlines, and communications in date order.',
     'Document preview disabled: Clicking a document didn’t open a preview. You can now click a document to see its details.',
-    'Inconsistent backend settings: Mixed hard-coded database names with shared settings, causing environment fragility. All calls now use the shared Appwrite configuration.',
+    'Inconsistent backend settings: Mixed hard-coded database names with shared settings, causing environment fragility. All calls now use the shared Firebase configuration.',
     'Developer leftovers: Debug pop-ups and logs triggered on Save. These were removed for a clean, professional experience.'
   ], y);
 
@@ -106,7 +106,7 @@ function buildPdf(outputPath) {
   y = addBullets(doc, [
     'Built the site for production and adjusted the build so test files do not block deployment.',
     'Committed and pushed the changes to the main branch.',
-    'An automated workflow deployed the updated site to Appwrite Sites.'
+    'An automated workflow deployed the updated site to Firebase Hosting.'
   ], y);
 
   ensureDirSync(outputPath);
@@ -120,5 +120,4 @@ const outArg = process.argv[2];
 const outputPath = outArg || path.join(process.cwd(), 'docs', 'Matter_Detail_Fixes.pdf');
 const saved = buildPdf(outputPath);
 console.log(`PDF written to: ${saved}`);
-
 

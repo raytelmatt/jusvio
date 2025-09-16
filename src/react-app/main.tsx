@@ -14,4 +14,6 @@ createRoot(document.getElementById("root")!).render(
 try {
   getFirebaseApp();
   void getFirebaseAnalytics();
-} catch {}
+} catch (error) {
+  console.error('Firebase initialization failed', error);
+}

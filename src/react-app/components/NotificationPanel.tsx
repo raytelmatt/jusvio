@@ -17,9 +17,10 @@ import {
   markAsRead as markAsReadApi,
   markAllAsRead as markAllAsReadApi,
   deleteNotification as deleteNotificationApi,
+  type NotificationItem,
 } from '@/react-app/lib/notifications';
 
-// AppwriteNotification is imported and used as the notification model
+// Notifications flow through the backend abstraction (Firestore in production)
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ interface NotificationPanelProps {
   onUnreadCountChange: (count: number) => void;
 }
 
-const getNotificationIcon = (type: string) => {
+const getNotificationIcon = (type: NotificationItem['type']) => {
   switch (type) {
     case 'deadline':
       return Clock;
@@ -47,7 +48,7 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
-const getNotificationColor = (type: string, priority: string) => {
+const getNotificationColor = (type: NotificationItem['type'], priority: NotificationItem['priority']) => {
   if (priority === 'urgent') return 'text-red-600 bg-red-50';
   if (priority === 'high') return 'text-orange-600 bg-orange-50';
   
@@ -85,7 +86,7 @@ const formatTimeAgo = (dateString: string) => {
 };
 
 export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnreadCountChange }: NotificationPanelProps) {
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const panelRef = useRef<HTMLDivElement>(null);
@@ -109,9 +110,9 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
   const loadNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const { notifications, unreadCount } = await fetchNotificationsApi(filter);
-      setNotifications(notifications);
-      onUnreadCountChange(unreadCount);
+      const { notifications: fetched, unreadCount: newUnreadCount } = await fetchNotificationsApi(filter);
+      setNotifications(fetched);
+      onUnreadCountChange(newUnreadCount);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -158,7 +159,7 @@ export default function NotificationPanel({ isOpen, onClose, unreadCount, onUnre
     }
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: NotificationItem) => {
     if (!notification.is_read) {
       void handleMarkAsRead(notification.id);
     }

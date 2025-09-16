@@ -117,17 +117,18 @@ export interface BackendService {
   auth: BackendAuthService;
   database: BackendDatabaseService;
   storage: BackendStorageService;
-  
+
   setJWT(jwt: string | null): void;
-  
+
   Query: BackendQueryApi;
 }
 
 export interface BackendConfig {
-  provider: 'firebase' | 'supabase' | 'custom';
-  endpoint?: string;
   projectId: string;
   apiKey?: string;
+  authDomain?: string;
+  databaseURL?: string;
+  storageBucket?: string;
   [key: string]: unknown;
 }
 

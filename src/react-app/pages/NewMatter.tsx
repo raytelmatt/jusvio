@@ -1,14 +1,34 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 // Permissions are provider-specific; Firebase adapter ignores them
-import { useAuth } from '@/react-app/auth/AuthProvider';
 import { ArrowLeft, Save, User, FolderOpen, DollarSign } from 'lucide-react';
 import type { Client } from '@/shared/types';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
+import type { BackendDocument } from '@/react-app/lib/backend';
+
+function mapClientDoc(raw: unknown): Client {
+  const record = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+  return {
+    id: typeof record.id === 'number' ? record.id : Number(record.id ?? record.$id ?? 0),
+    client_number: typeof record.client_number === 'string' ? record.client_number : null,
+    first_name: String(record.first_name ?? ''),
+    last_name: String(record.last_name ?? ''),
+    date_of_birth: typeof record.date_of_birth === 'string' ? record.date_of_birth : null,
+    ssn_last4: typeof record.ssn_last4 === 'string' ? record.ssn_last4 : null,
+    phones: typeof record.phones === 'string' ? record.phones : null,
+    email: typeof record.email === 'string' ? record.email : null,
+    address: typeof record.address === 'string' ? record.address : null,
+    emergency_contact: typeof record.emergency_contact === 'string' ? record.emergency_contact : null,
+    preferred_contact_method: (record.preferred_contact_method as Client['preferred_contact_method']) ?? null,
+    notifications_opt_in: Boolean(record.notifications_opt_in),
+    portal_enabled: Boolean(record.portal_enabled),
+    created_at: typeof record.created_at === 'string' ? record.created_at : new Date().toISOString(),
+    updated_at: typeof record.updated_at === 'string' ? record.updated_at : new Date().toISOString(),
+  };
+}
 
 export default function NewMatter() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -37,13 +57,8 @@ export default function NewMatter() {
   const fetchClients = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, []);
-      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
-        ...d,
-        id: d.id ?? d.$id,
-        created_at: d.created_at ?? d.$createdAt,
-        updated_at: d.updated_at ?? d.$updatedAt,
-      }));
-      setClients(rows as unknown as Client[]);
+      const rows = (list.documents || []).map(mapClientDoc);
+      setClients(rows);
     } catch (error) {
       console.error('Error fetching clients:', error);
     }
@@ -88,16 +103,14 @@ export default function NewMatter() {
         payload.flat_rate_amount = parseFloat(formData.flat_rate_amount);
       }
 
-      const permissions: string[] = [];
-
-      const created = await databases.createDocument(
+      const created = await databases.createDocument<BackendDocument>(
         DATABASE_ID,
         COLLECTIONS.matters,
         'unique()',
-        payload,
-        permissions
+        payload
       );
-      setTimeout(() => navigate(`/matters/${String((created as any).$id || (created as any).id)}`), 0);
+      const createdId = created.$id || (created as { id?: string | number }).id;
+      navigate(`/matters/${String(createdId ?? '')}`);
     } catch (error) {
       console.error('Error creating matter:', error);
       const message = (error as { message?: string })?.message || 'Error creating matter. Please check required fields and try again.';

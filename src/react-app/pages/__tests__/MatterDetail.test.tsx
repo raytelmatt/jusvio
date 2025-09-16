@@ -4,10 +4,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import MatterDetail from '../MatterDetail'
-import { databases } from '../../lib/appwrite'
+import { databases } from '../../lib/backend'
 
-// Mock the appwrite client
-vi.mock('../../lib/appwrite', () => ({
+// Mock the backend service
+vi.mock('../../lib/backend', () => ({
   databases: {
     getDocument: vi.fn(),
     listDocuments: vi.fn(),

@@ -60,7 +60,7 @@ export interface IncomingEmail {
 
 export class EmailService {
   private fromAddress: EmailAddress;
-  // Base URL for links in emails (Appwrite Sites domain)
+  // Base URL for links in emails (Firebase Hosting domain)
   private siteUrl: string;
 
   constructor(apiKey: string, siteUrl: string = 'https://jusivo.app') {

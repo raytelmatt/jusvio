@@ -23,12 +23,12 @@ Uncaught ReferenceError: Cannot access 'x' before initialization
 
 ## ✅ **Solutions Implemented**
 
-### 1. **Replaced API Endpoints with Appwrite Database Queries**
+### 1. **Replaced API Endpoints with Firestore Queries**
 
 **What was done:**
 - Removed all `/api/clients/balances` API calls
 - Created new `src/react-app/lib/client-balances.ts` module
-- Implemented comprehensive balance calculations using Appwrite collections:
+- Implemented comprehensive balance calculations using Firestore collections:
   - `clients` - Client information
   - `invoices` - Invoice data  
   - `payments` - Payment records
@@ -68,7 +68,7 @@ Uncaught ReferenceError: Cannot access 'x' before initialization
 
 ## 📊 **New Balance Calculation Features**
 
-The new Appwrite-based system provides much richer data than the original API approach:
+The new Firestore-backed system provides much richer data than the original API approach:
 
 ### **Balance Metrics Calculated:**
 - **Total Invoiced** - Sum of all client invoices
@@ -151,4 +151,4 @@ npm run build   # ✅ Successful build
 
 ---
 
-The console errors have been completely resolved and the client balance functionality now works properly using the Appwrite database instead of non-existent API endpoints. The new implementation is more robust, provides better data, and follows TypeScript best practices.
+The console errors have been completely resolved and the client balance functionality now works properly using Firestore instead of non-existent API endpoints. The new implementation is more robust, provides better data, and follows TypeScript best practices.

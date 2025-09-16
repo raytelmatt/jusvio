@@ -12,6 +12,18 @@ interface Matter {
   client_last_name: string;
 }
 
+function mapMatter(doc: unknown): Matter {
+  const record = (typeof doc === 'object' && doc !== null ? doc : {}) as Record<string, unknown>;
+  return {
+    id: Number(record.id ?? record.$id ?? 0),
+    title: String(record.title ?? ''),
+    matter_number: String(record.matter_number ?? ''),
+    practice_area: String(record.practice_area ?? ''),
+    client_first_name: String(record.client_first_name ?? ''),
+    client_last_name: String(record.client_last_name ?? ''),
+  };
+}
+
 export default function NewHearing() {
   const navigate = useNavigate();
   const [matters, setMatters] = useState<Matter[]>([]);
@@ -35,15 +47,8 @@ export default function NewHearing() {
   const fetchMatters = async () => {
     try {
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, [Query.limit(1000)]);
-      const rows = (list.documents || []).map((d: any) => ({
-        id: Number(d.id ?? d.$id),
-        title: String(d.title || ''),
-        matter_number: String(d.matter_number || ''),
-        practice_area: String(d.practice_area || ''),
-        client_first_name: String(d.client_first_name || ''),
-        client_last_name: String(d.client_last_name || ''),
-      }));
-      setMatters(rows as Matter[]);
+      const rows = (list.documents || []).map(mapMatter);
+      setMatters(rows);
     } catch (error) {
       console.error('Error fetching matters:', error);
     }
@@ -79,7 +84,8 @@ export default function NewHearing() {
         created_at: new Date().toISOString(),
       });
       navigate('/calendar');
-    } catch (e) {
+    } catch (error) {
+      console.error('Failed to schedule hearing:', error);
       setErrors({ submit: 'Failed to schedule hearing' });
     } finally {
       setLoading(false);

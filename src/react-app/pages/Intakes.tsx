@@ -1,15 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/backend';
 import { 
   FileText,
   Search,
-  Filter,
   Eye,
   UserPlus,
   FolderOpen,
   CheckCircle,
-  AlertCircle,
   RefreshCw
 } from 'lucide-react';
 
@@ -63,7 +62,8 @@ export default function IntakesAdmin() {
         status: d.status || 'New',
       })) as IntakeRecord[];
       setIntakes(rows);
-    } catch (e) {
+    } catch (error) {
+      console.error('Failed to load intakes:', error);
       setError('Failed to load intakes');
     } finally {
       setLoading(false);
@@ -90,7 +90,8 @@ export default function IntakesAdmin() {
     try {
       await databases.updateDocument(DATABASE_ID, COLLECTIONS.intakes, id, { status: 'Reviewed' });
       setIntakes(prev => prev.map(i => i.$id === id ? { ...i, status: 'Reviewed' } : i));
-    } catch (e) {
+    } catch (error) {
+      console.error('Failed to mark intake as reviewed:', error);
       alert('Failed to mark as reviewed');
     }
   }
@@ -292,4 +293,3 @@ export default function IntakesAdmin() {
     </div>
   );
 }
-
