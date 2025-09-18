@@ -1,8 +1,9 @@
-name: Deploy to Appwrite Sites
+name: Deploy to Appwrite Sites (DISABLED)
 
-on:
-  push:
-    branches: [ "main" ]
+# Disabled in favor of Firebase deployment
+# on:
+#   push:
+#     branches: [ "main" ]
 
 env:
   APPWRITE_ENDPOINT: "https://nyc.cloud.appwrite.io/v1"

@@ -11,6 +11,7 @@ import type {
 } from './types';
 
 import { getFirebaseApp } from '../firebase';
+import { checkNetworkConnectivity, waitForNetworkConnectivity, getFirebaseErrorMessage } from '../network-utils';
 import {
   getAuth,
   GoogleAuthProvider,
@@ -18,6 +19,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  connectAuthEmulator,
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -62,30 +64,77 @@ function tryParseQuery(raw?: string): QueryDescriptor | null {
 }
 
 class FirebaseAuthService implements BackendAuthService {
-  async getCurrentUser(): Promise<BackendUser | null> {
-    const auth = getAuth(getFirebaseApp());
-    const user = auth.currentUser;
-    if (user) {
-      return {
-        $id: user.uid,
-        email: user.email || '',
-        name: user.displayName || undefined,
-        prefs: {},
-      };
+  private maxRetries = 3;
+  private retryDelay = 1000;
+
+  private async withRetry<T>(operation: () => Promise<T>, context: string): Promise<T> {
+    let lastError: Error;
+    
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+        
+        // Log the error for debugging
+        console.warn(`${context} attempt ${attempt}/${this.maxRetries} failed:`, lastError.message);
+        
+        // Don't retry on certain errors
+        if (lastError.message.includes('auth/invalid-email') || 
+            lastError.message.includes('auth/user-not-found') ||
+            lastError.message.includes('auth/wrong-password') ||
+            lastError.message.includes('auth/too-many-requests')) {
+          throw lastError;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        if (attempt < this.maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
+        }
+      }
     }
-    // Fallback to a one-shot auth state check
-    return new Promise((resolve) => {
-      const unsub = onAuthStateChanged(auth, (u) => {
-        unsub();
-        if (!u) return resolve(null);
-        resolve({
-          $id: u.uid,
-          email: u.email || '',
-          name: u.displayName || undefined,
+    
+    throw lastError!;
+  }
+
+  async getCurrentUser(): Promise<BackendUser | null> {
+    return this.withRetry(async () => {
+      const auth = getAuth(getFirebaseApp());
+      const user = auth.currentUser;
+      
+      if (user) {
+        return {
+          $id: user.uid,
+          email: user.email || '',
+          name: user.displayName || undefined,
           prefs: {},
+        };
+      }
+      
+      // Fallback to a one-shot auth state check with timeout
+      return new Promise<BackendUser | null>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          unsub();
+          reject(new Error('Auth state check timeout'));
+        }, 10000); // 10 second timeout
+        
+        const unsub = onAuthStateChanged(auth, (u) => {
+          clearTimeout(timeout);
+          unsub();
+          if (!u) return resolve(null);
+          resolve({
+            $id: u.uid,
+            email: u.email || '',
+            name: u.displayName || undefined,
+            prefs: {},
+          });
+        }, (error) => {
+          clearTimeout(timeout);
+          unsub();
+          reject(error);
         });
       });
-    });
+    }, 'getCurrentUser');
   }
 
   async get(): Promise<BackendUser | null> {
@@ -93,16 +142,57 @@ class FirebaseAuthService implements BackendAuthService {
   }
 
   async loginWithGoogle(successUrl: string, failureUrl: string): Promise<void> {
-    void successUrl;
-    void failureUrl;
-    const auth = getAuth(getFirebaseApp());
-    const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    return this.withRetry(async () => {
+      void successUrl;
+      void failureUrl;
+      const auth = getAuth(getFirebaseApp());
+      const provider = new GoogleAuthProvider();
+      
+      // Add additional scopes if needed
+      provider.addScope('email');
+      provider.addScope('profile');
+      
+      await signInWithRedirect(auth, provider);
+    }, 'loginWithGoogle');
   }
 
   async loginWithEmailPassword(email: string, password: string): Promise<void> {
-    const auth = getAuth(getFirebaseApp());
-    await signInWithEmailAndPassword(auth, email, password);
+    return this.withRetry(async () => {
+      if (!email || !password) {
+        throw new Error('Email and password are required');
+      }
+      
+      // Check network connectivity before attempting login
+      const hasConnectivity = await checkNetworkConnectivity();
+      if (!hasConnectivity) {
+        console.warn('Network connectivity check failed, attempting to wait for connection...');
+        const connected = await waitForNetworkConnectivity(10000);
+        if (!connected) {
+          throw new Error('No internet connection. Please check your network and try again.');
+        }
+      }
+      
+      const auth = getAuth(getFirebaseApp());
+      
+      try {
+        const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+        
+        if (!result.user) {
+          throw new Error('Login failed: No user returned from Firebase');
+        }
+        
+        // Verify the user is properly authenticated
+        if (!result.user.uid) {
+          throw new Error('Login failed: Invalid user data');
+        }
+        
+        console.log('Login successful for user:', result.user.email);
+      } catch (error) {
+        // Transform Firebase errors into user-friendly messages
+        const friendlyMessage = getFirebaseErrorMessage(error);
+        throw new Error(friendlyMessage);
+      }
+    }, 'loginWithEmailPassword');
   }
 
   async logout(): Promise<void> {
