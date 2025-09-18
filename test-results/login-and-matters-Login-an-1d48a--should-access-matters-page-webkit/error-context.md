@@ -1,0 +1,53 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e10]:
+  - generic [ref=e11]:
+    - generic [ref=e12]:
+      - img [ref=e18]
+      - img [ref=e23]
+    - heading "Jusivo Case Manager" [level=1] [ref=e25]
+    - generic [ref=e26]: Version 1.0
+    - generic [ref=e27]: By Matthew R. Ray
+    - paragraph [ref=e28]: Comprehensive Legal Case Management
+  - generic [ref=e29]:
+    - link "Client Portal" [ref=e30]:
+      - /url: /client-portal
+      - img [ref=e31]
+      - paragraph [ref=e36]: Client Portal
+    - generic [ref=e37]:
+      - img [ref=e38]
+      - paragraph [ref=e41]: Case Files
+    - generic [ref=e42]:
+      - img [ref=e43]
+      - paragraph [ref=e45]: Court Calendar
+    - generic [ref=e46]:
+      - img [ref=e47]
+      - paragraph [ref=e51]: Smart Billing
+  - generic [ref=e52]:
+    - generic [ref=e53]:
+      - generic [ref=e54]: Email
+      - textbox "you@example.com" [ref=e55]: test@example.com
+    - generic [ref=e56]:
+      - generic [ref=e57]: Password
+      - textbox "••••••••" [ref=e58]: testpassword123
+    - generic [ref=e59]: "Firebase: Error (auth/invalid-credential)."
+    - button "Sign in" [ref=e60] [cursor=pointer]:
+      - generic [ref=e61] [cursor=pointer]:
+        - img [ref=e62] [cursor=pointer]
+        - text: Sign in
+  - generic [ref=e66]:
+    - button "Continue with Google" [ref=e67] [cursor=pointer]
+    - generic [ref=e68]:
+      - paragraph [ref=e69]: Criminal Defense • Personal Injury • SSD Cases
+      - generic [ref=e70]:
+        - link "General Case Intake" [ref=e71]:
+          - /url: /intake/new
+          - img [ref=e72]
+          - text: General Case Intake
+        - link "Criminal Defense Intake" [ref=e77]:
+          - /url: /intake/criminal
+          - img [ref=e78]
+          - text: Criminal Defense Intake
+    - generic [ref=e82]: © 2025 Matthew R. Ray - All Rights Reserved
+```

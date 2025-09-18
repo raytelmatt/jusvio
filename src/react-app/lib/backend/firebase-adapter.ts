@@ -10,9 +10,8 @@ import type {
   BackendConfig
 } from './types';
 
-import { getFirebaseApp } from '../firebase';
+import { getFirebaseApp, getFirebaseAuth } from '../firebase';
 import {
-  getAuth,
   GoogleAuthProvider,
   signInWithRedirect,
   signInWithEmailAndPassword,
@@ -63,7 +62,7 @@ function tryParseQuery(raw?: string): QueryDescriptor | null {
 
 class FirebaseAuthService implements BackendAuthService {
   async getCurrentUser(): Promise<BackendUser | null> {
-    const auth = getAuth(getFirebaseApp());
+    const auth = getFirebaseAuth();
     const user = auth.currentUser;
     if (user) {
       return {
@@ -95,23 +94,23 @@ class FirebaseAuthService implements BackendAuthService {
   async loginWithGoogle(successUrl: string, failureUrl: string): Promise<void> {
     void successUrl;
     void failureUrl;
-    const auth = getAuth(getFirebaseApp());
+    const auth = getFirebaseAuth();
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider);
   }
 
   async loginWithEmailPassword(email: string, password: string): Promise<void> {
-    const auth = getAuth(getFirebaseApp());
+    const auth = getFirebaseAuth();
     await signInWithEmailAndPassword(auth, email, password);
   }
 
   async logout(): Promise<void> {
-    const auth = getAuth(getFirebaseApp());
+    const auth = getFirebaseAuth();
     await signOut(auth);
   }
 
   async createJWT(): Promise<{ jwt: string }> {
-    const auth = getAuth(getFirebaseApp());
+    const auth = getFirebaseAuth();
     const user = auth.currentUser;
     const jwt = user ? await user.getIdToken() : '';
     return { jwt };

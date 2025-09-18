@@ -272,43 +272,48 @@ test.describe('Login and Matters Functionality', () => {
       }
     });
 
-    test('should create a new matter', async ({ page }) => {
+    test('should create a new matter and show it in the list', async ({ page }) => {
       const uniqueSuffix = Date.now();
       const matterTitle = `Test Matter ${uniqueSuffix}`;
-      
-      await page.goto('/matters/new');
-      
-      // Fill in matter details
-      const titleField = page.locator('input[name*="title"], input[placeholder*="title"]').first();
-      await titleField.fill(matterTitle);
-      
-      // Try to select a client if dropdown exists
-      const clientSelect = page.locator('select[name*="client"], #client_id').first();
-      if (await clientSelect.isVisible({ timeout: 5000 })) {
-        const options = await clientSelect.locator('option').count();
-        if (options > 1) {
-          await clientSelect.selectOption({ index: 1 });
-        }
+
+      await page.getByTestId('nav-matters').click();
+      await expect(page).toHaveURL(/\/matters/, { timeout: 10000 });
+
+      await page.getByRole('link', { name: /new matter/i }).click();
+      await expect(page).toHaveURL(/\/matters\/new/, { timeout: 10000 });
+
+      await page.getByLabel(/Matter Title/i).fill(matterTitle);
+
+      const clientSelect = page.getByLabel(/Select Client/i);
+      await expect(clientSelect).toBeVisible({ timeout: 10000 });
+      const clientOptions = clientSelect.locator('option[value]:not([value=""])');
+      const clientOptionCount = await clientOptions.count();
+      if (clientOptionCount === 0) {
+        throw new Error('No clients available for matter creation. Ensure test data seeds at least one client.');
       }
-      
-      // Try to select practice area if dropdown exists
-      const practiceAreaSelect = page.locator('select[name*="practice"], #practice_area').first();
-      if (await practiceAreaSelect.isVisible({ timeout: 5000 })) {
-        const options = await practiceAreaSelect.locator('option').count();
-        if (options > 1) {
-          await practiceAreaSelect.selectOption({ index: 1 });
-        }
+      const clientValue = await clientOptions.first().getAttribute('value');
+      if (!clientValue) {
+        throw new Error('Unable to resolve client option value for matter creation.');
       }
-      
-      // Submit the form
-      const submitButton = page.getByRole('button', { name: /create|save|submit/i }).first();
-      await submitButton.click();
-      
-      // Should redirect to matter detail page or matters list
-      await expect(page).toHaveURL(new RegExp('/matters'), { timeout: 15000 });
-      
-      // Verify matter was created by checking for the title
-      await expect(page.getByText(matterTitle)).toBeVisible({ timeout: 10000 });
+      await clientSelect.selectOption(clientValue);
+
+      const practiceSelect = page.getByLabel(/Practice Area/i);
+      await practiceSelect.selectOption('Criminal');
+
+      await Promise.all([
+        page.waitForURL(/\/matters\/[^/]+$/, { timeout: 20000 }),
+        page.getByRole('button', { name: /create matter/i }).click(),
+      ]);
+
+      await expect(page.getByRole('heading', { name: matterTitle })).toBeVisible({ timeout: 10000 });
+
+      await page.getByRole('button', { name: /back to matters/i }).click();
+      await page.waitForURL(/\/matters$/, { timeout: 15000 });
+      await page.waitForLoadState('networkidle');
+
+      const mattersList = page.getByTestId('matters-list');
+      await expect(mattersList).toBeVisible({ timeout: 15000 });
+      await expect(mattersList.getByRole('link', { name: matterTitle })).toBeVisible({ timeout: 15000 });
     });
 
     test('should view matter details', async ({ page }) => {

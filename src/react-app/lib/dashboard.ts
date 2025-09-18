@@ -1,6 +1,6 @@
 import { Query } from '@/react-app/lib/backend';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
-import type { DashboardStats } from '@/shared/types';
+import type { DashboardStats, Deadline } from '@/shared/types';
 
 function isoNow(): string {
   return new Date().toISOString();
@@ -27,6 +27,39 @@ async function count(collection: string, queries: string[]): Promise<number> {
   }
 }
 
+function isMissingIndexError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const maybe = err as { code?: string; message?: string };
+  return (
+    (maybe.code === 'failed-precondition' || maybe.code === 'permission-denied') &&
+    typeof maybe.message === 'string' &&
+    maybe.message.includes('requires an index')
+  );
+}
+
+async function countOpenDeadlinesBetween(startIso: string, endIso: string): Promise<number> {
+  try {
+    const res = await databases.listDocuments<Deadline>(DATABASE_ID, COLLECTIONS.deadlines, [
+      Query.equal('status', 'Open'),
+      Query.greaterThanEqual('due_at', startIso),
+      Query.lessThanEqual('due_at', endIso),
+    ]);
+    return res.documents.length;
+  } catch (err) {
+    if (isMissingIndexError(err)) {
+      console.warn('[dashboard] missing composite index for deadlines; falling back to client-side filter');
+      const fallback = await databases.listDocuments<Deadline>(DATABASE_ID, COLLECTIONS.deadlines, [
+        Query.greaterThanEqual('due_at', startIso),
+        Query.lessThanEqual('due_at', endIso),
+      ]);
+      return fallback.documents.filter((deadline) => deadline.status === 'Open').length;
+    }
+
+    console.warn('[dashboard] deadlines count fallback -> 0', err);
+    return 0;
+  }
+}
+
 export async function fetchDashboardStats(): Promise<DashboardStats> {
   const now = isoNow();
   const in7 = isoInDays(7);
@@ -37,8 +70,8 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     count(COLLECTIONS.matters, [Query.equal('practice_area', 'PersonalInjury'), Query.equal('status', 'Open')]),
     count(COLLECTIONS.matters, [Query.equal('practice_area', 'SSD'), Query.equal('status', 'Open')]),
     count(COLLECTIONS.hearings, [Query.greaterThanEqual('start_at', now), Query.lessThanEqual('start_at', in7)]),
-    count(COLLECTIONS.deadlines, [Query.equal('status', 'Open'), Query.greaterThanEqual('due_at', now), Query.lessThanEqual('due_at', in7)]),
-    count(COLLECTIONS.deadlines, [Query.equal('status', 'Open'), Query.greaterThanEqual('due_at', now), Query.lessThanEqual('due_at', in30)]),
+    countOpenDeadlinesBetween(now, in7),
+    countOpenDeadlinesBetween(now, in30),
     count(COLLECTIONS.invoices, [Query.in('status', ['Sent', 'Overdue'])]),
   ]);
 

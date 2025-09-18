@@ -8,8 +8,8 @@ export interface FirebaseTestConfig {
   projectId: string;
   apiKey: string;
   authDomain: string;
-  testEmail?: string;
-  testPassword?: string;
+  testEmail: string;
+  testPassword: string;
 }
 
 export function getFirebaseTestConfig(): FirebaseTestConfig {

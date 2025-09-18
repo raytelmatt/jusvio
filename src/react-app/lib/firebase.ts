@@ -3,6 +3,16 @@
 
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
+import {
+  initializeAuth,
+  getAuth,
+  type Auth,
+  type Persistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  indexedDBLocalPersistence,
+  inMemoryPersistence,
+} from "firebase/auth";
 
 function env(name: string, fallback: string) {
   try {
@@ -26,12 +36,62 @@ const firebaseConfig = {
 
 let app: FirebaseApp | null = null;
 let analytics: Analytics | null = null;
+let auth: Auth | null = null;
 
 export function getFirebaseApp(): FirebaseApp {
   if (!app) {
     app = initializeApp(firebaseConfig);
   }
   return app;
+}
+
+function isAlreadyInitialized(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    !!error &&
+    'code' in error &&
+    (error as { code?: string }).code === 'auth/already-initialized'
+  );
+}
+
+function initializeBrowserAuth(): Auth {
+  const firebaseApp = getFirebaseApp();
+  const preferredPersistence: Persistence[] = [
+    indexedDBLocalPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence,
+  ];
+
+  try {
+    return initializeAuth(firebaseApp, { persistence: preferredPersistence });
+  } catch (error) {
+    if (isAlreadyInitialized(error)) {
+      return getAuth(firebaseApp);
+    }
+
+    console.warn(
+      "Falling back to in-memory Firebase auth persistence due to initialization error:",
+      error
+    );
+
+    try {
+      return initializeAuth(firebaseApp, { persistence: inMemoryPersistence });
+    } catch (fallbackError) {
+      if (isAlreadyInitialized(fallbackError)) {
+        return getAuth(firebaseApp);
+      }
+
+      console.error("Failed to initialize Firebase Auth with in-memory persistence:", fallbackError);
+      return getAuth(firebaseApp);
+    }
+  }
+}
+
+export function getFirebaseAuth(): Auth {
+  if (!auth) {
+    auth = initializeBrowserAuth();
+  }
+  return auth;
 }
 
 export async function getFirebaseAnalytics(): Promise<Analytics | null> {
