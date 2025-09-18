@@ -33,17 +33,18 @@ type TimelineEventDisplay = {
   meta?: string;
 };
 
-// interface BillingStats {
-//   totalHours: number;
-//   totalAmount: number;
-//   totalPaid: number;
-//   balance: number;
-//   totalTime: number;
-//   totalInvoiced: number;
-//   outstanding: number;
-//   totalAmountDue: number;
-//   unbilledTime: number;
-// }
+interface BillingStats {
+  totalHours: number;
+  totalAmount: number;
+  totalPaid: number;
+  balance: number;
+  totalTime: number;
+  totalInvoiced: number;
+  outstanding: number;
+  totalAmountDue: number;
+  unbilledTime: number;
+  unbilledAmount: number;
+}
 
 
 
@@ -858,9 +859,35 @@ export default function MatterDetail() {
         'unique()',
         newInvoice
       );
+
+      // Add timeline event for invoice creation
+      try {
+        await databases.createDocument(
+          DATABASE_ID,
+          COLLECTIONS.timeline,
+          'unique()',
+          {
+            matter_id: id,
+            type: 'invoice_created',
+            title: `Invoice ${invoiceNumber} Created`,
+            description: `Invoice generated for $${subtotal.toFixed(2)} with ${lineItems.length} line item${lineItems.length !== 1 ? 's' : ''}`,
+            date: new Date().toISOString(),
+            metadata: JSON.stringify({
+              invoice_id: createdInvoice.$id,
+              invoice_number: invoiceNumber,
+              amount: subtotal,
+              status: 'Draft'
+            })
+          }
+        );
+      } catch (timelineError) {
+        console.error('Error adding timeline event:', timelineError);
+        // Don't fail the entire operation if timeline fails
+      }
       
-      // Refresh billing data
-      await fetchBillingData();
+      // Refresh billing data and timeline
+      await Promise.all([fetchBillingData(), fetchTimelineEvents()]);
+      
       setShowInvoiceModal(false);
       setInvoiceForm({
         description: '',
@@ -884,6 +911,78 @@ export default function MatterDetail() {
     }
   };
 
+  const calculateBillingStats = (): BillingStats => {
+    const totalHours = timeEntries.reduce((sum, entry) => sum + Number(entry.hours || 0), 0);
+    const totalInvoiced = invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0);
+    
+    // Calculate total payments for this matter's invoices
+    const invoiceIds = invoices.map(inv => inv.$id || inv.id);
+    const relevantPayments = payments.filter(payment => invoiceIds.includes(payment.invoice_id));
+    const totalPaid = relevantPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+    
+    // Calculate unbilled time value
+    const unbilledAmount = timeEntries.reduce((sum, entry) => {
+      const hours = Number(entry.hours || 0);
+      const rate = Number(entry.rate || 150);
+      return sum + (hours * rate);
+    }, 0);
+    
+    const balance = totalInvoiced - totalPaid;
+    const outstanding = invoices.filter(inv => inv.status !== 'Paid').length;
+    const totalAmountDue = balance + unbilledAmount;
+    
+    return {
+      totalHours,
+      totalAmount: totalInvoiced,
+      totalPaid,
+      balance,
+      totalTime: totalHours, // Alias for totalHours
+      totalInvoiced,
+      outstanding,
+      totalAmountDue,
+      unbilledTime: totalHours,
+      unbilledAmount
+    };
+  };
+
+  const applyPaymentToInvoice = async (invoiceId: string, paymentAmount: number, paymentId: string) => {
+    const invoice = invoices.find((inv) => (inv.$id || inv.id) === invoiceId);
+    if (!invoice) return { success: false, error: 'Invoice not found' };
+
+    const existingPayments = payments.filter((p) => p.invoice_id === invoiceId);
+    const totalPaid = existingPayments.reduce((sum: number, p) => sum + Number(p.amount || 0), 0) + paymentAmount;
+    const invoiceTotal = Number(invoice.total || 0);
+    
+    let newStatus = invoice.status;
+    let creditAmount = 0;
+    
+    if (totalPaid >= invoiceTotal) {
+      newStatus = 'Paid';
+      creditAmount = totalPaid - invoiceTotal; // Any overpayment becomes credit
+    } else if (totalPaid > 0 && invoice.status === 'Draft') {
+      newStatus = 'Sent'; // Assume it was sent if payment is being made
+    }
+    
+    // Update invoice status if needed
+    if (newStatus !== invoice.status) {
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.invoices,
+        invoiceId,
+        { status: newStatus }
+      );
+    }
+
+    return {
+      success: true,
+      newStatus,
+      totalPaid,
+      invoiceTotal,
+      creditAmount,
+      isFullPayment: totalPaid >= invoiceTotal
+    };
+  };
+
   const recordPayment = async (invoiceId: string, amount: number, method: string, reference?: string) => {
     try {
       const payment = {
@@ -894,37 +993,79 @@ export default function MatterDetail() {
         reference: reference || '',
       };
       
-      await databases.createDocument(
+      const createdPayment = await databases.createDocument(
         DATABASE_ID,
         COLLECTIONS.payments,
         'unique()',
         payment
       );
       
-      // Update invoice status to Paid if fully paid
+      // Apply payment to invoice and get results
+      const paymentResult = await applyPaymentToInvoice(invoiceId, amount, createdPayment.$id);
+      
+      if (!paymentResult.success) {
+        throw new Error(paymentResult.error || 'Failed to apply payment');
+      }
+
+      // Find the invoice for timeline event
       const invoice = invoices.find((inv) => (inv.$id || inv.id) === invoiceId);
       if (invoice) {
-        const totalPaid = payments
-          .filter((p) => p.invoice_id === invoiceId)
-          .reduce((sum: number, p) => sum + Number(p.amount || 0), 0) + amount;
-        
-        if (totalPaid >= Number(invoice.total || 0)) {
-          await databases.updateDocument(
+        // Add timeline event for payment
+        try {
+          let description = `${paymentResult.isFullPayment ? 'Full' : 'Partial'} payment of $${amount.toFixed(2)} received via ${method}${reference ? ` (Ref: ${reference})` : ''}.`;
+          
+          if (paymentResult.isFullPayment) {
+            description += ' Invoice fully paid.';
+            if (paymentResult.creditAmount > 0) {
+              description += ` Credit of $${paymentResult.creditAmount.toFixed(2)} applied to client account.`;
+            }
+          } else {
+            description += ` Balance remaining: $${(paymentResult.invoiceTotal - paymentResult.totalPaid).toFixed(2)}`;
+          }
+
+          await databases.createDocument(
             DATABASE_ID,
-            COLLECTIONS.invoices,
-            invoiceId,
-            { status: 'Paid' }
+            COLLECTIONS.timeline,
+            'unique()',
+            {
+              matter_id: id,
+              type: 'payment_received',
+              title: `Payment Received - ${invoice.invoice_number}`,
+              description: description,
+              date: new Date().toISOString(),
+              metadata: JSON.stringify({
+                payment_id: createdPayment.$id,
+                invoice_id: invoiceId,
+                invoice_number: invoice.invoice_number,
+                payment_amount: amount,
+                payment_method: method,
+                reference: reference,
+                total_paid: paymentResult.totalPaid,
+                invoice_total: paymentResult.invoiceTotal,
+                is_full_payment: paymentResult.isFullPayment,
+                new_status: paymentResult.newStatus,
+                credit_amount: paymentResult.creditAmount
+              })
+            }
           );
+        } catch (timelineError) {
+          console.error('Error adding payment timeline event:', timelineError);
+          // Don't fail the entire operation if timeline fails
         }
       }
       
-      // Refresh billing data
-      await fetchBillingData();
+      // Refresh billing data and timeline
+      await Promise.all([fetchBillingData(), fetchTimelineEvents()]);
+      
       setShowPaymentModal(false);
       setSelectedInvoice(null);
       
-      // Show success message
+      // Show success message with credit info if applicable
       setSaveSuccess(true);
+      if (paymentResult.creditAmount > 0) {
+        setSaveError(null); // Clear any errors first
+        // Could add a specific credit notification here
+      }
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error('Error recording payment:', error);

@@ -57,6 +57,7 @@ export interface ClientBalance {
   email?: string;
   balance: number;
   current_balance: number;
+  total_balance: number;
   total_paid: number;
   total_invoiced: number;
   unbilled_amount: number;
@@ -345,12 +346,19 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
         
         unbilledAmount += matterUnbilled;
         
-        // Add matter balance
+        // Add matter balance with detailed breakdown
         matterBalances.push({
           matter_id: matterId,
           matter_number: matter.matter_number || '',
           matter_title: matter.title,
           balance: matterInvoicedTotal - matterPaidTotal + matterUnbilled,
+          total_invoiced: matterInvoicedTotal,
+          total_paid: matterPaidTotal,
+          unbilled_amount: matterUnbilled,
+        } as typeof matterBalances[0] & {
+          total_invoiced: number;
+          total_paid: number;
+          unbilled_amount: number;
         });
       });
 
@@ -370,6 +378,7 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
         email: client.email ?? undefined,
         balance: currentBalance,
         current_balance: currentBalance,
+        total_balance: currentBalance, // Add this field that was missing
         total_paid: totalPaid,
         total_invoiced: totalInvoiced,
         unbilled_amount: unbilledAmount,
