@@ -162,32 +162,69 @@ class FirebaseAuthService implements BackendAuthService {
         throw new Error('Email and password are required');
       }
       
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        throw new Error('Please enter a valid email address');
+      }
+      
       // Check network connectivity before attempting login
       const hasConnectivity = await checkNetworkConnectivity();
       if (!hasConnectivity) {
         console.warn('Network connectivity check failed, attempting to wait for connection...');
-        const connected = await waitForNetworkConnectivity(10000);
+        const connected = await waitForNetworkConnectivity(15000); // Increased timeout for production
         if (!connected) {
-          throw new Error('No internet connection. Please check your network and try again.');
+          throw new Error('Unable to connect to authentication servers. Please check your internet connection and try again.');
         }
       }
       
       const auth = getAuth(getFirebaseApp());
       
+      // Add production-specific auth settings
+      if (typeof window !== 'undefined') {
+        // Ensure proper domain configuration
+        const currentDomain = window.location.hostname;
+        console.log('Authenticating from domain:', currentDomain);
+        
+        // Log Firebase configuration (without sensitive data)
+        console.log('Firebase Auth Domain:', auth.config.authDomain);
+        console.log('Firebase Project ID:', auth.config.projectId);
+      }
+      
       try {
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
         
         if (!result.user) {
-          throw new Error('Login failed: No user returned from Firebase');
+          throw new Error('Authentication failed: No user data received');
         }
         
         // Verify the user is properly authenticated
         if (!result.user.uid) {
-          throw new Error('Login failed: Invalid user data');
+          throw new Error('Authentication failed: Invalid user credentials');
         }
         
-        console.log('Login successful for user:', result.user.email);
+        // Verify user can get ID token (important for production)
+        try {
+          await result.user.getIdToken(true); // Force refresh
+          console.log('Authentication successful for user:', result.user.email);
+        } catch (tokenError) {
+          console.error('ID token verification failed:', tokenError);
+          throw new Error('Authentication completed but token verification failed. Please try again.');
+        }
+        
       } catch (error) {
+        console.error('Firebase authentication error:', error);
+        
+        // Enhanced error handling for production
+        if (error && typeof error === 'object' && 'code' in error) {
+          const firebaseError = error as { code: string; message: string };
+          
+          // Special handling for network errors in production
+          if (firebaseError.code === 'auth/network-request-failed') {
+            throw new Error('Unable to connect to authentication servers. This may be due to network issues or firewall restrictions. Please try again or contact support if the problem persists.');
+          }
+        }
+        
         // Transform Firebase errors into user-friendly messages
         const friendlyMessage = getFirebaseErrorMessage(error);
         throw new Error(friendlyMessage);

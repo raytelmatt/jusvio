@@ -26,6 +26,14 @@ const firebaseConfig = {
   measurementId: env('FIREBASE_MEASUREMENT_ID', "G-1L2R9BGTM1"),
 };
 
+// Log configuration in development to help with debugging
+if (import.meta.env.DEV) {
+  console.log('Firebase config:', {
+    ...firebaseConfig,
+    apiKey: firebaseConfig.apiKey.substring(0, 10) + '...' // Don't log full API key
+  });
+}
+
 let app: FirebaseApp | null = null;
 let analytics: Analytics | null = null;
 let initializationError: Error | null = null;

@@ -5,18 +5,35 @@ export async function checkNetworkConnectivity(): Promise<boolean> {
   }
   
   try {
-    // Test connectivity to Firebase Auth API
+    // Test connectivity to Firebase Auth API with multiple endpoints
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
-    const response = await fetch('https://identitytoolkit.googleapis.com/v1/projects', {
-      method: 'HEAD',
-      signal: controller.signal,
-      mode: 'no-cors' // Avoid CORS issues for connectivity test
-    });
+    // Try multiple Firebase endpoints to ensure connectivity
+    const endpoints = [
+      'https://identitytoolkit.googleapis.com/v1/projects',
+      'https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword',
+      'https://firebase.googleapis.com/'
+    ];
+    
+    // Test at least one endpoint
+    for (const endpoint of endpoints) {
+      try {
+        await fetch(endpoint, {
+          method: 'HEAD',
+          signal: controller.signal,
+          mode: 'no-cors' // Avoid CORS issues for connectivity test
+        });
+        clearTimeout(timeoutId);
+        return true;
+      } catch (endpointError) {
+        // Continue to next endpoint
+        continue;
+      }
+    }
     
     clearTimeout(timeoutId);
-    return true;
+    return false;
   } catch (error) {
     console.warn('Network connectivity check failed:', error);
     return false;
