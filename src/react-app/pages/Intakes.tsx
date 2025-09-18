@@ -217,34 +217,59 @@ export default function IntakesAdmin() {
       <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-white/10">
-            <thead className="bg-white/5">
+            <thead className="bg-white/10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Submitted</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Practice</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Urgency</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Submitted</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Practice</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Urgency</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
                 <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="bg-white/5 divide-y divide-white/10">
               {loading ? (
-                <tr><td colSpan={8} className="px-6 py-12 text-center text-blue-200">Loading...</td></tr>
+                <tr><td colSpan={8} className="px-6 py-12 text-center text-white">Loading...</td></tr>
               ) : error ? (
                 <tr><td colSpan={8} className="px-6 py-12 text-center text-red-300">{error}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="px-6 py-12 text-center text-blue-200">No intakes found</td></tr>
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center">
+                    <div className="text-white">
+                      {search || typeFilter !== 'all' || practiceFilter !== 'all' || statusFilter !== 'all' 
+                        ? 'No intakes found matching your criteria.' 
+                        : 'No intakes submitted yet.'}
+                    </div>
+                    {!search && typeFilter === 'all' && practiceFilter === 'all' && statusFilter === 'all' && (
+                      <div className="mt-2 text-blue-200 text-sm">
+                        Intakes will appear here when clients submit intake forms.
+                      </div>
+                    )}
+                  </td>
+                </tr>
               ) : (
                 filtered.map((r) => (
                   <tr key={r.$id} className="hover:bg-white/10">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200">{new Date(r.submitted_at || '').toLocaleString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200 capitalize">{r.type || 'general'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200 capitalize">{r.practice_area || 'General'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{r.first_name} {r.last_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200">{r.email || r.phone || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200">{r.urgency_level || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{new Date(r.submitted_at || '').toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white capitalize">{r.type || 'general'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white capitalize">{r.practice_area || 'General'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{r.first_name} {r.last_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{r.email || r.phone || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      {r.urgency_level && (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          r.urgency_level === 'Urgent' ? 'bg-red-100 text-red-800' :
+                          r.urgency_level === 'High' ? 'bg-orange-100 text-orange-800' :
+                          r.urgency_level === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {r.urgency_level}
+                        </span>
+                      )}
+                      {!r.urgency_level && <span className="text-blue-200">-</span>}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         (r.status || 'New') === 'Converted' ? 'bg-green-100 text-green-800' :
@@ -258,14 +283,14 @@ export default function IntakesAdmin() {
                       <div className="flex items-center space-x-2 justify-end">
                         <button
                           onClick={() => alert(JSON.stringify(safeParse(r.data), null, 2))}
-                          className="text-blue-300 hover:text-blue-100"
+                          className="text-blue-400 hover:text-blue-200 p-1 rounded hover:bg-white/10 transition-colors"
                           title="View details"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => void markReviewed(r.$id)}
-                          className="text-yellow-300 hover:text-yellow-100"
+                          className="text-yellow-400 hover:text-yellow-200 p-1 rounded hover:bg-white/10 transition-colors"
                           title="Mark reviewed"
                         >
                           <CheckCircle className="h-4 w-4" />
@@ -273,12 +298,16 @@ export default function IntakesAdmin() {
                         <button
                           disabled={convertingId === r.$id}
                           onClick={() => void convertToClientAndMatter(r)}
-                          className="text-green-300 hover:text-green-100 disabled:opacity-50"
+                          className="text-green-400 hover:text-green-200 disabled:opacity-50 p-1 rounded hover:bg-white/10 transition-colors"
                           title="Convert to Client + Matter"
                         >
                           <UserPlus className="h-4 w-4" />
                         </button>
-                        <Link to="/matters/new" className="text-blue-300 hover:text-blue-100" title="Create matter manually">
+                        <Link 
+                          to="/matters/new" 
+                          className="text-blue-400 hover:text-blue-200 p-1 rounded hover:bg-white/10 transition-colors" 
+                          title="Create matter manually"
+                        >
                           <FolderOpen className="h-4 w-4" />
                         </Link>
                       </div>
