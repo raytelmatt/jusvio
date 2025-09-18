@@ -816,12 +816,21 @@ export default function ClientDetail() {
                       </div>
                       <p className="text-sm text-white mb-2">{matter.title}</p>
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
-                          {matter.practice_area === 'PersonalInjury' ? 'Personal Injury' : matter.practice_area}
-                        </span>
-                        <span className="text-xs text-blue-200">
-                          {new Date(matter.created_at).toLocaleDateString()}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
+                            {matter.practice_area === 'PersonalInjury' ? 'Personal Injury' : matter.practice_area}
+                          </span>
+                          <span className="text-xs text-blue-200">
+                            {new Date(matter.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <Link
+                          to={`/matters/${matter.id}`}
+                          className="inline-flex items-center px-3 py-1.5 border border-white/20 text-xs font-medium rounded-lg text-white bg-white/10 hover:bg-white/20 transition-colors"
+                        >
+                          <Eye className="mr-1 h-3 w-3" />
+                          View
+                        </Link>
                       </div>
                     </div>
                   ))}
