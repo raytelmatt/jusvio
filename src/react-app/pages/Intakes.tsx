@@ -174,7 +174,10 @@ export default function IntakesAdmin() {
           </h1>
           <p className="text-blue-200">Review and convert submitted intakes</p>
         </div>
-        <button onClick={() => void loadIntakes()} className="inline-flex items-center px-4 py-2 border border-white/20 text-sm font-medium rounded-lg text-blue-100 bg-white/10 hover:bg-white/20 backdrop-blur-sm">
+        <button 
+          onClick={() => void loadIntakes()} 
+          className="inline-flex items-center px-4 py-2 border border-white/20 text-sm font-medium rounded-lg text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-200 shadow-lg hover:shadow-xl"
+        >
           <RefreshCw className="mr-2 h-4 w-4" />
           Refresh
         </button>
@@ -193,18 +196,18 @@ export default function IntakesAdmin() {
               className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40"
             />
           </div>
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white">
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200">
             <option value="all" className="bg-slate-800 text-white">All Types</option>
             <option value="general" className="bg-slate-800 text-white">General</option>
             <option value="criminal" className="bg-slate-800 text-white">Criminal</option>
           </select>
-          <select value={practiceFilter} onChange={(e) => setPracticeFilter(e.target.value)} className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white">
+          <select value={practiceFilter} onChange={(e) => setPracticeFilter(e.target.value)} className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200">
             <option value="all" className="bg-slate-800 text-white">All Practice Areas</option>
             <option value="criminal" className="bg-slate-800 text-white">Criminal</option>
             <option value="personalinjury" className="bg-slate-800 text-white">Personal Injury</option>
             <option value="ssd" className="bg-slate-800 text-white">SSD</option>
           </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-white/20 rounded-lg bg-white/10 backdrop-blur-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all duration-200">
             <option value="all" className="bg-slate-800 text-white">All Status</option>
             <option value="new" className="bg-slate-800 text-white">New</option>
             <option value="reviewed" className="bg-slate-800 text-white">Reviewed</option>
@@ -217,39 +220,39 @@ export default function IntakesAdmin() {
       <div className="bg-white/8 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-white/10">
-            <thead className="bg-white/5">
+            <thead className="bg-white/10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Submitted</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Practice</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Urgency</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Submitted</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Practice</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Urgency</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
                 <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="bg-white/5 divide-y divide-white/10">
               {loading ? (
-                <tr><td colSpan={8} className="px-6 py-12 text-center text-blue-200">Loading...</td></tr>
+                <tr><td colSpan={8} className="px-6 py-12 text-center text-white">Loading...</td></tr>
               ) : error ? (
                 <tr><td colSpan={8} className="px-6 py-12 text-center text-red-300">{error}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="px-6 py-12 text-center text-blue-200">No intakes found</td></tr>
+                <tr><td colSpan={8} className="px-6 py-12 text-center text-white">No intakes found</td></tr>
               ) : (
                 filtered.map((r) => (
-                  <tr key={r.$id} className="hover:bg-white/10">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200">{new Date(r.submitted_at || '').toLocaleString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200 capitalize">{r.type || 'general'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200 capitalize">{r.practice_area || 'General'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{r.first_name} {r.last_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200">{r.email || r.phone || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200">{r.urgency_level || '-'}</td>
+                  <tr key={r.$id} className="hover:bg-white/10 transition-colors duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">{new Date(r.submitted_at || '').toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200 capitalize">{r.type || 'general'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200 capitalize">{r.practice_area || 'General'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-medium">{r.first_name} {r.last_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">{r.email || r.phone || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">{r.urgency_level || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        (r.status || 'New') === 'Converted' ? 'bg-green-100 text-green-800' :
-                        (r.status || 'New') === 'Reviewed' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold shadow-sm ${
+                        (r.status || 'New') === 'Converted' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                        (r.status || 'New') === 'Reviewed' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
+                        'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                       }`}>
                         {(r.status || 'New')}
                       </span>
@@ -258,14 +261,14 @@ export default function IntakesAdmin() {
                       <div className="flex items-center space-x-2 justify-end">
                         <button
                           onClick={() => alert(JSON.stringify(safeParse(r.data), null, 2))}
-                          className="text-blue-300 hover:text-blue-100"
+                          className="p-2 text-blue-300 hover:text-white hover:bg-blue-500/20 rounded-lg transition-all duration-200"
                           title="View details"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => void markReviewed(r.$id)}
-                          className="text-yellow-300 hover:text-yellow-100"
+                          className="p-2 text-yellow-300 hover:text-white hover:bg-yellow-500/20 rounded-lg transition-all duration-200"
                           title="Mark reviewed"
                         >
                           <CheckCircle className="h-4 w-4" />
@@ -273,12 +276,16 @@ export default function IntakesAdmin() {
                         <button
                           disabled={convertingId === r.$id}
                           onClick={() => void convertToClientAndMatter(r)}
-                          className="text-green-300 hover:text-green-100 disabled:opacity-50"
+                          className="p-2 text-green-300 hover:text-white hover:bg-green-500/20 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Convert to Client + Matter"
                         >
                           <UserPlus className="h-4 w-4" />
                         </button>
-                        <Link to="/matters/new" className="text-blue-300 hover:text-blue-100" title="Create matter manually">
+                        <Link 
+                          to="/matters/new" 
+                          className="p-2 text-blue-300 hover:text-white hover:bg-blue-500/20 rounded-lg transition-all duration-200 inline-block" 
+                          title="Create matter manually"
+                        >
                           <FolderOpen className="h-4 w-4" />
                         </Link>
                       </div>
