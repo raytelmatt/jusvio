@@ -107,13 +107,17 @@ export const InvoiceSchema = z.object({
   matter_id: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
   invoice_number: z.string(),
   description: z.string().optional(),
-  amount: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseFloat(val) : val),
+  issue_date: z.string(),
+  due_date: z.string(),
+  line_items: z.string().optional(), // JSON array
+  subtotal: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseFloat(val) : val),
+  taxes: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseFloat(val) : val).default(0),
+  discounts: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseFloat(val) : val).default(0),
   total: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseFloat(val) : val),
   status: z.enum(['Draft', 'Sent', 'Paid', 'Overdue']),
-  due_date: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
-  created_by: z.string(),
+  created_by: z.string().optional(),
 });
 
 export type Invoice = z.infer<typeof InvoiceSchema>;
