@@ -224,8 +224,9 @@ export default function Matters() {
             )}
           </div>
         ) : (
-          filteredMatters.map((matter) => {
-            const matterId = matter.id ?? Number(matter.$id ?? 0);
+          filteredMatters.filter(matter => matter.$id).map((matter) => {
+            // Always use Firestore document ID ($id) for links
+            const matterId = matter.$id!; // Safe to use ! since we filtered for $id
             const safeId = `matter-${matterId}`;
             const openedAt = matter.opened_at || matter.created_at || matter.$createdAt || '';
             return (
@@ -235,7 +236,7 @@ export default function Matters() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <Link
-                        to={`/matters/${matter.id}`}
+                        to={`/matters/${matterId}`}
                         className="text-lg font-semibold text-bright hover:text-blue-300"
                       >
                         {matter.title}
@@ -263,7 +264,7 @@ export default function Matters() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Link
-                      to={`/matters/${matter.id}`}
+                      to={`/matters/${matterId}`}
                       className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
                     >
                       View

@@ -223,8 +223,20 @@ export default function MatterDetail() {
       return;
     }
 
+    // Validate matter ID - should not be "0" or other invalid values
+    if (id === '0' || id === 'undefined' || id === 'null' || id.trim() === '') {
+      setError('Invalid matter ID provided');
+      setLoading(false);
+      // Redirect to matters list after a short delay
+      setTimeout(() => {
+        navigate('/matters');
+      }, 2000);
+      return;
+    }
+
     setLoading(true);
     try {
+      console.log('Fetching matter with ID:', id);
       const res = await databases.getDocument(
         DATABASE_ID,
         COLLECTIONS.matters,
@@ -271,7 +283,22 @@ export default function MatterDetail() {
       setError(null);
     } catch (error) {
       console.error('Error fetching matter:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch matter');
+      console.error('Matter ID that failed:', id);
+      console.error('URL path:', window.location.pathname);
+      
+      // Provide more specific error messages
+      if (error instanceof Error && error.message === 'Document not found') {
+        setError(`Matter with ID "${id}" was not found. This may be due to an invalid matter ID in the URL. Redirecting to matters list...`);
+        
+        // Redirect to matters list after showing error
+        setTimeout(() => {
+          navigate('/matters');
+        }, 3000);
+      } else if (error instanceof Error && error.message.includes('Network connectivity issue')) {
+        setError('Network connectivity issue. Please check your connection and try again.');
+      } else {
+        setError(error instanceof Error ? error.message : 'Failed to fetch matter');
+      }
     } finally {
       setLoading(false);
     }
