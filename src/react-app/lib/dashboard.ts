@@ -39,6 +39,7 @@ function isMissingIndexError(err: unknown): boolean {
 
 async function countOpenDeadlinesBetween(startIso: string, endIso: string): Promise<number> {
   try {
+    // Try with composite query first
     const res = await databases.listDocuments<Deadline>(DATABASE_ID, COLLECTIONS.deadlines, [
       Query.equal('status', 'Open'),
       Query.greaterThanEqual('due_at', startIso),
@@ -47,15 +48,21 @@ async function countOpenDeadlinesBetween(startIso: string, endIso: string): Prom
     return res.documents.length;
   } catch (err) {
     if (isMissingIndexError(err)) {
-      console.warn('[dashboard] missing composite index for deadlines; falling back to client-side filter');
-      const fallback = await databases.listDocuments<Deadline>(DATABASE_ID, COLLECTIONS.deadlines, [
-        Query.greaterThanEqual('due_at', startIso),
-        Query.lessThanEqual('due_at', endIso),
-      ]);
-      return fallback.documents.filter((deadline) => deadline.status === 'Open').length;
+      // Silently fall back to client-side filtering without console warning
+      // This is expected behavior when composite indexes are not set up
+      try {
+        const fallback = await databases.listDocuments<Deadline>(DATABASE_ID, COLLECTIONS.deadlines, [
+          Query.greaterThanEqual('due_at', startIso),
+          Query.lessThanEqual('due_at', endIso),
+        ]);
+        return fallback.documents.filter((deadline) => deadline.status === 'Open').length;
+      } catch (fallbackErr) {
+        console.error('[dashboard] Error fetching deadlines:', fallbackErr);
+        return 0;
+      }
     }
 
-    console.warn('[dashboard] deadlines count fallback -> 0', err);
+    console.error('[dashboard] Error counting deadlines:', err);
     return 0;
   }
 }
