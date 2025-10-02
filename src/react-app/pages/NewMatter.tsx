@@ -6,10 +6,15 @@ import type { Client } from '@/shared/types';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
 import type { BackendDocument } from '@/react-app/lib/backend';
 
-function mapClientDoc(raw: unknown): Client {
+function mapClientDoc(raw: unknown): Client & { firebaseId?: string } {
   const record = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+  // Preserve the actual Firebase document ID
+  const firebaseId = String(record.$id ?? '');
+  // Use a numeric ID for type compatibility
+  const idValue = record.id ?? record.$id ?? 0;
   return {
-    id: typeof record.id === 'number' ? record.id : Number(record.id ?? record.$id ?? 0),
+    id: typeof idValue === 'number' ? idValue : Number(idValue) || 0,
+    firebaseId: firebaseId,
     client_number: typeof record.client_number === 'string' ? record.client_number : null,
     first_name: String(record.first_name ?? ''),
     last_name: String(record.last_name ?? ''),
@@ -24,7 +29,7 @@ function mapClientDoc(raw: unknown): Client {
     portal_enabled: Boolean(record.portal_enabled),
     created_at: typeof record.created_at === 'string' ? record.created_at : new Date().toISOString(),
     updated_at: typeof record.updated_at === 'string' ? record.updated_at : new Date().toISOString(),
-  };
+  } as Client & { firebaseId?: string };
 }
 
 export default function NewMatter() {
@@ -160,7 +165,7 @@ export default function NewMatter() {
               >
                 <option value="" className="bg-slate-800 text-white">Choose a client...</option>
                 {clients.map((client) => (
-                  <option key={client.id} value={client.id} className="bg-slate-800 text-white">
+                  <option key={client.id} value={(client as any).firebaseId || client.id} className="bg-slate-800 text-white">
                     {client.first_name} {client.last_name}
                   </option>
                 ))}
