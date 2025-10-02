@@ -212,6 +212,19 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
           mattersByClient.set(clientIdStr, []);
         }
         mattersByClient.get(clientIdStr)?.push(matter);
+        
+        // Also store by numeric ID if it's a numeric string
+        // This helps match clients that have numeric IDs with matters that store them as strings
+        if (/^\d+$/.test(clientIdStr)) {
+          const numericId = clientIdStr;
+          if (!mattersByClient.has(numericId)) {
+            mattersByClient.set(numericId, []);
+          }
+          const existingMatters = mattersByClient.get(numericId) || [];
+          if (!existingMatters.includes(matter)) {
+            existingMatters.push(matter);
+          }
+        }
       }
     });
 
@@ -252,10 +265,18 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
     const clientBalances: ClientBalance[] = clients.map((client: Client) => {
       // Support records that may contain either numeric id or $id
       const clientId = String(client.id || (client as any).$id);
-      // Also check with $id if id doesn't match
+      
+      // Try multiple ID formats to find matters
       let clientMatters = mattersByClient.get(clientId) || [];
+      
+      // If no matters found, try with $id
       if (clientMatters.length === 0 && (client as any).$id) {
         clientMatters = mattersByClient.get(String((client as any).$id)) || [];
+      }
+      
+      // If still no matters, try without converting to string (for numeric IDs)
+      if (clientMatters.length === 0 && client.id) {
+        clientMatters = mattersByClient.get(client.id as any) || [];
       }
       
       let totalInvoiced = 0;
@@ -301,11 +322,16 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
         // Calculate invoiced amount and payments for this matter
         matterInvoices.forEach((invoice: InvoiceDoc) => {
           const invoiceTotal = Number(invoice.total || invoice.amount || 0);
-          matterInvoicedTotal += invoiceTotal;
-          totalInvoiced += invoiceTotal;
           
-          if (invoice.status !== 'Paid') {
-            outstandingInvoices++;
+          // Only include non-draft invoices in the totals
+          // Draft invoices haven't been sent to the client yet
+          if (invoice.status !== 'Draft') {
+            matterInvoicedTotal += invoiceTotal;
+            totalInvoiced += invoiceTotal;
+            
+            if (invoice.status !== 'Paid') {
+              outstandingInvoices++;
+            }
           }
           
           const invoiceId = invoice.id || invoice.$id;
@@ -336,7 +362,7 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
             });
           });
           
-          // Add to recent invoices
+          // Add to recent invoices (including drafts for visibility)
           recentInvoices.push({
             id: invoice.id || invoice.$id || '',
             invoice_number: invoice.invoice_number,

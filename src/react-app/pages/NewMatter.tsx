@@ -8,8 +8,11 @@ import type { BackendDocument } from '@/react-app/lib/backend';
 
 function mapClientDoc(raw: unknown): Client {
   const record = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+  // Use the Appwrite document ID ($id) as the primary identifier
+  // This ensures consistency across the application
+  const documentId = String(record.$id || record.id || '');
   return {
-    id: typeof record.id === 'number' ? record.id : Number(record.id ?? record.$id ?? 0),
+    id: documentId as any, // Keep as string but cast to any for type compatibility
     client_number: typeof record.client_number === 'string' ? record.client_number : null,
     first_name: String(record.first_name ?? ''),
     last_name: String(record.last_name ?? ''),
@@ -92,7 +95,7 @@ export default function NewMatter() {
         title: formData.title,
         practice_area: formData.practice_area,
         status: 'Open',
-        client_id: formData.client_id,
+        client_id: String(formData.client_id), // Ensure client_id is stored as string
         fee_model: formData.fee_model,
         opened_at: new Date().toISOString(),
       };
