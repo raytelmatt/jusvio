@@ -185,12 +185,11 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
 
     const matters: MatterDoc[] = (mattersResponse.documents || []).map((raw) => {
       const record = toRecord(raw);
-      const nested = toRecord(record.clients as unknown);
       return {
         $id: toStringOrUndefined(record.$id),
         id: toStringOrUndefined(record.id),
-        client_id: toStringOrUndefined(record.client_id) ?? nestedId(nested),
-        clients: nested,
+        client_id: toStringOrUndefined(record.client_id),
+        clients: undefined,
         title: String(record.title ?? ''),
         matter_number: toStringOrUndefined(record.matter_number),
         $createdAt: record.$createdAt as string | undefined,
@@ -205,7 +204,7 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
 
     // Group matters by client - handle both string and numeric IDs
     matters.forEach((matter: MatterDoc) => {
-      const clientId = matter.client_id || matter.clients?.id || matter.clients?.$id;
+      const clientId = matter.client_id;
       if (clientId) {
         const clientIdStr = String(clientId);
         if (!mattersByClient.has(clientIdStr)) {
