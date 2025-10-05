@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { Client } from '@/shared/types';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
+import { updateClient, deleteClient } from '@/react-app/lib/client-utils';
 
 interface ClientActionsMenuProps {
   client: Client;
@@ -25,12 +26,9 @@ export default function ClientActionsMenu({ client, onUpdate }: ClientActionsMen
   const togglePortalAccess = async () => {
     setLoading(true);
     try {
-      await databases.updateDocument(
-        DATABASE_ID,
-        COLLECTIONS.clients,
-        String(client.id),
-        { portal_enabled: !client.portal_enabled },
-      );
+      await updateClient(client.id, { 
+        portal_enabled: !client.portal_enabled 
+      });
       onUpdate();
       setIsOpen(false);
     } catch (error) {
@@ -57,18 +55,14 @@ export default function ClientActionsMenu({ client, onUpdate }: ClientActionsMen
     setIsOpen(false);
   };
 
-  const deleteClient = async () => {
+  const handleDeleteClient = async () => {
     if (!confirm(`Are you sure you want to delete ${client.first_name} ${client.last_name}? This action cannot be undone.`)) {
       return;
     }
 
     setLoading(true);
     try {
-      await databases.deleteDocument(
-        DATABASE_ID,
-        COLLECTIONS.clients,
-        String(client.id)
-      );
+      await deleteClient(client.id);
       onUpdate();
     } catch (error) {
       console.error('Error deleting client:', error);
@@ -163,7 +157,7 @@ export default function ClientActionsMenu({ client, onUpdate }: ClientActionsMen
               <div className="border-t border-gray-100 my-1" />
 
               <button
-                onClick={deleteClient}
+                onClick={handleDeleteClient}
                 disabled={loading}
                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
               >

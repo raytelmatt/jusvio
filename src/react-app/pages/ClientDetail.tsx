@@ -112,32 +112,20 @@ export default function ClientDetail() {
 
   const fetchClientMatters = useCallback(async () => {
     try {
-      console.log('🔍 Fetching matters for client ID:', id, 'type:', typeof id);
-      
-      // First, let's see ALL matters to debug
-      const allMatters = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, []);
-      console.log('🗂️ ALL matters in database:', allMatters.documents?.map(d => ({ 
-        id: d.$id, 
-        client_id: d.client_id, 
-        title: d.title,
-        client_id_type: typeof d.client_id
-      })));
+      if (!id) return;
       
       const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, [
         Query.equal('client_id', String(id)),
       ]);
-      console.log('📋 Raw matters response for client:', list);
-      console.log('📊 Total matters found:', list.documents?.length || 0);
       
       const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
         ...d,
         id: d.id ?? d.$id,
         created_at: d.created_at ?? d.$createdAt,
       }));
-      console.log('✅ Processed matters:', rows);
       setMatters(rows as Matter[]);
     } catch (error) {
-      console.error('❌ Error fetching client matters:', error);
+      console.error('Error fetching client matters:', error);
     }
   }, [id]);
 

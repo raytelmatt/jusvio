@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router';
 import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/backend';
+import { fetchClientById } from '@/react-app/lib/client-utils';
 import { 
   FolderOpen, 
   FileText, 
@@ -79,8 +80,8 @@ export default function ClientPortal() {
 
   const fetchClientPortalData = useCallback(async () => {
     try {
-      // Load client
-      const client = await databases.getDocument(DATABASE_ID, COLLECTIONS.clients, String(clientId));
+      // Load client using new utility
+      const client = await fetchClientById(String(clientId));
 
       // Load matters for client
       const matterList = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, [
@@ -147,11 +148,11 @@ export default function ClientPortal() {
         })) as Hearing[];
 
       const clientData: Client = {
-        id: String(client.id ?? (client as any).$id ?? ''),
-        first_name: String((client as any).first_name || ''),
-        last_name: String((client as any).last_name || ''),
-        email: String((client as any).email || ''),
-        client_number: String((client as any).client_number || ''),
+        id: client.id,
+        first_name: client.first_name,
+        last_name: client.last_name,
+        email: client.email || '',
+        client_number: client.client_number || '',
       };
 
       setData({
