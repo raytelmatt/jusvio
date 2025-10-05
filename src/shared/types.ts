@@ -17,9 +17,15 @@ export const UserProfileSchema = z.object({
 
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 
-// Client Schema
+// Client Schema - Updated for Firebase/Firestore
 export const ClientSchema = z.object({
-  id: z.number(),
+  // Firebase document fields
+  $id: z.string().optional(), // Firestore document ID
+  id: z.string(), // Use string ID to match Firebase document IDs
+  $createdAt: z.string().optional(),
+  $updatedAt: z.string().optional(),
+  
+  // Client data fields
   client_number: z.string().nullable(),
   first_name: z.string(),
   last_name: z.string(),

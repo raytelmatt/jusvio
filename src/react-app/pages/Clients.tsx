@@ -4,7 +4,7 @@ import { Plus, Search, Phone, Mail, Filter, Download, DollarSign, AlertCircle, E
 import type { Client } from '@/shared/types';
 import ClientActionsMenu from '../components/ClientActionsMenu';
 import ClientFilterModal, { type ClientFilters } from '../components/ClientFilterModal';
-import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
+import { fetchAllClients, searchClients } from '@/react-app/lib/client-utils';
 import { fetchClientBalances as getClientBalances, type ClientBalance } from '@/react-app/lib/client-balances';
 
 
@@ -33,14 +33,8 @@ export default function Clients() {
 
   const fetchClients = async () => {
     try {
-      const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, []);
-      const rows = (list.documents || []).map((d: Record<string, unknown>) => ({
-        ...d,
-        id: d.id ?? d.$id,
-        created_at: d.created_at ?? d.$createdAt,
-        updated_at: d.updated_at ?? d.$updatedAt,
-      })) as unknown as Client[];
-      setClients(rows);
+      const clients = await fetchAllClients();
+      setClients(clients);
     } catch (error) {
       console.error('Error fetching clients:', error);
     } finally {

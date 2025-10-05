@@ -19,6 +19,7 @@ import {
   Eye
 } from 'lucide-react';
 import type { Client } from '@/shared/types';
+import { fetchClientById, updateClient, deleteClient } from '@/react-app/lib/client-utils';
 import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/backend';
 
 interface Matter {
@@ -93,14 +94,14 @@ export default function ClientDetail() {
 
   const fetchClientDetails = useCallback(async () => {
     try {
-      const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.clients, String(id));
-      const normalized: Record<string, unknown> = {
-        ...doc,
-        id: doc.id ?? doc.$id,
-        created_at: doc.created_at ?? doc.$createdAt,
-        updated_at: doc.updated_at ?? doc.$updatedAt,
-      };
-      setClient(normalized as Client);
+      if (!id) {
+        setError('No client ID provided');
+        setLoading(false);
+        return;
+      }
+      
+      const client = await fetchClientById(String(id));
+      setClient(client);
     } catch (error) {
       console.error('Error fetching client details:', error);
       setError('Client not found');
@@ -162,27 +163,24 @@ export default function ClientDetail() {
   }, [id, fetchClientDetails, fetchClientMatters, fetchClientBalance]);
 
   const togglePortalAccess = async () => {
-    if (!client) return;
+    if (!client || !id) return;
     try {
-      const updated = await databases.updateDocument(
-        DATABASE_ID,
-        COLLECTIONS.clients,
-        String(id),
-        { portal_enabled: !client.portal_enabled }
-      );
-      setClient({ ...(updated as Record<string, unknown>) } as Client);
+      const updated = await updateClient(String(id), { 
+        portal_enabled: !client.portal_enabled 
+      });
+      setClient(updated);
     } catch (error) {
       console.error('Error updating client:', error);
     }
   };
 
-  const deleteClient = async () => {
-    if (!client) return;
+  const handleDeleteClient = async () => {
+    if (!client || !id) return;
     if (!confirm(`Are you sure you want to delete ${client.first_name} ${client.last_name}? This action cannot be undone.`)) {
       return;
     }
     try {
-      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.clients, String(id));
+      await deleteClient(String(id));
       navigate('/clients');
     } catch (error) {
       console.error('Error deleting client:', error);
@@ -320,7 +318,7 @@ export default function ClientDetail() {
             Edit
           </button>
           <button
-            onClick={deleteClient}
+            onClick={handleDeleteClient}
             className="inline-flex items-center px-3 py-2 border border-red-400/30 text-sm font-medium rounded-lg text-red-200 bg-red-500/20 hover:bg-red-500/30"
           >
             <Trash2 className="mr-2 h-4 w-4" />

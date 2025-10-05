@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, User, Phone, Mail, Users, Save, X } from 'lucide-react';
-import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
+import { createClient } from '@/react-app/lib/client-utils';
 
 interface ClientFormData {
   first_name: string;
@@ -73,7 +73,7 @@ export default function NewClient() {
     setLoading(true);
 
     try {
-      const submitData = {
+      const clientData = {
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email || null,
@@ -85,18 +85,11 @@ export default function NewClient() {
         emergency_contact: formData.emergency_contact.name ? JSON.stringify(formData.emergency_contact) : null,
         notifications_opt_in: true,
         portal_enabled: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      } as Record<string, unknown>;
+        client_number: null, // Will be generated if needed
+      };
 
-      const created = await databases.createDocument(
-        DATABASE_ID,
-        COLLECTIONS.clients,
-        'unique()',
-        submitData,
-      );
-
-      navigate(`/clients/${created.$id}`);
+      const created = await createClient(clientData);
+      navigate(`/clients/${created.id}`);
     } catch (error) {
       console.error('Error creating client:', error);
       alert('Error creating client. Please try again.');
