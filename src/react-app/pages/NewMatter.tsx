@@ -92,7 +92,7 @@ export default function NewMatter() {
         title: formData.title,
         practice_area: formData.practice_area,
         status: 'Open',
-        client_id: formData.client_id,
+        client_id: formData.client_id, // Store as string to match Firestore IDs
         fee_model: formData.fee_model,
         opened_at: new Date().toISOString(),
       };

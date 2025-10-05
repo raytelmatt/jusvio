@@ -45,7 +45,7 @@ export const MatterSchema = z.object({
   title: z.string(),
   practice_area: z.enum(['Criminal', 'PersonalInjury', 'SSD']),
   status: z.enum(['Intake', 'Open', 'Pending', 'Closed']),
-  client_id: z.number(),
+  client_id: z.string(),
   assigned_attorney_ids: z.string().nullable(), // JSON array
   opened_at: z.string().nullable(),
   closed_at: z.string().nullable(),
@@ -152,7 +152,7 @@ export type Deadline = z.infer<typeof DeadlineSchema>;
 
 // Create Matter Request Schema
 export const CreateMatterSchema = z.object({
-  client_id: z.number(),
+  client_id: z.string(),
   title: z.string().min(1),
   practice_area: z.enum(['Criminal', 'PersonalInjury', 'SSD']),
   description: z.string().optional(),

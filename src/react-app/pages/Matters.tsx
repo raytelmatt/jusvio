@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Plus, Search, MoreHorizontal, FolderOpen } from 'lucide-react';
-import { databases, DATABASE_ID } from '@/react-app/lib/backend';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
 import { Matter } from '@/shared/types';
 
 type FirestoreMatter = Matter & {
@@ -28,7 +28,7 @@ function normalizeMatter(raw: unknown): FirestoreMatter {
     title: String(record.title ?? ''),
     practice_area: (record.practice_area as Matter['practice_area']) ?? 'Criminal',
     status: (record.status as Matter['status']) ?? 'Open',
-    client_id: typeof record.client_id === 'number' ? record.client_id : Number(record.client_id ?? 0),
+    client_id: String(record.client_id ?? ''),
     assigned_attorney_ids: typeof record.assigned_attorney_ids === 'string' ? record.assigned_attorney_ids : null,
     opened_at: openedAt ?? null,
     closed_at: typeof record.closed_at === 'string' ? record.closed_at : null,
@@ -74,7 +74,7 @@ export default function Matters() {
 
   const fetchMatters = async () => {
     try {
-      const list = await databases.listDocuments(DATABASE_ID, 'matters', []);
+      const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.matters, []);
       const docs = (list.documents || []).map(normalizeMatter);
       setMatters(docs);
     } catch (error) {

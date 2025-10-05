@@ -23,6 +23,7 @@ import { databases, DATABASE_ID, COLLECTIONS, Query } from '@/react-app/lib/back
 
 interface Matter {
   id: number;
+  $id?: string;
   matter_number: string;
   title: string;
   practice_area: string;
@@ -800,7 +801,7 @@ export default function ClientDetail() {
                     <div key={matter.id} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors">
                       <div className="flex items-center justify-between mb-3">
                         <Link
-                          to={`/matters/${matter.id}`}
+                          to={`/matters/${matter.$id || matter.id}`}
                           className="text-sm font-medium text-blue-300 hover:text-blue-200"
                         >
                           {matter.matter_number}
