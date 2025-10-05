@@ -3,6 +3,7 @@ import { AuthProvider } from "@/react-app/auth/AuthProvider";
 import AuthCallbackPage from "@/react-app/pages/AuthCallback";
 import LoginPage from "@/react-app/pages/Login";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
+import NetworkStatus from "@/react-app/components/NetworkStatus";
 import Dashboard from "@/react-app/pages/Dashboard";
 import Clients from "@/react-app/pages/Clients";
 import Matters from "@/react-app/pages/Matters";
@@ -38,6 +39,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <NetworkStatus />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />

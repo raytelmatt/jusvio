@@ -120,6 +120,26 @@ class FirebaseAuthService implements BackendAuthService {
 class FirebaseDatabaseService implements BackendDatabaseService {
   constructor(private projectId: string) {}
 
+  private isNetworkError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    
+    const errorMessage = (error as { message?: string }).message || '';
+    const errorCode = (error as { code?: string }).code || '';
+    
+    // Check for common network error patterns
+    return (
+      errorMessage.includes('ERR_BLOCKED_BY_CLIENT') ||
+      errorMessage.includes('ERR_NETWORK_CHANGED') ||
+      errorMessage.includes('ERR_INTERNET_DISCONNECTED') ||
+      errorMessage.includes('ERR_CONNECTION_REFUSED') ||
+      errorMessage.includes('ERR_CONNECTION_TIMED_OUT') ||
+      errorMessage.includes('ERR_NAME_NOT_RESOLVED') ||
+      errorCode === 'unavailable' ||
+      errorCode === 'deadline-exceeded' ||
+      errorCode === 'permission-denied'
+    );
+  }
+
   async listDocuments<T = BackendDocument>(
     _databaseId: string,
     collectionId: string,
@@ -148,17 +168,27 @@ class FirebaseDatabaseService implements BackendDatabaseService {
     }
 
     const q = constraints.length > 0 ? fsQuery(colRef, ...constraints) : colRef;
-    const snap = await getDocs(q);
-    let docs = snap.docs.map((docSnap) => {
-      const data = (typeof docSnap.data === 'function' ? docSnap.data() : ({} as DocumentData)) ?? {};
-      return { $id: docSnap.id, ...data } as T;
-    });
+    
+    try {
+      const snap = await getDocs(q);
+      let docs = snap.docs.map((docSnap) => {
+        const data = (typeof docSnap.data === 'function' ? docSnap.data() : ({} as DocumentData)) ?? {};
+        return { $id: docSnap.id, ...data } as T;
+      });
 
-    if (typeof offset === 'number' && offset > 0) {
-      docs = docs.slice(offset);
+      if (typeof offset === 'number' && offset > 0) {
+        docs = docs.slice(offset);
+      }
+
+      return { total: docs.length, documents: docs };
+    } catch (error) {
+      // Handle network connectivity issues
+      if (this.isNetworkError(error)) {
+        console.error(`Network error accessing collection: ${collectionId}`, error);
+        throw new Error('Network connectivity issue. Please check your internet connection and try again.');
+      }
+      throw error;
     }
-
-    return { total: docs.length, documents: docs };
   }
 
   async getDocument<T = BackendDocument>(
@@ -168,9 +198,22 @@ class FirebaseDatabaseService implements BackendDatabaseService {
   ): Promise<T> {
     const db = getFirestore(getFirebaseApp());
     const ref = doc(db, collectionId, documentId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Document not found');
-    return { $id: snap.id, ...snap.data() } as unknown as T;
+    
+    try {
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        console.error(`Document not found: collection="${collectionId}", id="${documentId}"`);
+        throw new Error('Document not found');
+      }
+      return { $id: snap.id, ...snap.data() } as unknown as T;
+    } catch (error) {
+      // Handle network connectivity issues
+      if (this.isNetworkError(error)) {
+        console.error(`Network error accessing document: collection="${collectionId}", id="${documentId}"`, error);
+        throw new Error('Network connectivity issue. Please check your internet connection and try again.');
+      }
+      throw error;
+    }
   }
 
   async createDocument<T = BackendDocument>(

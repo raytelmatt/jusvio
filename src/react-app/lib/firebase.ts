@@ -54,6 +54,15 @@ function isAlreadyInitialized(error: unknown): boolean {
   );
 }
 
+function isOfflineError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    !!error &&
+    'code' in error &&
+    (error as { code?: string }).code === 'installations/app-offline'
+  );
+}
+
 function initializeBrowserAuth(): Auth {
   const firebaseApp = getFirebaseApp();
   const preferredPersistence: Persistence[] = [
@@ -67,6 +76,19 @@ function initializeBrowserAuth(): Auth {
   } catch (error) {
     if (isAlreadyInitialized(error)) {
       return getAuth(firebaseApp);
+    }
+
+    if (isOfflineError(error)) {
+      console.warn("Firebase is offline, using in-memory persistence:", error);
+      try {
+        return initializeAuth(firebaseApp, { persistence: inMemoryPersistence });
+      } catch (offlineError) {
+        if (isAlreadyInitialized(offlineError)) {
+          return getAuth(firebaseApp);
+        }
+        console.error("Failed to initialize Firebase Auth offline:", offlineError);
+        return getAuth(firebaseApp);
+      }
     }
 
     console.warn(
