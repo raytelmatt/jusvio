@@ -117,7 +117,15 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
       [Query.limit(500)] // Adjust limit as needed
     );
 
-    const clients = clientsResponse.documents as unknown as Client[];
+    // Normalize client documents to ensure they have required fields
+    const clients = (clientsResponse.documents || []).map((doc: any) => ({
+      ...doc,
+      id: doc.id || doc.$id,
+      first_name: doc.first_name || '',
+      last_name: doc.last_name || '',
+      email: doc.email || undefined,
+      client_number: doc.client_number || undefined,
+    })) as Client[];
 
     // Fetch all invoices, payments, time entries, and matters for balance calculations
     const [invoicesResponse, paymentsResponse, timeEntriesResponse, mattersResponse] = await Promise.all([
@@ -132,7 +140,7 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
       const nested = toRecord(record.matters as unknown);
       return {
         $id: toStringOrUndefined(record.$id),
-        id: record.id,
+        id: toStringOrUndefined(record.id),
         matter_id: toStringOrUndefined(record.matter_id) ?? nestedId(nested),
         matters: nested,
         invoice_number: String(record.invoice_number ?? ''),
@@ -150,7 +158,7 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
       const nested = toRecord(record.invoices as unknown);
       return {
         $id: toStringOrUndefined(record.$id),
-        id: record.id,
+        id: toStringOrUndefined(record.id),
         invoice_id: toStringOrUndefined(record.invoice_id) ?? nestedId(nested),
         invoices: nested,
         amount: Number(record.amount ?? 0),
@@ -166,7 +174,7 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
       const nested = toRecord(record.matters as unknown);
       return {
         $id: toStringOrUndefined(record.$id),
-        id: record.id,
+        id: toStringOrUndefined(record.id),
         matter_id: toStringOrUndefined(record.matter_id) ?? nestedId(nested),
         matters: nested,
         hours: Number(record.hours ?? 0),
@@ -177,12 +185,11 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
 
     const matters: MatterDoc[] = (mattersResponse.documents || []).map((raw) => {
       const record = toRecord(raw);
-      const nested = toRecord(record.clients as unknown);
       return {
         $id: toStringOrUndefined(record.$id),
-        id: record.id,
-        client_id: toStringOrUndefined(record.client_id) ?? nestedId(nested),
-        clients: nested,
+        id: toStringOrUndefined(record.id),
+        client_id: toStringOrUndefined(record.client_id),
+        clients: undefined,
         title: String(record.title ?? ''),
         matter_number: toStringOrUndefined(record.matter_number),
         $createdAt: record.$createdAt as string | undefined,
@@ -195,14 +202,15 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
     const timeEntriesByMatter = new Map<string, TimeEntryDoc[]>();
     const mattersByClient = new Map<string, MatterDoc[]>();
 
-    // Group matters by client
+    // Group matters by client - handle both string and numeric IDs
     matters.forEach((matter: MatterDoc) => {
-      const clientId = matter.client_id || matter.clients?.id || matter.clients?.$id;
-      if (clientId && !mattersByClient.has(clientId)) {
-        mattersByClient.set(clientId, []);
-      }
+      const clientId = matter.client_id;
       if (clientId) {
-        mattersByClient.get(clientId)?.push(matter);
+        const clientIdStr = String(clientId);
+        if (!mattersByClient.has(clientIdStr)) {
+          mattersByClient.set(clientIdStr, []);
+        }
+        mattersByClient.get(clientIdStr)?.push(matter);
       }
     });
 
@@ -242,8 +250,12 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
     // Calculate balances for each client
     const clientBalances: ClientBalance[] = clients.map((client: Client) => {
       // Support records that may contain either numeric id or $id
-      const clientId = String(client.id);
-      const clientMatters = mattersByClient.get(clientId) || [];
+      const clientId = String(client.id || (client as any).$id);
+      // Also check with $id if id doesn't match
+      let clientMatters = mattersByClient.get(clientId) || [];
+      if (clientMatters.length === 0 && (client as any).$id) {
+        clientMatters = mattersByClient.get(String((client as any).$id)) || [];
+      }
       
       let totalInvoiced = 0;
       let totalPaid = 0;
@@ -365,8 +377,8 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
         id: clientId,
         client_id: clientId,
         client_number: client.client_number ?? undefined,
-        first_name: client.first_name,
-        last_name: client.last_name,
+        first_name: client.first_name || '',
+        last_name: client.last_name || '',
         email: client.email ?? undefined,
         balance: currentBalance,
         current_balance: currentBalance,
@@ -395,7 +407,11 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
 export async function fetchClientBalance(clientId: string): Promise<ClientBalance | null> {
   try {
     const balances = await fetchClientBalances();
-    return balances.find(balance => balance.client_id === clientId) || null;
+    // Check both client_id and id fields for matching
+    return balances.find(balance => 
+      balance.client_id === clientId || 
+      balance.id === clientId
+    ) || null;
   } catch (error) {
     console.error('Error fetching client balance:', error);
     return null;

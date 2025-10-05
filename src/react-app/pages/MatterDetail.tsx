@@ -845,23 +845,35 @@ export default function MatterDetail() {
     if (!id || !matter) return;
     
     try {
-      // Calculate totals from time entries or line items
-      let subtotal = 0;
+      // Use the line items from the invoice modal
       let lineItems: unknown[] = [];
+      let subtotal = 0;
+      let taxes = 0;
+      let discounts = 0;
+      let total = 0;
       
-      if (invoiceForm.line_items.length > 0) {
-        // Use custom line items
-        lineItems = invoiceForm.line_items;
-        subtotal = invoiceForm.line_items.reduce((sum, item) => sum + item.amount, 0);
+      if (invoiceLineItems.length > 0) {
+        // Use the line items from the modal
+        lineItems = invoiceLineItems;
+        subtotal = calculateInvoiceSubtotal();
+        taxes = calculateInvoiceTax();
+        discounts = calculateInvoiceDiscount();
+        total = calculateInvoiceTotal();
       } else if (timeEntries.length > 0) {
-        // Generate from unbilled time entries
-        lineItems = timeEntries.map((entry) => ({
-          description: entry.description || 'Legal Services',
-          quantity: Number(entry.hours || 0),
-          rate: Number(entry.rate || 150), // Default rate if not set
-          amount: Number(entry.hours || 0) * Number(entry.rate || 150),
-        }));
+        // Generate from unbilled time entries if no custom line items
+        lineItems = timeEntries.map((entry) => {
+          const hours = Number(entry.hours || 0);
+          const rate = Number(entry.rate || 150); // Default rate if not set
+          const amount = hours * rate;
+          return {
+            description: entry.description || 'Legal Services',
+            quantity: hours,
+            rate: rate,
+            amount: amount,
+          };
+        });
         subtotal = (lineItems as Record<string, unknown>[]).reduce((sum: number, item) => sum + Number(item.amount || 0), 0);
+        total = subtotal;
       }
       
       const invoiceNumber = `INV-${matter.matter_number}-${Date.now().toString().slice(-6)}`;
@@ -869,13 +881,14 @@ export default function MatterDetail() {
       const newInvoice = {
         matter_id: id,
         invoice_number: invoiceNumber,
-        issue_date: new Date().toISOString(),
+        issue_date: invoiceForm.issue_date || new Date().toISOString(),
         due_date: invoiceForm.due_date,
         line_items: JSON.stringify(lineItems),
         subtotal: subtotal,
-        taxes: 0,
-        discounts: 0,
-        total: subtotal,
+        taxes: taxes,
+        discounts: discounts,
+        total: total,
+        amount: total, // Include amount field for compatibility
         status: 'Draft',
       };
       
@@ -1538,7 +1551,8 @@ export default function MatterDetail() {
                       const totalPaid = invoicePayments.reduce((sum: number, p) => 
                         sum + Number(p.amount || 0), 0
                       );
-                      const balance = Number(invoice.total || 0) - totalPaid;
+                      const invoiceTotal = Number(invoice.total || invoice.amount || 0);
+                      const balance = invoiceTotal - totalPaid;
                       
                       return (
                         <div key={invoice.$id || invoice.id} className="p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
@@ -1568,24 +1582,32 @@ export default function MatterDetail() {
                             </div>
                             <div className="text-right ml-4">
                               <p className="text-sm text-blue-200">Total</p>
-                              <p className="text-lg font-semibold text-white">${Number(invoice.total || 0).toFixed(2)}</p>
+                              <p className="text-lg font-semibold text-white">${Number(invoice.total || invoice.amount || 0).toFixed(2)}</p>
                               {totalPaid > 0 && (
                                 <>
                                   <p className="text-sm text-green-300">Paid: ${totalPaid.toFixed(2)}</p>
                                   <p className="text-sm font-medium text-yellow-300">Balance: ${balance.toFixed(2)}</p>
                                 </>
                               )}
-                              {invoice.status !== 'Paid' && (
+                              <div className="flex gap-2 mt-2">
                                 <button
-                                  onClick={() => {
-                                    setSelectedInvoice(invoice);
-                                    setShowPaymentModal(true);
-                                  }}
-                                  className="mt-2 inline-flex items-center px-3 py-1 border border-white/20 text-xs font-medium rounded text-blue-100 bg-white/10 hover:bg-white/20"
+                                  onClick={() => navigate(`/billing/invoice/${invoice.$id || invoice.id}`)}
+                                  className="inline-flex items-center px-3 py-1 border border-white/20 text-xs font-medium rounded text-blue-100 bg-white/10 hover:bg-white/20"
                                 >
-                                  Record Payment
+                                  View Details
                                 </button>
-                              )}
+                                {invoice.status !== 'Paid' && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedInvoice(invoice);
+                                      setShowPaymentModal(true);
+                                    }}
+                                    className="inline-flex items-center px-3 py-1 border border-white/20 text-xs font-medium rounded text-blue-100 bg-white/10 hover:bg-white/20"
+                                  >
+                                    Record Payment
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1600,7 +1622,7 @@ export default function MatterDetail() {
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4">
                   <p className="text-sm text-blue-200">Total Billed</p>
                   <p className="text-2xl font-semibold text-white">
-                    ${invoices.reduce((sum: number, inv) => sum + Number(inv.total || 0), 0).toFixed(2)}
+                    ${invoices.reduce((sum: number, inv) => sum + Number(inv.total || inv.amount || 0), 0).toFixed(2)}
                   </p>
                 </div>
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4">
@@ -1612,7 +1634,7 @@ export default function MatterDetail() {
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4">
                   <p className="text-sm text-yellow-300">Outstanding</p>
                   <p className="text-2xl font-semibold text-white">
-                    ${(invoices.reduce((sum: number, inv) => sum + Number(inv.total || 0), 0) - 
+                    ${(invoices.reduce((sum: number, inv) => sum + Number(inv.total || inv.amount || 0), 0) - 
                        payments.reduce((sum: number, p) => sum + Number(p.amount || 0), 0)).toFixed(2)}
                   </p>
                 </div>

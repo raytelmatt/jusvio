@@ -35,6 +35,12 @@ import ClientBalances from "@/react-app/pages/ClientBalances";
 import IntakesAdmin from "@/react-app/pages/Intakes";
 import ProtectedRoute from "@/react-app/components/ProtectedRoute";
 
+// Import test utilities for debugging (available in browser console)
+if (import.meta.env.DEV) {
+  import('./test-billing-fix').catch(console.error);
+  import('./fix-client-matter-associations').catch(console.error);
+}
+
 export default function App() {
   return (
     <AuthProvider>
