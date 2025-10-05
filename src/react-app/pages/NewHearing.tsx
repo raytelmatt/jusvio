@@ -73,7 +73,7 @@ export default function NewHearing() {
     setLoading(true);
     try {
       await databases.createDocument(DATABASE_ID, COLLECTIONS.hearings, 'unique()', {
-        matter_id: parseInt(formData.matter_id),
+        matter_id: formData.matter_id, // Keep as string to match Firebase IDs
         hearing_type: formData.hearing_type,
         start_at: new Date(formData.start_at).toISOString(),
         end_at: formData.end_at ? new Date(formData.end_at).toISOString() : null,
@@ -92,7 +92,7 @@ export default function NewHearing() {
     }
   };
 
-  const selectedMatter = matters.find(m => m.id.toString() === formData.matter_id);
+  const selectedMatter = matters.find(m => m.id === formData.matter_id);
 
   return (
     <div className="space-y-6">

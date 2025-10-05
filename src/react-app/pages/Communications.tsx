@@ -511,7 +511,7 @@ function NewCommunicationForm({
     try {
       const created = await databases.createDocument(DATABASE_ID, COLLECTIONS.communications, 'unique()', {
         ...formData,
-        matter_id: parseInt(formData.matter_id),
+        matter_id: formData.matter_id, // Keep as string to match Firebase IDs
         sent_at: new Date().toISOString(),
       });
       onSave(created as unknown as Communication);

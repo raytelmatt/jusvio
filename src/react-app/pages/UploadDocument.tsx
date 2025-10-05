@@ -77,7 +77,7 @@ export default function UploadDocument() {
       const created = await storage.createFile(BUCKETS.documents, 'unique()', selectedFile!);
       const fileId = created.$id;
       await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
-        matter_id: formData.matter_id.toString(),
+        matter_id: formData.matter_id, // Keep as string to match Firebase IDs
         title: formData.title,
         status: formData.status,
         version: 1,
@@ -92,7 +92,7 @@ export default function UploadDocument() {
     }
   };
 
-  const selectedMatter = matters.find(m => m.id.toString() === formData.matter_id);
+  const selectedMatter = matters.find(m => m.id === formData.matter_id);
 
   return (
     <div className="space-y-6">

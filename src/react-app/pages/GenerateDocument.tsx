@@ -142,7 +142,7 @@ export default function GenerateDocument() {
 
       // Create document record
       await databases.createDocument(DATABASE_ID, COLLECTIONS.documents, 'unique()', {
-        matter_id: formData.matter_id,
+        matter_id: formData.matter_id, // Keep as string to match Firebase IDs
         template_id: selectedTemplate?.id?.toString?.() ?? null,
         title: formData.title || selectedTemplate.name,
         status: 'Draft',
@@ -181,7 +181,7 @@ export default function GenerateDocument() {
     return content;
   };
 
-  const selectedMatter = matters.find(m => m.id.toString() === formData.matter_id);
+  const selectedMatter = matters.find(m => m.id === formData.matter_id);
 
   return (
     <div className="space-y-6">

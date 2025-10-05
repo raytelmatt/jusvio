@@ -56,7 +56,7 @@ export default function NewDeadline() {
     setLoading(true);
     try {
       await databases.createDocument(DATABASE_ID, COLLECTIONS.deadlines, 'unique()', {
-        matter_id: parseInt(formData.matter_id),
+        matter_id: formData.matter_id, // Keep as string to match Firebase IDs
         title: formData.title,
         source: formData.source,
         due_at: new Date(formData.due_at).toISOString(),
@@ -70,7 +70,7 @@ export default function NewDeadline() {
     }
   };
 
-  const selectedMatter = matters.find(m => m.id.toString() === formData.matter_id);
+  const selectedMatter = matters.find(m => m.id === formData.matter_id);
 
   return (
     <div className="space-y-6">

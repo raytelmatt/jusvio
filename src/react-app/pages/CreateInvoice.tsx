@@ -141,7 +141,7 @@ export default function CreateInvoice() {
     setLoading(true);
     try {
       await databases.createDocument(DATABASE_ID, COLLECTIONS.invoices, 'unique()', {
-        matter_id: parseInt(formData.matter_id),
+        matter_id: formData.matter_id, // Keep as string to match Firebase IDs
         invoice_number: String(Date.now()).slice(-6),
         issue_date: formData.issue_date,
         due_date: formData.due_date,
@@ -160,7 +160,7 @@ export default function CreateInvoice() {
     }
   };
 
-  const selectedMatter = matters.find(m => m.id.toString() === formData.matter_id);
+  const selectedMatter = matters.find(m => m.id === formData.matter_id);
   const totals = calculateTotals();
 
   return (

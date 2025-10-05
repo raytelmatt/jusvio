@@ -3,34 +3,10 @@ import { useNavigate, Link } from 'react-router';
 // Permissions are provider-specific; Firebase adapter ignores them
 import { ArrowLeft, Save, User, FolderOpen, DollarSign } from 'lucide-react';
 import type { Client } from '@/shared/types';
+import { fetchAllClients } from '@/react-app/lib/client-utils';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
 import type { BackendDocument } from '@/react-app/lib/backend';
 
-function mapClientDoc(raw: unknown): Client & { firebaseId?: string } {
-  const record = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
-  // Preserve the actual Firebase document ID
-  const firebaseId = String(record.$id ?? '');
-  // Use a numeric ID for type compatibility
-  const idValue = record.id ?? record.$id ?? 0;
-  return {
-    id: typeof idValue === 'number' ? idValue : Number(idValue) || 0,
-    firebaseId: firebaseId,
-    client_number: typeof record.client_number === 'string' ? record.client_number : null,
-    first_name: String(record.first_name ?? ''),
-    last_name: String(record.last_name ?? ''),
-    date_of_birth: typeof record.date_of_birth === 'string' ? record.date_of_birth : null,
-    ssn_last4: typeof record.ssn_last4 === 'string' ? record.ssn_last4 : null,
-    phones: typeof record.phones === 'string' ? record.phones : null,
-    email: typeof record.email === 'string' ? record.email : null,
-    address: typeof record.address === 'string' ? record.address : null,
-    emergency_contact: typeof record.emergency_contact === 'string' ? record.emergency_contact : null,
-    preferred_contact_method: (record.preferred_contact_method as Client['preferred_contact_method']) ?? null,
-    notifications_opt_in: Boolean(record.notifications_opt_in),
-    portal_enabled: Boolean(record.portal_enabled),
-    created_at: typeof record.created_at === 'string' ? record.created_at : new Date().toISOString(),
-    updated_at: typeof record.updated_at === 'string' ? record.updated_at : new Date().toISOString(),
-  } as Client & { firebaseId?: string };
-}
 
 export default function NewMatter() {
   const navigate = useNavigate();
@@ -61,9 +37,8 @@ export default function NewMatter() {
 
   const fetchClients = async () => {
     try {
-      const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.clients, []);
-      const rows = (list.documents || []).map(mapClientDoc);
-      setClients(rows);
+      const clients = await fetchAllClients();
+      setClients(clients);
     } catch (error) {
       console.error('Error fetching clients:', error);
     }
@@ -126,7 +101,7 @@ export default function NewMatter() {
     }
   };
 
-  const selectedClient = clients.find(c => c.id.toString() === formData.client_id);
+  const selectedClient = clients.find(c => c.id === formData.client_id);
 
   return (
     <div className="space-y-6">

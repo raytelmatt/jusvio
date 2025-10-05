@@ -63,7 +63,7 @@ export default function TimeEntry() {
     setLoading(true);
     try {
       await databases.createDocument(DATABASE_ID, COLLECTIONS.timeEntries, 'unique()', {
-        matter_id: parseInt(formData.matter_id),
+        matter_id: formData.matter_id, // Keep as string to match Firebase IDs
         entry_date: formData.entry_date,
         hours: parseFloat(formData.hours),
         rate: parseFloat(formData.rate),
@@ -77,7 +77,7 @@ export default function TimeEntry() {
     }
   };
 
-  const selectedMatter = matters.find(m => m.id.toString() === formData.matter_id);
+  const selectedMatter = matters.find(m => m.id === formData.matter_id);
 
   return (
     <div className="space-y-6">

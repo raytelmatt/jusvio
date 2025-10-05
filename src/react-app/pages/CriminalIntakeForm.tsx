@@ -11,6 +11,7 @@ import {
   Shield
 } from 'lucide-react';
 import { databases, DATABASE_ID, COLLECTIONS } from '@/react-app/lib/backend';
+import { createClient } from '@/react-app/lib/client-utils';
 
 interface CriminalIntakeFormData {
   // Personal Information
@@ -227,10 +228,30 @@ export default function CriminalIntakeForm() {
 
     setLoading(true);
     try {
-      // Persist intake using backend adapter
+      // First, create a client record
+      const clientData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email || null,
+        phones: (formData.mobile_phone || formData.home_phone || formData.work_phone) ? 
+          JSON.stringify([formData.mobile_phone || formData.home_phone || formData.work_phone]) : null,
+        preferred_contact_method: formData.preferred_contact_method || null,
+        date_of_birth: formData.date_of_birth || null,
+        ssn_last4: formData.ssn_last4 || null,
+        address: formData.address.street ? JSON.stringify(formData.address) : null,
+        emergency_contact: formData.emergency_contact.name ? JSON.stringify(formData.emergency_contact) : null,
+        notifications_opt_in: true,
+        portal_enabled: false, // Will be enabled after review
+        client_number: null,
+      };
+
+      const client = await createClient(clientData);
+
+      // Then create the intake record with client reference
       const payload = {
         type: 'criminal',
         practice_area: 'Criminal',
+        client_id: client.id, // Reference the created client
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email,
