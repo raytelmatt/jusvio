@@ -29,6 +29,9 @@ export default defineConfig({
   globalSetup: './tests/global-setup.ts',
   globalTeardown: './tests/global-teardown.ts',
 
+  // Exclude vitest unit tests from Playwright
+  testIgnore: ['**/billing-validators.spec.ts'],
+
   projects: [
     {
       name: 'chromium',
