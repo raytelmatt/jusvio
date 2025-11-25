@@ -1,11 +1,11 @@
 # Development Checklist
 
-This checklist ensures that all changes to the Jusivo app are properly tracked and documented in Linear.
+This checklist ensures that all changes to the Jusivo app are properly tracked and documented.
 
 ## 📋 Pre-Development Checklist
 
 ### 1. Issue Creation
-- [ ] **Linear Issue Created**: Issue exists in Linear with proper title and description
+- [ ] **Issue Created**: Issue exists with proper title and description
 - [ ] **Issue Type**: Correct prefix used ([FEATURE], [BUG], [TECH-DEBT], etc.)
 - [ ] **Acceptance Criteria**: Clear, testable criteria defined
 - [ ] **Technical Requirements**: Technical constraints and requirements documented
@@ -22,10 +22,10 @@ This checklist ensures that all changes to the Jusivo app are properly tracked a
 ## 🔧 During Development Checklist
 
 ### 1. Branch and Commit Management
-- [ ] **Branch Naming**: Branch follows convention `username/RAY-XXX-descriptive-name`
-- [ ] **Commit Messages**: Commits reference Linear issue ID
+- [ ] **Branch Naming**: Branch follows convention `username/descriptive-name`
+- [ ] **Commit Messages**: Commits reference issue ID when applicable
 - [ ] **Regular Commits**: Frequent, meaningful commits made
-- [ ] **Issue Updates**: Linear issue updated with progress
+- [ ] **Issue Updates**: Issue updated with progress
 
 ### 2. Code Quality
 - [ ] **Code Review**: Code reviewed by team member
@@ -42,12 +42,12 @@ This checklist ensures that all changes to the Jusivo app are properly tracked a
 ## 🚀 Post-Development Checklist
 
 ### 1. Pull Request
-- [ ] **PR Description**: Clear description with Linear issue reference
+- [ ] **PR Description**: Clear description with issue reference when applicable
 - [ ] **Testing Notes**: Testing approach and results documented
 - [ ] **Deployment Notes**: Any special deployment considerations noted
 - [ ] **Breaking Changes**: Any breaking changes clearly documented
 
-### 2. Linear Issue Updates
+### 2. Issue Updates
 - [ ] **Status Updated**: Issue status updated to reflect current state
 - [ ] **Comments Added**: Significant decisions and progress documented
 - [ ] **Links Added**: PR and commit links added to issue
@@ -60,7 +60,7 @@ This checklist ensures that all changes to the Jusivo app are properly tracked a
 - [ ] **Production Verified**: Changes verified in production
 
 ### 4. Completion
-- [ ] **Issue Closed**: Linear issue marked as Done
+- [ ] **Issue Closed**: Issue marked as Done
 - [ ] **Summary Added**: Completion summary added to issue
 - [ ] **Documentation Updated**: Any relevant documentation updated
 - [ ] **Team Notified**: Team notified of completion
@@ -68,7 +68,7 @@ This checklist ensures that all changes to the Jusivo app are properly tracked a
 ## 🔍 Quality Gates
 
 ### Code Review Requirements
-- [ ] **Linear Issue Reference**: PR must reference Linear issue
+- [ ] **Issue Reference**: PR must reference issue when applicable
 - [ ] **Testing Coverage**: Adequate test coverage maintained
 - [ ] **Performance Impact**: No negative performance impact
 - [ ] **Security Review**: Security implications considered
@@ -96,7 +96,7 @@ This checklist ensures that all changes to the Jusivo app are properly tracked a
 ## 🚨 Red Flags
 
 ### Stop Development If:
-- [ ] **No Linear Issue**: Development started without Linear issue
+- [ ] **No Issue Tracking**: Development started without proper issue tracking
 - [ ] **Unclear Requirements**: Acceptance criteria not well defined
 - [ ] **High Risk**: High-risk changes without proper planning
 - [ ] **Dependencies**: Blocking dependencies not resolved
@@ -110,15 +110,8 @@ This checklist ensures that all changes to the Jusivo app are properly tracked a
 ## 📚 Resources
 
 ### Tools
-- **Linear**: [linear.app](https://linear.app)
 - **GitHub**: [github.com](https://github.com)
-- **Linear CLI**: `npm install -g @linear/cli`
 - **GitHub CLI**: `npm install -g @github/cli`
-
-### Scripts
-- **Create Issue**: `node scripts/linear/create-issue.mjs`
-- **Update Status**: `node scripts/linear/update-status.mjs`
-- **Sync GitHub**: `node scripts/linear/sync-github.mjs`
 
 ### Templates
 - **Feature Request**: `.github/ISSUE_TEMPLATE/feature-request.md`
@@ -127,4 +120,4 @@ This checklist ensures that all changes to the Jusivo app are properly tracked a
 
 ---
 
-**Remember**: This checklist is a tool to ensure quality and proper tracking. Adapt it to your specific needs while maintaining the core principle of documenting all changes in Linear.
+**Remember**: This checklist is a tool to ensure quality and proper tracking. Adapt it to your specific needs while maintaining the core principle of documenting all changes properly.
