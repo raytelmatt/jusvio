@@ -379,7 +379,8 @@ describe('billing-validators', () => {
     });
 
     it('should throw error for invalid line items', () => {
-      const lineItems = null as unknown as LineItem[];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const lineItems = null as any;
       expect(() => calculateInvoiceTotal(lineItems)).toThrow(BillingValidationError);
       expect(() => calculateInvoiceTotal(lineItems)).toThrow('Line items must be an array');
     });
