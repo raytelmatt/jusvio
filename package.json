@@ -60,9 +60,6 @@
     "firebase:init": "npx firebase init hosting --project $FIREBASE_PROJECT_ID --non-interactive --force",
     "deploy": "vite build && npx firebase deploy --only hosting --project $FIREBASE_PROJECT_ID",
     "mcp:firebase": "dotenv -e .env.firebase npx -y @gannonh/firebase-mcp",
-    "firebase:seed": "node scripts/firebase/seed-firestore.mjs",
-    "linear:create": "node scripts/linear/create-issue.mjs",
-    "linear:update": "node scripts/linear/update-status.mjs",
-    "linear:sync": "node scripts/linear/sync-github.mjs"
+    "firebase:seed": "node scripts/firebase/seed-firestore.mjs"
   }
 }
