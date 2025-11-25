@@ -1,0 +1,52 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e10]:
+  - generic [ref=e11]:
+    - generic [ref=e12]:
+      - img [ref=e18]
+      - img [ref=e23]
+    - heading "Jusivo Case Manager" [level=1] [ref=e25]
+    - generic [ref=e26]: Version 1.0
+    - generic [ref=e27]: By Matthew R. Ray
+    - paragraph [ref=e28]: Comprehensive Legal Case Management
+  - generic [ref=e29]:
+    - link "Client Portal" [ref=e30] [cursor=pointer]:
+      - /url: /client-portal
+      - img [ref=e31] [cursor=pointer]
+      - paragraph [ref=e36] [cursor=pointer]: Client Portal
+    - generic [ref=e37]:
+      - img [ref=e38]
+      - paragraph [ref=e41]: Case Files
+    - generic [ref=e42]:
+      - img [ref=e43]
+      - paragraph [ref=e45]: Court Calendar
+    - generic [ref=e46]:
+      - img [ref=e47]
+      - paragraph [ref=e51]: Smart Billing
+  - generic [ref=e52]:
+    - generic [ref=e53]:
+      - generic [ref=e54]: Email
+      - textbox "you@example.com" [ref=e55]
+    - generic [ref=e56]:
+      - generic [ref=e57]: Password
+      - textbox "••••••••" [ref=e58]
+    - button "Sign in" [ref=e59] [cursor=pointer]:
+      - generic [ref=e60] [cursor=pointer]:
+        - img [ref=e61] [cursor=pointer]
+        - text: Sign in
+  - generic [ref=e65]:
+    - button "Continue with Google" [ref=e66] [cursor=pointer]
+    - generic [ref=e67]:
+      - paragraph [ref=e68]: Criminal Defense • Personal Injury • SSD Cases
+      - generic [ref=e69]:
+        - link "General Case Intake" [ref=e70] [cursor=pointer]:
+          - /url: /intake/new
+          - img [ref=e71] [cursor=pointer]
+          - text: General Case Intake
+        - link "Criminal Defense Intake" [ref=e76] [cursor=pointer]:
+          - /url: /intake/criminal
+          - img [ref=e77] [cursor=pointer]
+          - text: Criminal Defense Intake
+    - generic [ref=e81]: © 2025 Matthew R. Ray - All Rights Reserved
+```

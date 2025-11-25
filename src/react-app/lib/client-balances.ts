@@ -118,14 +118,17 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
     );
 
     // Normalize client documents to ensure they have required fields
-    const clients = (clientsResponse.documents || []).map((doc: any) => ({
-      ...doc,
-      id: doc.id || doc.$id,
-      first_name: doc.first_name || '',
-      last_name: doc.last_name || '',
-      email: doc.email || undefined,
-      client_number: doc.client_number || undefined,
-    })) as Client[];
+    const clients = (clientsResponse.documents || []).map((doc: unknown) => {
+      const record = toRecord(doc);
+      return {
+        ...record,
+        id: toStringOrUndefined(record.id ?? record.$id) || '',
+        first_name: String(record.first_name || ''),
+        last_name: String(record.last_name || ''),
+        email: toStringOrUndefined(record.email),
+        client_number: toStringOrUndefined(record.client_number),
+      };
+    }) as Client[];
 
     // Fetch all invoices, payments, time entries, and matters for balance calculations
     const [invoicesResponse, paymentsResponse, timeEntriesResponse, mattersResponse] = await Promise.all([
@@ -250,11 +253,12 @@ export async function fetchClientBalances(): Promise<ClientBalance[]> {
     // Calculate balances for each client
     const clientBalances: ClientBalance[] = clients.map((client: Client) => {
       // Support records that may contain either numeric id or $id
-      const clientId = String(client.id || (client as any).$id);
+      const clientRecord = toRecord(client);
+      const clientId = String(client.id || clientRecord.$id);
       // Also check with $id if id doesn't match
       let clientMatters = mattersByClient.get(clientId) || [];
-      if (clientMatters.length === 0 && (client as any).$id) {
-        clientMatters = mattersByClient.get(String((client as any).$id)) || [];
+      if (clientMatters.length === 0 && clientRecord.$id) {
+        clientMatters = mattersByClient.get(String(clientRecord.$id)) || [];
       }
       
       let totalInvoiced = 0;
