@@ -182,15 +182,6 @@ export default function ClientDetail() {
     }
   };
 
-  const callClient = () => {
-    if (client?.phones) {
-      const phones = JSON.parse(client.phones);
-      if (phones.length > 0) {
-        window.location.href = `tel:${phones[0]}`;
-      }
-    }
-  };
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -249,9 +240,41 @@ export default function ClientDetail() {
     );
   }
 
-  const address = client.address ? JSON.parse(client.address) : null;
-  const emergencyContact = client.emergency_contact ? JSON.parse(client.emergency_contact) : null;
-  const phones = client.phones ? JSON.parse(client.phones) : [];
+  let address = null;
+  if (client.address) {
+    try {
+      address = JSON.parse(client.address);
+    } catch (err) {
+      console.warn('Failed to parse address JSON', err);
+      address = null;
+    }
+  }
+
+  let emergencyContact = null;
+  if (client.emergency_contact) {
+    try {
+      emergencyContact = JSON.parse(client.emergency_contact);
+    } catch (err) {
+      console.warn('Failed to parse emergency contact JSON', err);
+      emergencyContact = null;
+    }
+  }
+
+  let phones: string[] = [];
+  if (client.phones) {
+    try {
+      phones = JSON.parse(client.phones);
+    } catch (err) {
+      console.warn('Failed to parse phones JSON', err);
+      phones = [];
+    }
+  }
+
+  const callClient = () => {
+    if (phones.length > 0) {
+      window.location.href = `tel:${phones[0]}`;
+    }
+  };
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: User },
