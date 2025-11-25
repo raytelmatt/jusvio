@@ -47,8 +47,3 @@ assignees: ''
 - [ ] Reproduced locally
 - [ ] Tested in staging
 - [ ] Tested in production
-
-## Linear Issue
-<!-- This will be created automatically when the issue is moved to Linear -->
-- [ ] Linear issue created
-- [ ] Linear issue linked to this GitHub issue

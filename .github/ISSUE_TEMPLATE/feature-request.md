@@ -47,8 +47,3 @@ assignees: ''
 
 ## Additional Context
 <!-- Add any other context, screenshots, or references here -->
-
-## Linear Issue
-<!-- This will be created automatically when the issue is moved to Linear -->
-- [ ] Linear issue created
-- [ ] Linear issue linked to this GitHub issue
