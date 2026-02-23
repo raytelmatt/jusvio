@@ -3,6 +3,12 @@
 This app uses a backend abstraction that currently runs on Firebase for auth, database, and storage.
 Frontend is React + Vite and is deployed to Firebase Hosting via GitHub Actions.
 
+## Documentation
+
+📋 **[Feature Specification](FEATURE_SPECIFICATION.md)** - Comprehensive documentation of all app features including client management, matter management, billing, document generation, calendar, deadlines, intake forms, and client portal.
+
+## Getting Started
+
 To run the devserver:
 
 ```bash
